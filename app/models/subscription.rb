@@ -4,5 +4,5 @@ class Subscription < ApplicationRecord
   enum :status, VALID_STATUSES.reduce({}) { |acc, v| acc.merge(v => v) },
     prefix: true
   monetize :amount_cents
-  belongs_to :customer_id
+  belongs_to :customer
 end

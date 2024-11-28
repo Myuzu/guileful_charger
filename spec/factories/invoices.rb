@@ -18,6 +18,6 @@ FactoryBot.define do
     issued_at { DateTime.now }
 
     association :customer,     factory: :random_customer
-    association :subscription, factory: :random_active_subscription
+    association :subscription, factory: :random_subscription
   end
 end
