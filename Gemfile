@@ -20,6 +20,9 @@ gem "solid_cache"
 gem "solid_queue"
 gem "solid_cable"
 
+# A system for processing messages from RabbitMQ
+gem "hutch", "~> 1.3.0"
+
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
@@ -29,11 +32,25 @@ gem "kamal", require: false
 # Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
 gem "thruster", require: false
 
+# A Ruby Library for dealing with money and currency conversion
+gem "money", "~> 6.19.0"
+
+# State machines for Ruby classes
+gem "aasm", "~> 5.3.0"
+
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # gem "image_processing", "~> 1.2"
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
 # gem "rack-cors"
+
+group :development do
+  # The Ruby LSP is an implementation of the language server protocol
+  gem "ruby-lsp"
+
+  # A Ruby Gem that adds annotations to your Rails models and route files
+  gem "annotaterb"
+end
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
@@ -44,6 +61,7 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # rspec-rails
+  gem "rspec-rails"
 end
-
-

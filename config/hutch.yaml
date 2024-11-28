@@ -1,0 +1,3 @@
+mq_username: peter
+mq_password: rabbit
+mq_host: broker.yourhost.com
