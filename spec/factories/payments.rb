@@ -4,7 +4,7 @@ FactoryBot.define do
     amount_cents { 1200 }
     transaction_id { "3DXr8xOoobomobuENfdk8Q" }
     paid_at { DateTime.now }
-    failure_reason {}
+    failure_reason { }
 
     association :customer, factory: :customer
     association :invoice,  factory: :invoice

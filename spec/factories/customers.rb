@@ -8,6 +8,6 @@ FactoryBot.define do
   factory :random_customer, class: Customer do
     name            { Faker::Name.name }
     email           { Faker::Internet.email }
-    billing_address { Faker::Address.full_address}
+    billing_address { Faker::Address.full_address }
   end
 end
