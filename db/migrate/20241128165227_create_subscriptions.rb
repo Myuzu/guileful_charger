@@ -9,7 +9,7 @@ class CreateSubscriptions < ActiveRecord::Migration[8.0]
 
       t.integer :billing_cycle_count
       t.datetime :next_billing_at, null: false
-      t.references :customer_id, null: false, foreign_key: true, type: :uuid
+      t.references :customer, null: false, foreign_key: true, type: :uuid
 
       t.timestamps
     end

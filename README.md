@@ -52,11 +52,10 @@ PaymentID: Unique identifier
 InvoiceID: Reference to Invoice
 CustomerID: Reference to Customer
 Amount: Payment amount
-Status: Pending/Completed/Failed
+Status: pending/completed/failed
 TransactionID: External payment processor transaction ID
-PaymentDate: When payment was processed
-FailureReason: Description of failure (if applicable)
-Metadata: Additional payment-specific data
+PaidAt: When payment was processed
+FailureReason: Description of failure
 CreatedAt: Account creation timestamp
 
 - PaymentMethod
