@@ -36,7 +36,7 @@ gem "thruster", require: false
 gem "money-rails", "~> 1.15.0"
 
 # State machines for Ruby classes
-gem "aasm", "~> 5.3.0"
+gem "aasm", "~> 5.5.0"
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # gem "image_processing", "~> 1.2"
