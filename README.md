@@ -1,10 +1,11 @@
 # GuilefulCharger
 
 For the sake of time some crucial concepts was omited, such as:
-- currency will always be UAH
+- there will be one currency
 - no taxation handling
 - Subscribtion will always be in auto-renew state and there are no Plans
 - no user-initiated Subscribtion canceleation
+- Subscription without start/end date
 - no alternative Payment collection methods: only one PaymentMethod, it will be always active without encryption on sensative fields
 - skip on refunds logic
 
@@ -15,10 +16,8 @@ For the sake of time some crucial concepts was omited, such as:
 CustomerID: Unique identifier
 Name: Customer's name
 Email: Primary contact email
-Status: Active/Inactive
 BillingAddress: Address for billing purposes
 PaymentMethodId: associated payment method
-TaxInformation: Tax-related details
 CreatedAt: Account creation timestamp
 UpdatedAt: Last update timestamp
 
@@ -27,16 +26,13 @@ UpdatedAt: Last update timestamp
 SubscriptionID: Unique identifier
 CustomerID: Reference to Customer
 Amount: Base subscription price
-Status: Active/Paused/Cancelled/Past_Due
-StartDate: When subscription begins
-EndDate: When subscription ends (if applicable)
+Status: active/paused/cancelled/past_due
 BillingCycle: Current billing cycle number
-NextBillingDate: Date of next billing
-CancellationDate: When subscription was/will be cancelled
+NextBillingAt: Date of next billing
 CreatedAt: Account creation timestamp
 UpdatedAt: Last update timestamp
 
-- Invoice
+- Invoice (Not sure about)
 
 InvoiceID: Unique identifier
 CustomerID: Reference to Customer
@@ -45,8 +41,8 @@ Amount: Total amount
 Currency: Invoice currency
 Status: Draft/Issued/Paid/Void/Past_Due
 DueDate: Payment due date
-IssueDate: When invoice was issued
-PaidDate: When invoice was paid
+IssuedAt: When invoice was issued
+PaidAt: When invoice was paid
 BillingPeriod: Start and end dates for billing period
 CreatedAt: Account creation timestamp
 
