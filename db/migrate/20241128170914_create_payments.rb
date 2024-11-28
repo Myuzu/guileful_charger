@@ -10,7 +10,9 @@ class CreatePayments < ActiveRecord::Migration[8.0]
       t.string :transaction_id, null: false
       t.datetime :paid_at
       t.text :failure_reason
+
       t.references :customer, null: false, foreign_key: true, type: :uuid
+      t.references :invoice,  null: false, foreign_key: true, type: :uuid
 
       t.timestamps
     end

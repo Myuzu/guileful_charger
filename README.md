@@ -32,13 +32,12 @@ NextBillingAt: Date of next billing
 CreatedAt: Account creation timestamp
 UpdatedAt: Last update timestamp
 
-- Invoice (Not sure about)
+- Invoice
 
 InvoiceID: Unique identifier
 CustomerID: Reference to Customer
 SubscriptionID: Reference to Subscription
 Amount: Total amount
-Currency: Invoice currency
 Status: Draft/Issued/Paid/Void/Past_Due
 DueDate: Payment due date
 IssuedAt: When invoice was issued
