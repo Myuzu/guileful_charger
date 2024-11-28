@@ -1,6 +1,6 @@
 class CreateInvoices < ActiveRecord::Migration[8.0]
   def change
-    create_enum :invoice_status, %i[draft issued paid void past_due]
+    create_enum :invoice_status, Invoice::VALID_STATUSES
 
     create_table :invoices, id: :uuid do |t|
       t.enum :status, enum_type: :invoice_status, default: :draft, null: false
@@ -10,7 +10,6 @@ class CreateInvoices < ActiveRecord::Migration[8.0]
       t.datetime :due_date
       t.datetime :issued_at
       t.datetime :paid_at
-      t.text :billingperiod
 
       t.references :customer,     null: false, foreign_key: true, type: :uuid
       t.references :subscription, null: false, foreign_key: true, type: :uuid

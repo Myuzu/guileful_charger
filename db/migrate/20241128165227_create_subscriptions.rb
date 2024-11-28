@@ -1,6 +1,6 @@
 class CreateSubscriptions < ActiveRecord::Migration[8.0]
   def change
-    create_enum :subscription_status, %i[active paused cancelled past_due]
+    create_enum :subscription_status, Subscription::VALID_STATUSES
 
     create_table :subscriptions, id: :uuid do |t|
       t.enum :status, enum_type: :subscription_status, default: :active, null: false

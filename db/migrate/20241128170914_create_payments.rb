@@ -1,6 +1,6 @@
 class CreatePayments < ActiveRecord::Migration[8.0]
   def change
-    create_enum :payment_status, %i[pending completed failed]
+    create_enum :payment_status, Payment::VALID_STATUSES
 
     create_table :payments, id: :uuid do |t|
       t.enum :status, enum_type: :payment_status, default: :pending, null: false

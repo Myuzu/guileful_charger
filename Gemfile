@@ -32,8 +32,8 @@ gem "kamal", require: false
 # Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
 gem "thruster", require: false
 
-# A Ruby Library for dealing with money and currency conversion
-gem "money", "~> 6.19.0"
+# Integration of RubyMoney - Money with Rails
+gem "money-rails", "~> 1.15.0"
 
 # State machines for Ruby classes
 gem "aasm", "~> 5.3.0"
@@ -58,6 +58,9 @@ group :development, :test do
 
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem "brakeman", require: false
+
+  # Factory Bot ♥ Rails
+  gem "factory_bot_rails", "~> 6.4.4"
 
   # A library for generating fake data such as names, addresses, and phone numbers.
   gem "faker", "~> 3.5.1"

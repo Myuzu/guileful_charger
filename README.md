@@ -61,8 +61,8 @@ CreatedAt: Account creation timestamp
 
 PaymentMethodID: Unique identifier
 CustomerID: Reference to Customer
-Details: Encrypted payment details
-LastUsedDate: When method was last used
+Name: PaymentMethod's name
+LastUsedAt: When method was last used
 FailureCount: Number of payment failures
 CreatedAt: Account creation timestamp
 UpdatedAt: Last update timestamp
