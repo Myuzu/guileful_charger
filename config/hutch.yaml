@@ -1,3 +1,4 @@
-mq_username: peter
-mq_password: rabbit
-mq_host: broker.yourhost.com
+mq_username: guest
+mq_password: guest
+mq_host: rabbitmq
+mq_api_host: rabbitmq

@@ -1,5 +1,2 @@
-autoloader = Rails.autoloaders.main
-
-Dir.glob(File.join("app/consumers", "*_consumer.rb")).each do |consumer|
-  autoloader.preload(consumer)
-end
+Hutch::Config.load_from_file("config/hutch.yaml")
+Hutch.connect
