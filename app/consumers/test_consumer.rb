@@ -1,6 +1,6 @@
 class TestConsumer
   include Hutch::Consumer
-  consume 'payment.failed'
+  consume "payment.failed"
 
   def process(message)
     logger.info "Marking payment #{message.message_id} as failed"
