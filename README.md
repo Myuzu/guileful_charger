@@ -9,6 +9,11 @@ For the sake of time some crucial concepts was omited, such as:
 - no alternative Payment collection methods: only one PaymentMethod, it will be always active without encryption on sensative fields
 - skip on refunds logic
 
+Some other considerations:
+
+* postgres pessimistic locks
+* exactly-once deliver garantee
+
 ## Core entities
 
 - Customer

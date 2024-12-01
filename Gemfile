@@ -38,6 +38,11 @@ gem "money-rails", "~> 1.15.0"
 # State machines for Ruby classes
 gem "aasm", "~> 5.5.0"
 
+# dry-rb gems
+gem "dry-struct"
+gem "dry-types"
+gem "dry-initializer"
+
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # gem "image_processing", "~> 1.2"
 
@@ -50,6 +55,9 @@ group :development do
 
   # A Ruby Gem that adds annotations to your Rails models and route files
   gem "annotaterb"
+
+  # Guard::RSpec automatically run your specs (much like autotest)
+  gem "guard-rspec", require: false
 end
 
 group :development, :test do
