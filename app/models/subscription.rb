@@ -40,13 +40,11 @@ class Subscription < ApplicationRecord
   end
 
   def requires_retry
-    where(status: :past_due)
+    where(status: %i[past_due partially_paid])
       .where("next_payment_attempt_at <= ?", Time.current)
   end
 
   def calculate_payment_amount
-    amount
-
     total_collected = subscription.payment_attempts
                                   .succeeded
                                   .sum(:amount)

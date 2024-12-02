@@ -40,13 +40,13 @@ class PaymentScheduler
   private
 
   def schedule_initial_payment(subscription)
+    # skip if we already have a pending PaymentAttempt
     return if subscription.payment_attempts.pending.exists?
 
     PaymentAttempt.transaction do
       attempt = create_payment_attempt(subscription)
       subscription.update!(
         next_payment_attempt_at: calculate_next_attempt_time(subscription),
-        retry_count: subscription.retry_count + 1
       )
       Subscription::BillingService.call(payment_attempt: attempt)
     end
@@ -56,7 +56,6 @@ class PaymentScheduler
     subscription.payment_attempts.create!(
       amount: subscription.amount,
       status: :pending,
-      attempt_number: subscription.retry_count + 1,
       scheduled_at: Time.current
     )
   end
