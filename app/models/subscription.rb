@@ -5,7 +5,7 @@
 #  id                   :uuid             not null, primary key
 #  active_at            :datetime
 #  amount_cents         :integer          default(0), not null
-#  cancel_reason        :text
+#  cancellation_reason  :text
 #  cancelled_at         :datetime
 #  current_period_end   :datetime         not null
 #  current_period_start :datetime         not null
@@ -34,31 +34,57 @@ class Subscription < ApplicationRecord
   monetize :amount_cents
 
   belongs_to :customer
-  has_many :payment_attempts
+  has_many :invoices
 
-  aasm timestamps: true, no_direct_assignment: true, column: :status, enum: true do
-    state :active
+  aasm timestamps:           true,
+       no_direct_assignment: true,
+       column:               :status,
+       enum:                 true do
+    state :active, initial: true
     state :cancelled
     state :paused
+
+    event :pause do
+      transitions from: :active, to: :paused do
+        guard do
+          # TODO: add any validation logic here
+          true
+        end
+
+        after do
+          self.pause_reason = pause_reason
+          self.paused_at = Time.current
+        end
+      end
+    end
+
+    event :resume do
+      transitions from: :paused, to: :active do
+        after do
+          self.active_at = Time.current
+          self.pause_reason = nil
+        end
+      end
+    end
+
+    event :cancel do
+      transitions from: %i[active paused], to: :cancelled do
+        after do
+          self.cancelled_at = Time.current
+          self.cancellation_reason = cancellation_reason
+        end
+      end
+    end
   end
 
-  def due_for_payment
-    where(status: %i[active past_due])
-      .where("next_payment_attempt_at <= ?", Time.current)
+  def issue_new_invoice
+    invoices.create(issued_at:            Time.current,
+                    billing_period_start: current_period_start,
+                    billing_period_end:   current_period_end,
+                    past_due_at:          next_due_date)
   end
 
-  def requires_retry
-    where(status: %i[past_due partially_paid])
-      .where("next_payment_attempt_at <= ?", Time.current)
-  end
-
-  def calculate_payment_amount
-    total_collected = subscription.payment_attempts
-                                  .succeeded
-                                  .sum(:amount)
-
-      remaining_balance = subscription.payment_attempts
-                                    .first
-                                    .original_amount - total_collected
+  def next_due_date
+    current_period_end.next_weekday
   end
 end

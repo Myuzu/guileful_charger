@@ -5,7 +5,7 @@
 #  id                   :uuid             not null, primary key
 #  active_at            :datetime
 #  amount_cents         :integer          default(0), not null
-#  cancel_reason        :text
+#  cancellation_reason  :text
 #  cancelled_at         :datetime
 #  current_period_end   :datetime         not null
 #  current_period_start :datetime         not null

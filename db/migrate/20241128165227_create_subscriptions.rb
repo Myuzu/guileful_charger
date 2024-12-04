@@ -15,7 +15,7 @@ class CreateSubscriptions < ActiveRecord::Migration[8.0]
       t.datetime :cancelled_at
       t.datetime :paused_at
 
-      t.text :cancel_reason
+      t.text :cancellation_reason
 
       t.references :customer, null: false, foreign_key: true, type: :uuid
 

@@ -18,7 +18,7 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_28_170914) do
 
   # Custom types defined in this database.
   # Note that some types may not work with other database engines. Be careful if changing database.
-  create_enum "invoice_status", ["issued", "paid", "partially_paid", "past_due", "not_paid"]
+  create_enum "invoice_status", ["draft", "open", "paid", "partially_paid", "not_paid"]
   create_enum "payment_attempt_status", ["pending", "scheduled", "processing", "completed", "failed"]
   create_enum "payment_retry_strategy", ["initial", "remaining_balance"]
   create_enum "subscription_status", ["active", "cancelled", "paused"]
@@ -33,14 +33,17 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_28_170914) do
   end
 
   create_table "invoices", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.enum "status", default: "issued", null: false, enum_type: "invoice_status"
+    t.enum "status", default: "draft", null: false, enum_type: "invoice_status"
     t.integer "amount_total_cents", default: 0, null: false
     t.integer "amount_paid_cents", default: 0, null: false
+    t.datetime "billing_period_start", null: false
+    t.datetime "billing_period_end", null: false
     t.datetime "next_retry_at"
-    t.datetime "issued_at"
+    t.integer "payment_attempts_count", default: 0, null: false
+    t.datetime "draft_at"
+    t.datetime "open_at"
     t.datetime "paid_at"
     t.datetime "partially_paid_at"
-    t.datetime "past_due_at"
     t.datetime "not_paid_at"
     t.uuid "subscription_id", null: false
     t.datetime "created_at", null: false
@@ -77,7 +80,7 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_28_170914) do
     t.datetime "active_at"
     t.datetime "cancelled_at"
     t.datetime "paused_at"
-    t.text "cancel_reason"
+    t.text "cancellation_reason"
     t.uuid "customer_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

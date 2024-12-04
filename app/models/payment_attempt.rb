@@ -36,7 +36,7 @@ class PaymentAttempt < ApplicationRecord
 
   monetize :amount_attempted_cents
 
-  belongs_to :invoice
+  belongs_to :invoice, counter_cache: true
 
   aasm timestamps:           true,
        no_direct_assignment: true,

@@ -2,19 +2,22 @@
 #
 # Table name: invoices
 #
-#  id                 :uuid             not null, primary key
-#  amount_paid_cents  :integer          default(0), not null
-#  amount_total_cents :integer          default(0), not null
-#  issued_at          :datetime
-#  next_retry_at      :datetime
-#  not_paid_at        :datetime
-#  paid_at            :datetime
-#  partially_paid_at  :datetime
-#  past_due_at        :datetime
-#  status             :enum             default("issued"), not null
-#  created_at         :datetime         not null
-#  updated_at         :datetime         not null
-#  subscription_id    :uuid             not null
+#  id                     :uuid             not null, primary key
+#  amount_paid_cents      :integer          default(0), not null
+#  amount_total_cents     :integer          default(0), not null
+#  billing_period_end     :datetime         not null
+#  billing_period_start   :datetime         not null
+#  draft_at               :datetime
+#  next_retry_at          :datetime
+#  not_paid_at            :datetime
+#  open_at                :datetime
+#  paid_at                :datetime
+#  partially_paid_at      :datetime
+#  payment_attempts_count :integer          default(0), not null
+#  status                 :enum             default(NULL), not null
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  subscription_id        :uuid             not null
 #
 # Indexes
 #

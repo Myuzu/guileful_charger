@@ -5,7 +5,7 @@
 #  id                   :uuid             not null, primary key
 #  active_at            :datetime
 #  amount_cents         :integer          default(0), not null
-#  cancel_reason        :text
+#  cancellation_reason  :text
 #  cancelled_at         :datetime
 #  current_period_end   :datetime         not null
 #  current_period_start :datetime         not null
@@ -26,12 +26,9 @@
 #
 FactoryBot.define do
   factory :subscription do
-    status { :active }
     amount_cents { 1200 }
     current_period_start { Time.current.beginning_of_month }
     current_period_end { Time.current.end_of_month  }
-    last_payment_at { DateTime.now }
-    next_payment_attempt_at { DateTime.now }
 
     customer
   end
