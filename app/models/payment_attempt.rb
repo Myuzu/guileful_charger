@@ -38,10 +38,10 @@ class PaymentAttempt < ApplicationRecord
 
   belongs_to :invoice
 
-  aasm timestamps: true,
+  aasm timestamps:           true,
        no_direct_assignment: true,
-       column: :status,
-       enum: true do
+       column:               :status,
+       enum:                 true do
     state :pending, initial: true
     state :scheduled
     state :processing

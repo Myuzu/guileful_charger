@@ -30,10 +30,10 @@ class Invoice < ApplicationRecord
   monetize :amount_total_cents
   monetize :amount_paid_cents
 
-  aasm timestamps: true,
+  aasm timestamps:           true,
        no_direct_assignment: true,
-       column: :status,
-       enum: true do
+       column:               :status,
+       enum:                 true do
     state :issued, initial: true
     state :paid
     state :partially_paid

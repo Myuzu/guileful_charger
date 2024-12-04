@@ -14,6 +14,11 @@ Some other considerations:
 * postgres pessimistic locks
 * exactly-once deliver garantee
 
+Postgres setup (Zero RPO):
+ * 1 Primary node
+ * 1 Synchronous standby (for immediate failover)
+ * 1-2 Asynchronous standbys (for reporting/analytics/non-critical reads)
+
 ## Core entities
 
 - Customer
