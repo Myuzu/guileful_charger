@@ -1,9 +1,16 @@
-class BillingConsumer
+# routing keys to consume
+# * billing.payment.full.success
+# * billing.payment.partial.success
+# * billing.payment.failed
+# * billing.attempt.new
+# * billing.attempt.retry
+# * billing.retry.exhausted
+
+class NotificationConsumer
   include Hutch::Consumer
-  consume "payment_attempt.perform"
+  consume "billing.*"
 
   def process(message)
-    binding.irb
     logger.info "Message content #{message.body.to_json}"
   end
 

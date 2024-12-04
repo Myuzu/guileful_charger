@@ -1,6 +1,6 @@
 class CreateSubscriptions < ActiveRecord::Migration[8.0]
   def change
-    create_enum :subscription_status, %i[active cancelled past_due partially_paid]
+    create_enum :subscription_status, %i[active cancelled paused]
 
     create_table :subscriptions, id: :uuid do |t|
       t.enum :status, enum_type: :subscription_status, default: :active, null: false
@@ -9,15 +9,19 @@ class CreateSubscriptions < ActiveRecord::Migration[8.0]
 
       t.datetime :current_period_start, null: false
       t.datetime :current_period_end,   null: false
-      t.datetime :next_payment_attempt_at
-      t.datetime :last_payment_at
 
-      t.timestamps
+      # AASM status timestamps
+      t.datetime :active_at
+      t.datetime :cancelled_at
+      t.datetime :paused_at
+
+      t.text :cancel_reason
 
       t.references :customer, null: false, foreign_key: true, type: :uuid
 
-      t.index :current_period_end
-      t.index %i[status next_payment_attempt_at]
+      t.timestamps
+
+      t.index %i[status current_period_end]
     end
   end
 end

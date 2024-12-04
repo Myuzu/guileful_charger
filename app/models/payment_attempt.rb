@@ -2,36 +2,50 @@
 #
 # Table name: payment_attempts
 #
-#  id              :uuid             not null, primary key
-#  amount_cents    :integer          default(0), not null
-#  attempt_number  :integer          not null
-#  failure_reason  :text
-#  paid_at         :datetime
-#  processed_at    :datetime
-#  scheduled_at    :datetime         not null
-#  status          :enum             default("pending"), not null
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  customer_id     :uuid             not null
-#  subscription_id :uuid             not null
-#  transaction_id  :text
+#  id                     :uuid             not null, primary key
+#  amount_attempted_cents :integer          default(0), not null
+#  attempt_number         :integer          not null
+#  completed_at           :datetime
+#  failed_at              :datetime
+#  failure_reason         :text
+#  gateway_response       :text
+#  pending_at             :datetime
+#  processing_at          :datetime
+#  retry_strategy         :enum
+#  scheduled_at           :datetime
+#  status                 :enum             default("pending"), not null
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  gateway_transaction_id :text
+#  invoice_id             :uuid             not null
 #
 # Indexes
 #
-#  index_payment_attempts_on_customer_id                         (customer_id)
-#  index_payment_attempts_on_scheduled_at                        (scheduled_at)
-#  index_payment_attempts_on_status                              (status)
-#  index_payment_attempts_on_subscription_id                     (subscription_id)
-#  index_payment_attempts_on_subscription_id_and_attempt_number  (subscription_id,attempt_number)
+#  index_payment_attempts_on_invoice_id             (invoice_id)
+#  index_payment_attempts_on_invoice_id_and_status  (invoice_id,status)
+#  index_payment_attempts_on_scheduled_at           (scheduled_at)
 #
 # Foreign Keys
 #
-#  fk_rails_...  (customer_id => customers.id)
-#  fk_rails_...  (subscription_id => subscriptions.id)
+#  fk_rails_...  (invoice_id => invoices.id)
 #
 class PaymentAttempt < ApplicationRecord
-  VALID_STATUSES = %i[pending in_progress completed failed].freeze
+  include AASM
 
-  belongs_to :customer
-  belongs_to :subscription
+  VALID_STATUSES = %i[pending scheduled processing completed failed].freeze
+
+  monetize :amount_attempted_cents
+
+  belongs_to :invoice
+
+  aasm timestamps: true,
+       no_direct_assignment: true,
+       column: :status,
+       enum: true do
+    state :pending, initial: true
+    state :scheduled
+    state :processing
+    state :completed
+    state :failed
+  end
 end

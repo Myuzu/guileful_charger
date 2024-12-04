@@ -1,4 +1,6 @@
 mq_username: guest
 mq_password: guest
 mq_host: rabbitmq
+mq_exchange: billing.events
 mq_api_host: rabbitmq
+force_publisher_confirms: true

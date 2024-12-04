@@ -54,8 +54,8 @@ class PaymentScheduler
 
   def create_payment_attempt(subscription)
     subscription.payment_attempts.create!(
-      amount: subscription.amount,
-      status: :pending,
+      amount:       subscription.amount,
+      status:       :pending,
       scheduled_at: Time.current
     )
   end

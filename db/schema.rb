@@ -18,8 +18,10 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_28_170914) do
 
   # Custom types defined in this database.
   # Note that some types may not work with other database engines. Be careful if changing database.
-  create_enum "payment_attempt_status", ["pending", "in_progress", "completed", "failed"]
-  create_enum "subscription_status", ["active", "cancelled", "past_due", "partially_paid"]
+  create_enum "invoice_status", ["issued", "paid", "partially_paid", "past_due", "not_paid"]
+  create_enum "payment_attempt_status", ["pending", "scheduled", "processing", "completed", "failed"]
+  create_enum "payment_retry_strategy", ["initial", "remaining_balance"]
+  create_enum "subscription_status", ["active", "cancelled", "paused"]
 
   create_table "customers", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
@@ -30,23 +32,41 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_28_170914) do
     t.index ["email"], name: "index_customers_on_email", unique: true
   end
 
-  create_table "payment_attempts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.enum "status", default: "pending", null: false, enum_type: "payment_attempt_status"
-    t.integer "amount_cents", default: 0, null: false
-    t.integer "attempt_number", null: false
-    t.text "transaction_id"
-    t.text "failure_reason"
+  create_table "invoices", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.enum "status", default: "issued", null: false, enum_type: "invoice_status"
+    t.integer "amount_total_cents", default: 0, null: false
+    t.integer "amount_paid_cents", default: 0, null: false
+    t.datetime "next_retry_at"
+    t.datetime "issued_at"
     t.datetime "paid_at"
-    t.datetime "scheduled_at", null: false
-    t.datetime "processed_at"
+    t.datetime "partially_paid_at"
+    t.datetime "past_due_at"
+    t.datetime "not_paid_at"
+    t.uuid "subscription_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.uuid "customer_id", null: false
-    t.uuid "subscription_id", null: false
-    t.index ["customer_id"], name: "index_payment_attempts_on_customer_id"
+    t.index ["subscription_id"], name: "index_invoices_on_subscription_id"
+  end
+
+  create_table "payment_attempts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.enum "status", default: "pending", null: false, enum_type: "payment_attempt_status"
+    t.enum "retry_strategy", enum_type: "payment_retry_strategy"
+    t.integer "amount_attempted_cents", default: 0, null: false
+    t.integer "attempt_number", null: false
+    t.text "gateway_transaction_id"
+    t.text "gateway_response"
+    t.text "failure_reason"
+    t.datetime "pending_at"
+    t.datetime "processing_at"
+    t.datetime "scheduled_at"
+    t.datetime "completed_at"
+    t.datetime "failed_at"
+    t.uuid "invoice_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invoice_id", "status"], name: "index_payment_attempts_on_invoice_id_and_status"
+    t.index ["invoice_id"], name: "index_payment_attempts_on_invoice_id"
     t.index ["scheduled_at"], name: "index_payment_attempts_on_scheduled_at"
-    t.index ["subscription_id", "status"], name: "index_payment_attempts_on_subscription_id_and_status"
-    t.index ["subscription_id"], name: "index_payment_attempts_on_subscription_id"
   end
 
   create_table "subscriptions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -54,17 +74,18 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_28_170914) do
     t.integer "amount_cents", default: 0, null: false
     t.datetime "current_period_start", null: false
     t.datetime "current_period_end", null: false
-    t.datetime "next_payment_attempt_at"
-    t.datetime "last_payment_at"
+    t.datetime "active_at"
+    t.datetime "cancelled_at"
+    t.datetime "paused_at"
+    t.text "cancel_reason"
+    t.uuid "customer_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.uuid "customer_id", null: false
-    t.index ["current_period_end"], name: "index_subscriptions_on_current_period_end"
     t.index ["customer_id"], name: "index_subscriptions_on_customer_id"
-    t.index ["status", "next_payment_attempt_at"], name: "index_subscriptions_on_status_and_next_payment_attempt_at"
+    t.index ["status", "current_period_end"], name: "index_subscriptions_on_status_and_current_period_end"
   end
 
-  add_foreign_key "payment_attempts", "customers"
-  add_foreign_key "payment_attempts", "subscriptions"
+  add_foreign_key "invoices", "subscriptions"
+  add_foreign_key "payment_attempts", "invoices"
   add_foreign_key "subscriptions", "customers"
 end
