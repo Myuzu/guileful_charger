@@ -21,7 +21,7 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_28_170914) do
   create_enum "invoice_status", ["draft", "open", "paid", "partially_paid", "not_paid"]
   create_enum "payment_attempt_status", ["pending", "scheduled", "processing", "completed", "failed"]
   create_enum "payment_retry_strategy", ["initial", "remaining_balance"]
-  create_enum "subscription_status", ["active", "cancelled", "paused"]
+  create_enum "subscription_status", ["active", "cancelled"]
 
   create_table "customers", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
@@ -48,6 +48,7 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_28_170914) do
     t.uuid "subscription_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["subscription_id", "billing_period_start", "billing_period_end"], name: "idx_on_subscription_id_billing_period_start_billing_97b6392bf1", unique: true
     t.index ["subscription_id"], name: "index_invoices_on_subscription_id"
   end
 
@@ -57,8 +58,8 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_28_170914) do
     t.integer "amount_attempted_cents", default: 0, null: false
     t.integer "attempt_number", null: false
     t.text "gateway_transaction_id"
-    t.text "gateway_response"
     t.text "failure_reason"
+    t.jsonb "gateway_response"
     t.datetime "pending_at"
     t.datetime "processing_at"
     t.datetime "scheduled_at"
@@ -79,7 +80,6 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_28_170914) do
     t.datetime "current_period_end", null: false
     t.datetime "active_at"
     t.datetime "cancelled_at"
-    t.datetime "paused_at"
     t.text "cancellation_reason"
     t.uuid "customer_id", null: false
     t.datetime "created_at", null: false

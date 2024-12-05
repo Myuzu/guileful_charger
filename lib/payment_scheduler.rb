@@ -19,51 +19,21 @@ class PaymentScheduler
     @config = config
   end
 
-  def schedule_due_payments
-    Subscription.due_for_payment
-                .where(retry_count: 0)
+  def run!
+    Subscription.with_latest_invoice(:draft)
                 .lock("FOR UPDATE SKIP LOCKED")
-                .find_each(batch_size: SQL_BATCH_SIZE) do |subscription|
+                .find_each(batch_size: 25) do |subscription|
                   schedule_initial_payment(subscription)
-                end
-  end
-
-  def schedule_retries
-    Subscription.requires_retry
-                .where("retry_count < ?", config.max_retry_attempts)
-                .lock("FOR UPDATE SKIP LOCKED")
-                .find_each(batch_size: SQL_BATCH_SIZE) do |subscription|
-                  schedule_retry_payment(subscription)
                 end
   end
 
   private
 
   def schedule_initial_payment(subscription)
-    # skip if we already have a pending PaymentAttempt
-    return if subscription.payment_attempts.pending.exists?
-
-    PaymentAttempt.transaction do
-      attempt = create_payment_attempt(subscription)
-      subscription.update!(
-        next_payment_attempt_at: calculate_next_attempt_time(subscription),
-      )
+    invoice = subscription.latest_invoice
+    Invoice.transaction(isolation: :serializable) do
+      attempt = invoice.create_new_payment_attempt
       Subscription::BillingService.call(payment_attempt: attempt)
     end
-  end
-
-  def create_payment_attempt(subscription)
-    subscription.payment_attempts.create!(
-      amount:       subscription.amount,
-      status:       :pending,
-      scheduled_at: Time.current
-    )
-  end
-
-  def calculate_next_attempt_time(subscription)
-    return subscription.current_period_end + 1.day if subscription.retry_count == 0
-
-    delay = BASE_DELAY * (RETRY_MULTIPLIER ** (subscription.retry_count - 1))
-    Time.current + [ delay, MAX_DELAY ].min
   end
 end

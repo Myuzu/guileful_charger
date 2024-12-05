@@ -1,6 +1,6 @@
 class CreateSubscriptions < ActiveRecord::Migration[8.0]
   def change
-    create_enum :subscription_status, %i[active cancelled paused]
+    create_enum :subscription_status, %i[active cancelled]
 
     create_table :subscriptions, id: :uuid do |t|
       t.enum :status, enum_type: :subscription_status, default: :active, null: false
@@ -13,7 +13,6 @@ class CreateSubscriptions < ActiveRecord::Migration[8.0]
       # AASM status timestamps
       t.datetime :active_at
       t.datetime :cancelled_at
-      t.datetime :paused_at
 
       t.text :cancellation_reason
 

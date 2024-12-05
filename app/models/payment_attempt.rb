@@ -8,12 +8,12 @@
 #  completed_at           :datetime
 #  failed_at              :datetime
 #  failure_reason         :text
-#  gateway_response       :text
+#  gateway_response       :jsonb
 #  pending_at             :datetime
 #  processing_at          :datetime
 #  retry_strategy         :enum
 #  scheduled_at           :datetime
-#  status                 :enum             default("pending"), not null
+#  status                 :enum             default(NULL), not null
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
 #  gateway_transaction_id :text
@@ -34,18 +34,48 @@ class PaymentAttempt < ApplicationRecord
 
   VALID_STATUSES = %i[pending scheduled processing completed failed].freeze
 
+  enum :status, VALID_STATUSES.reduce({}) { |acc, v| acc.merge(v => v) }
+
   monetize :amount_attempted_cents
 
   belongs_to :invoice, counter_cache: true
 
-  aasm timestamps:           true,
-       no_direct_assignment: true,
-       column:               :status,
-       enum:                 true do
+  aasm timestamps: true,
+       column:     :status,
+       enum:       true do
     state :pending, initial: true
     state :scheduled
     state :processing
     state :completed
     state :failed
+
+    event :schedule do
+      transitions from: :pending, to: :scheduled
+    end
+
+    event :start_processing do
+      transitions from: :scheduled, to: :processing
+    end
+
+    event :succeed do
+      transitions from: :processing, to: :completed do
+        after do |response|
+          update!(gateway_response:       response.to_h,
+                  gateway_transaction_id: response.transaction_id,
+                  completed_at:           Time.current)
+        end
+      end
+    end
+
+    event :fail do
+      transitions from: :processing, to: :failed do
+        after do |response, failure_reason|
+          update!(gateway_response:       response.to_h,
+                  gateway_transaction_id: response.transaction_id,
+                  failure_reason:         failure_reason,
+                  failed_at:              Time.current)
+        end
+      end
+    end
   end
 end

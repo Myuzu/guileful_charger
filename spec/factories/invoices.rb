@@ -21,7 +21,8 @@
 #
 # Indexes
 #
-#  index_invoices_on_subscription_id  (subscription_id)
+#  idx_on_subscription_id_billing_period_start_billing_97b6392bf1  (subscription_id,billing_period_start,billing_period_end) UNIQUE
+#  index_invoices_on_subscription_id                               (subscription_id)
 #
 # Foreign Keys
 #
@@ -29,11 +30,10 @@
 #
 FactoryBot.define do
   factory :invoice do
-    billing_period_start_at { "2024-12-04 01:45:01" }
-    bodybilling_period_end_at { "2024-12-04 01:45:01" }
-    amount_total { 1 }
-    status { "MyString" }
-    due_date_at { "2024-12-04 01:45:01" }
-    issued_at { "MyString" }
+    billing_period_start { "2024-12-04 01:45:01" }
+    billing_period_end { "2024-12-04 01:45:01" }
+    amount_total_cents { 1200 }
+
+    subscription
   end
 end

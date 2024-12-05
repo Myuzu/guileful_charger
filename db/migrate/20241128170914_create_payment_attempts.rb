@@ -12,8 +12,8 @@ class CreatePaymentAttempts < ActiveRecord::Migration[8.0]
       t.integer :attempt_number, null: false
 
       t.text :gateway_transaction_id
-      t.text :gateway_response
       t.text :failure_reason
+      t.jsonb :gateway_response
 
       # AASM status timestamps
       t.datetime :pending_at

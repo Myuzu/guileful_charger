@@ -8,12 +8,12 @@
 #  completed_at           :datetime
 #  failed_at              :datetime
 #  failure_reason         :text
-#  gateway_response       :text
+#  gateway_response       :jsonb
 #  pending_at             :datetime
 #  processing_at          :datetime
 #  retry_strategy         :enum
 #  scheduled_at           :datetime
-#  status                 :enum             default("pending"), not null
+#  status                 :enum             default(NULL), not null
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
 #  gateway_transaction_id :text

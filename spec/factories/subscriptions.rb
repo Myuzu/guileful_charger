@@ -9,7 +9,6 @@
 #  cancelled_at         :datetime
 #  current_period_end   :datetime         not null
 #  current_period_start :datetime         not null
-#  paused_at            :datetime
 #  status               :enum             default(NULL), not null
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
@@ -33,14 +32,11 @@ FactoryBot.define do
     customer
   end
 
-  # factory :random_subscription, class: Subscription do
-  #   status { :active }
-  #   traits_for_enum :status, Subscription::VALID_STATUSES
+  factory :random_subscription, class: Subscription do
+    amount_cents { Faker::Number.between(from: 1000, to: 10_000) }
+    current_period_start { Time.current.beginning_of_month }
+    current_period_end { Time.current.end_of_month }
 
-  #   amount_cents { Faker::Number.between(from: 1000, to: 10_000) }
-  #   billing_cycle_count { Faker::Number.between(from: 0, to: 24) }
-  #   next_billing_at { DateTime.now }
-
-  #   association :customer, factory: :random_customer
-  # end
+    customer
+  end
 end

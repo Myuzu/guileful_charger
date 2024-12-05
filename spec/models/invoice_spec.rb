@@ -21,7 +21,8 @@
 #
 # Indexes
 #
-#  index_invoices_on_subscription_id  (subscription_id)
+#  idx_on_subscription_id_billing_period_start_billing_97b6392bf1  (subscription_id,billing_period_start,billing_period_end) UNIQUE
+#  index_invoices_on_subscription_id                               (subscription_id)
 #
 # Foreign Keys
 #

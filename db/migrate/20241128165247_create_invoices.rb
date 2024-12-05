@@ -24,6 +24,11 @@ class CreateInvoices < ActiveRecord::Migration[8.0]
 
       t.references :subscription, null: false, foreign_key: true, type: :uuid
 
+      # uniq index to prevent multiple Invoices per same Subscription period
+      t.index %i[subscription_id
+                 billing_period_start
+                 billing_period_end], unique: true
+
       t.timestamps
     end
   end

@@ -21,7 +21,8 @@
 #
 # Indexes
 #
-#  index_invoices_on_subscription_id  (subscription_id)
+#  idx_on_subscription_id_billing_period_start_billing_97b6392bf1  (subscription_id,billing_period_start,billing_period_end) UNIQUE
+#  index_invoices_on_subscription_id                               (subscription_id)
 #
 # Foreign Keys
 #
@@ -32,13 +33,18 @@ class Invoice < ApplicationRecord
 
   VALID_STATUSES = %i[draft open paid partially_paid not_paid]
 
-  enum :status, VALID_STATUSES.reduce({}) { |acc, v| acc.merge(v => v) },
-    prefix: true
+  enum :status, VALID_STATUSES.reduce({}) { |acc, v| acc.merge(v => v) }
 
   monetize :amount_total_cents
   monetize :amount_paid_cents
 
   has_many :payment_attempts
+  belongs_to :subscription
+
+  validates :subscription_id, uniqueness: {
+    scope:   %i[billing_period_start billing_period_end],
+    message: "Already has an invoice for this billing period"
+  }
 
   aasm timestamps:           true,
        no_direct_assignment: true,
@@ -49,5 +55,14 @@ class Invoice < ApplicationRecord
     state :paid
     state :partially_paid
     state :not_paid
+  end
+
+  def create_new_payment_attempt
+    payment_attempts.create!(amount_attempted: amount_remaining,
+                             retry_strategy:   :initial)
+  end
+
+  def amount_remaining
+    amount_total - amount_paid_cents
   end
 end
