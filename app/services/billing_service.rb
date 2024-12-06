@@ -1,4 +1,4 @@
-class Subscription::BillingService < ApplicationService
+class BillingService < ApplicationService
   param :payment_attempt
 
   def call
