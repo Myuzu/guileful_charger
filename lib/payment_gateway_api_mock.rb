@@ -7,7 +7,7 @@ class PaymentGatewayApiMock
     end
   end
 
-  def charge(amount:)
+  def charge(amount:, subscription_id:)
     case amount
     when 1..500
       PaymentResponse.new(status:         :success,

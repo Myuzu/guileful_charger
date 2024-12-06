@@ -42,14 +42,14 @@ class Subscription < ApplicationRecord
     subscriptions = Subscription.arel_table
     invoices      = Invoice.arel_table
 
-    period_match_condition = invoices[:billing_period_start].eq(subscriptions[:current_period_start])
+    period_match_condition = invoices[:subscription_id].eq(subscriptions[:id])
+      .and(invoices[:billing_period_start].eq(subscriptions[:current_period_start]))
       .and(invoices[:billing_period_end].eq(subscriptions[:current_period_end]))
 
-    invoice_exists = Invoice.where(period_match_condition)
+    invoice_exists = Invoice.unscoped
+                            .where(period_match_condition)
                             .arel
                             .exists
-
-    where.not(invoice_exists)
   end
 
   scope :due_for_payment, ->(buffer_hours: 24) {
@@ -57,7 +57,7 @@ class Subscription < ApplicationRecord
       .where("current_period_end BETWEEN ? AND ?",
         Time.current.beginning_of_day,
         (Time.current.end_of_day + buffer_hours.hours))
-      .where(without_invoice_for_current_period)
+      .where.not(Subscription.without_invoice_for_current_period)
   }
 
   scope :with_latest_invoice, ->(status) {
@@ -76,8 +76,6 @@ class Subscription < ApplicationRecord
     event :resume do
       transitions from: :paused, to: :active do
         after do
-          self.active_at = Time.current
-          self.pause_reason = nil
         end
       end
     end
@@ -92,16 +90,8 @@ class Subscription < ApplicationRecord
     end
   end
 
-  def self.schedule_due_payments
-    Subscription.due_for_payment
-                .lock("FOR UPDATE SKIP LOCKED") # FIXME: probably can delete this db lock
-                .find_each(batch_size: 25) do |subscription|
-                  subscription.issue_new_invoice
-                end
-  end
-
-  def issue_new_invoice
-    ActiveRecord::Base.transaction(isolation: :repeatable_read) do
+  def issue_new_invoice!
+    ActiveRecord::Base.transaction(isolation: :serializable) do
       invoices.create!(draft_at:             Time.current,
                        amount_total:         amount,
                        billing_period_start: current_period_start,

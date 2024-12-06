@@ -55,10 +55,17 @@ class Invoice < ApplicationRecord
     state :paid
     state :partially_paid
     state :not_paid
+
+    event :open_new do
+      transitions from: :draft, to: :open do
+        after { create_new_payment_attempt }
+      end
+    end
   end
 
   def create_new_payment_attempt
     payment_attempts.create!(amount_attempted: amount_remaining,
+                             attempt_number:   1,
                              retry_strategy:   :initial)
   end
 

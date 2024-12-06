@@ -40,6 +40,8 @@ class PaymentAttempt < ApplicationRecord
 
   belongs_to :invoice, counter_cache: true
 
+  delegate :subscription, to: :invoice
+
   aasm timestamps: true,
        column:     :status,
        enum:       true do

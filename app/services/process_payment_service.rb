@@ -23,7 +23,8 @@ class ProcessPaymentService < ApplicationService
 
   def process_payment
     payment_gateway.charge(
-      amount: payment_attempt.amount_attempted_cents,
+      amount:          payment_attempt.amount_attempted_cents,
+      subscription_id: payment_attempt.invoice.subscription_id
     )
   end
 
