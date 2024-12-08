@@ -9,6 +9,10 @@ class PaymentGatewayApiMock
 
   def charge(amount:, subscription_id:)
     case amount
+    when 0
+      # imitate network, availability, etc. errors
+      PaymentResponse.new(status:  :system_error,
+                          message: "Gate availability error")
     when 1..500
       PaymentResponse.new(status:         :success,
                           transaction_id: SecureRandom.uuid,

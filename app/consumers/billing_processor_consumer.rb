@@ -6,6 +6,8 @@ class BillingProcessorConsumer
     logger.info "Message content: #{message.body.to_json}"
 
     payment_attempt = find_payment_attempt
+
+    # we can inject different gateway implementation that supports #charge
     result = ProcessPaymentService.call(payment_attempt, PaymentGatewayApiMock.new)
 
     case result
@@ -15,13 +17,14 @@ class BillingProcessorConsumer
       error_type, processed_attempt = result.failure
       case error_type
       when :insufficient_funds
-        # Schedule retry with lower amount
+        # schedule retry with lower amount
       when :gateway_error
-        # Log error and notify support
+        # log error and notify support
       when :system_error
-        # Log exception and retry later
+        # log exception and retry later
       when :already_processed
-        # Handle duplicate processing attempt
+        # handle duplicate processing attempt
+        # skip this branch for now
       end
     end
   end

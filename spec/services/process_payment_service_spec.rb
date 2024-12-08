@@ -32,6 +32,7 @@ RSpec.describe ProcessPaymentService, type: :service do
 
         expect(result).to be_success
         expect(result.success.completed?).to be(true)
+        expect(result.value!.status).to eq("completed")
       end
     end
 
@@ -44,6 +45,20 @@ RSpec.describe ProcessPaymentService, type: :service do
         expect(result).not_to be_success
         expect(result.failure.first).to eq :insufficient_funds
         expect(result.failure.last.failed?).to be(true)
+        expect(result.failure.last.status).to eq("failed")
+      end
+    end
+
+    context "with Payment Gateway returning `system_error`" do
+      it "return Failure[:system_error] result monad" do
+        payment_attempt.status = :scheduled
+        payment_attempt.amount_attempted_cents = 0
+        result = described_class.call(payment_attempt, payment_gateway)
+
+        expect(result).not_to be_success
+        expect(result.failure.first).to eq :system_error
+        expect(result.failure.last.failed?).to be(true)
+        expect(result.failure.last.status).to eq("failed")
       end
     end
 
@@ -56,6 +71,7 @@ RSpec.describe ProcessPaymentService, type: :service do
         expect(result).not_to be_success
         expect(result.failure.first).to eq :gateway_error
         expect(result.failure.last.failed?).to be(true)
+        expect(result.failure.last.status).to eq("failed")
       end
     end
   end

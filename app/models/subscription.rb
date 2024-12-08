@@ -83,8 +83,8 @@ class Subscription < ApplicationRecord
     event :cancel do
       transitions from: %i[active paused], to: :cancelled do
         after do
-          self.cancelled_at = Time.current
-          self.cancellation_reason = cancellation_reason
+          cancelled_at = Time.current
+          cancellation_reason = cancellation_reason
         end
       end
     end
