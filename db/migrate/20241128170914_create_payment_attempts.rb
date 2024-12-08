@@ -26,7 +26,7 @@ class CreatePaymentAttempts < ActiveRecord::Migration[8.0]
 
       t.timestamps
 
-      t.index %i[invoice_id status]
+      t.index %i[invoice_id status], unique: true
       t.index :scheduled_at
     end
   end

@@ -31,5 +31,15 @@
 require 'rails_helper'
 
 RSpec.describe Invoice, type: :model do
-  pending "add some examples to (or delete) #{__FILE__}"
+  describe "#open_new" do
+    let(:invoice) { FactoryBot.create(:invoice) }
+
+    it "creates new PaymentAttempt with pending status" do
+      invoice.open_new!
+
+      expect(invoice.open?).to be(true)
+      expect(invoice.payment_attempts.count).to eq(1)
+      expect(invoice.payment_attempts.first.status).to eq("pending")
+    end
+  end
 end

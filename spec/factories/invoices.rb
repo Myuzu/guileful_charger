@@ -35,5 +35,9 @@ FactoryBot.define do
     amount_total_cents { 1200 }
 
     subscription
+
+    after(:create) do |model|
+      model.reload  # This will load the AASM-set state
+    end
   end
 end

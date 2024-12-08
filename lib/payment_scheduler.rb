@@ -2,9 +2,9 @@
 #
 # Value object for payment scheduler configuration
 class PaymentSchedulerConfig < Dry::Struct
-  attribute :max_retry_attempts,       Types::Integer.default(4)
-  attribute :batch_size,               Types::Integer.default(25)
-  attribute :jitter,                   Types::Bool.default(true)
+  attribute :max_retry_attempts, Types::Integer.default(4)
+  attribute :batch_size,         Types::Integer.default(25)
+  attribute :jitter,             Types::Bool.default(true)
 end
 
 class PaymentScheduler

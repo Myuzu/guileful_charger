@@ -20,6 +20,7 @@ class BillingProcessorConsumer
         # schedule retry with lower amount
       when :gateway_error
         # log error and notify support
+        # skip this branch for new
       when :system_error
         # log exception and retry later
       when :already_processed
@@ -39,5 +40,8 @@ class BillingProcessorConsumer
   def publish_payment_success(processed_attempt)
     payload = { payment_attempt_id:  processed_attempt.id }
     Hutch.publish("billing.payment.full.success", payload)
+  end
+
+  def publish_payment_retry(processed_attempt)
   end
 end

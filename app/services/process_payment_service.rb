@@ -54,12 +54,6 @@ class ProcessPaymentService < ApplicationService
   end
 
   def handle_exception(ex)
-    # payment_attempt.update!(
-    #   failure_reason:   :system_error,
-    #   gateway_response: { error: ex.message },
-    #   failed_at:        Time.current
-    # )
-
     payment_attempt.fail!(response, :system_error)
     Failure[:system_error, payment_attempt]
   end

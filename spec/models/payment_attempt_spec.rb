@@ -22,7 +22,7 @@
 # Indexes
 #
 #  index_payment_attempts_on_invoice_id             (invoice_id)
-#  index_payment_attempts_on_invoice_id_and_status  (invoice_id,status)
+#  index_payment_attempts_on_invoice_id_and_status  (invoice_id,status) UNIQUE
 #  index_payment_attempts_on_scheduled_at           (scheduled_at)
 #
 # Foreign Keys
