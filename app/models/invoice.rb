@@ -43,7 +43,7 @@ class Invoice < ApplicationRecord
 
   validates :subscription_id, uniqueness: {
     scope:   %i[billing_period_start billing_period_end],
-    message: "Already has an invoice for this billing period"
+    message: "Already has an Invoice for this billing period"
   }
 
   aasm timestamps:           true,
