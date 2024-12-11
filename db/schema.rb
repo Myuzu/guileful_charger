@@ -68,7 +68,7 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_28_170914) do
     t.uuid "invoice_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["invoice_id", "status"], name: "index_payment_attempts_on_invoice_id_and_status", unique: true
+    t.index ["invoice_id", "status"], name: "index_payment_attempts_on_invoice_id_and_status", unique: true, where: "(status = ANY (ARRAY['pending'::payment_attempt_status, 'scheduled'::payment_attempt_status, 'processing'::payment_attempt_status]))"
     t.index ["invoice_id"], name: "index_payment_attempts_on_invoice_id"
     t.index ["scheduled_at"], name: "index_payment_attempts_on_scheduled_at"
   end
