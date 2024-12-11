@@ -29,7 +29,7 @@ class CreatePaymentAttempts < ActiveRecord::Migration[8.0]
       # partial index that excludes completed/failed statuses
       t.index %i[invoice_id status],
               unique: true,
-              where: "status IN ('pending', 'scheduled', 'processing')"
+              where:  "status IN ('pending', 'scheduled', 'processing')"
       t.index :scheduled_at
     end
   end
