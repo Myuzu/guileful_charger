@@ -38,6 +38,8 @@ gem "money-rails", "~> 1.15.0"
 # State machines for Ruby classes
 gem "aasm", "~> 5.5.0"
 
+gem "csv"
+
 # dry-rb gems
 gem "dry-struct"
 gem "dry-types"
