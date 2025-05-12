@@ -270,7 +270,7 @@ GEM
     pry (0.15.2)
       coderay (~> 1.1)
       method_source (~> 1.0)
-    psych (5.2.3)
+    psych (5.2.5)
       date
       stringio
     puma (6.6.0)
@@ -388,7 +388,7 @@ GEM
     securerandom (0.4.1)
     set (1.1.1)
     shellany (0.0.1)
-    solid_cable (3.0.7)
+    solid_cable (3.0.8)
       actioncable (>= 7.2)
       activejob (>= 7.2)
       activerecord (>= 7.2)
