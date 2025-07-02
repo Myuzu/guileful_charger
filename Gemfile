@@ -74,7 +74,7 @@ group :development, :test do
   gem "factory_bot_rails", "~> 6.5.0"
 
   # A library for generating fake data such as names, addresses, and phone numbers.
-  gem "faker", "~> 3.5.1"
+  gem "faker", "~> 3.5.2"
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
