@@ -34,11 +34,18 @@ RSpec.describe Invoice, type: :model do
   describe "#open_new" do
     let(:invoice) { FactoryBot.create(:invoice) }
 
-    it "creates new PaymentAttempt with pending status" do
+    it "sets the invoice status to open" do
       invoice.open_new!
-
       expect(invoice.open?).to be(true)
+    end
+
+    it "creates a new payment attempt" do
+      invoice.open_new!
       expect(invoice.payment_attempts.count).to eq(1)
+    end
+
+    it "sets the new payment attempt status to pending" do
+      invoice.open_new!
       expect(invoice.payment_attempts.first.status).to eq("pending")
     end
   end

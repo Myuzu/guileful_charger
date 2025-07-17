@@ -10,13 +10,14 @@ RSpec.describe InvoiceConsumer, type: :consumer do
       let(:drafted_invoice) { FactoryBot.create(:invoice) }
 
       let(:properties) do
-        double('Properties', content_type: "application/json",
-                             message_id:   SecureRandom.uuid,
-                             timestamp:    Time.current)
+        instance_double(Hutch::Message::Properties, content_type: "application/json",
+                                                    message_id:   SecureRandom.uuid,
+                                                    timestamp:    Time.current)
       end
 
-      xit "opens Invoice and queue for `billing.attempt.new`" do
-        message = Hutch::Message.new(double('Delivery Info', routing_key: "invoice.created"),
+      it "opens Invoice and queue for `billing.attempt.new`" do
+        skip "This test requires a more comprehensive integration test setup and is currently pending."
+        message = Hutch::Message.new(instance_double(Hutch::Message::DeliveryInfo, routing_key: "invoice.created"),
                                      properties,
                                      { invoice_id: drafted_invoice.id }.with_indifferent_access.to_json,
                                      Hutch::Config[:serializer])
