@@ -1,0 +1,8 @@
+<type>(<scope>): <subject>
+
+<body>
+
+# Type examples: feat, fix, docs, style, refactor, test, chore
+# Scope examples: auth, users, products, api, ui, build, ci
+# Subject: concise description in imperative mood, max 50 chars, no period
+# Body: more detailed explanation, if necessary
