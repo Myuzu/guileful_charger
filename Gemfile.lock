@@ -399,7 +399,7 @@ GEM
     securerandom (0.4.1)
     set (1.1.2)
     shellany (0.0.1)
-    shoulda-matchers (5.3.0)
+    shoulda-matchers (6.5.0)
       activesupport (>= 5.2.0)
     solid_cable (3.0.11)
       actioncable (>= 7.2)
@@ -482,7 +482,7 @@ DEPENDENCIES
   rubocop-rails-omakase
   rubocop-rspec
   ruby-lsp
-  shoulda-matchers (~> 5.3)
+  shoulda-matchers (~> 6.5)
   solid_cable
   solid_cache
   solid_queue
