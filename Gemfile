@@ -87,5 +87,5 @@ group :development, :test do
 
   # rspec-rails
   gem "rspec-rails"
-  gem "shoulda-matchers", "~> 5.3"
+  gem "shoulda-matchers", "~> 6.5"
 end
