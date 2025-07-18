@@ -61,6 +61,9 @@ group :development do
 
   # Guard::RSpec automatically run your specs (much like autotest)
   gem "guard-rspec", require: false
+
+  # Git hooks management
+  gem "overcommit"
 end
 
 group :development, :test do
