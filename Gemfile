@@ -74,7 +74,7 @@ group :development, :test do
   gem "brakeman", require: false
 
   # Factory Bot ♥ Rails
-  gem "factory_bot_rails", "~> 6.5.0"
+  gem "factory_bot_rails", "~> 6.5.1"
 
   # A library for generating fake data such as names, addresses, and phone numbers.
   gem "faker", "~> 3.5.2"
