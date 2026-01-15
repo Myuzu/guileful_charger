@@ -33,7 +33,7 @@ gem "kamal", require: false
 gem "thruster", require: false
 
 # Integration of RubyMoney - Money with Rails
-gem "money-rails", "~> 2.0.0"
+gem "money-rails", "~> 3.0.0"
 
 # State machines for Ruby classes
 gem "aasm", "~> 5.5.2"
