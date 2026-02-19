@@ -13,7 +13,7 @@ help:
 docker-build-test: ## Build the Docker image for the test environment
 	docker build -f .devcontainer/Dockerfile -t guileful_charger_test .
 
-docker-compose-up-test: ## Bring up PostgreSQL and RabbitMQ services for testing
+docker-compose-up-test: ## Bring up all Docker services (Rails app, PostgreSQL, RabbitMQ) for testing
 	docker-compose -f $(DOCKER_COMPOSE_FILE) up -d
 
 docker-compose-down-test: ## Bring down the Docker services
@@ -25,8 +25,8 @@ bootstrap: docker-compose-up-test ## Fetch Ruby dependencies inside the Docker c
 db-test-prepare: docker-compose-up-test ## Prepare the test database inside the container
 	docker-compose -f $(DOCKER_COMPOSE_FILE) exec $(RAILS_APP_SERVICE) bin/rails db:prepare RAILS_ENV=test
 
-test: db-test-prepare ## Run RSpec tests inside the Docker container. Pass arguments directly, e.g., 'make test spec/models/customer_spec.rb:123 --seed 123'.
-	docker-compose -f $(DOCKER_COMPOSE_FILE) exec $(RAILS_APP_SERVICE) bin/rspec $(filter-out $@ test-all,$(MAKECMDGOALS))
+test: db-test-prepare ## Run RSpec tests inside the Docker container. Usage: make test RSPEC_ARGS="spec/models/customer_spec.rb:123 --seed 123"
+	docker-compose -f $(DOCKER_COMPOSE_FILE) exec $(RAILS_APP_SERVICE) bin/rspec $(RSPEC_ARGS)
 
 test-all: docker-build-test docker-compose-up-test db-test-prepare test ## Build, setup, and run all tests
 	@echo "All tests completed successfully."
