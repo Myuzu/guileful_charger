@@ -26,7 +26,7 @@ db-test-prepare: docker-compose-up-test ## Prepare the test database inside the 
 	docker-compose -f $(DOCKER_COMPOSE_FILE) exec $(RAILS_APP_SERVICE) bin/rails db:prepare RAILS_ENV=test
 
 test: db-test-prepare ## Run RSpec tests inside the Docker container. Pass arguments directly, e.g., 'make test spec/models/customer_spec.rb:123 --seed 123'.
-	docker-compose -f $(DOCKER_COMPOSE_FILE) exec $(RAILS_APP_SERVICE) bin/rspec $(filter-out $@,$(MAKECMDGOALS))
+	docker-compose -f $(DOCKER_COMPOSE_FILE) exec $(RAILS_APP_SERVICE) bin/rspec $(filter-out $@ test-all,$(MAKECMDGOALS))
 
 test-all: docker-build-test docker-compose-up-test db-test-prepare test ## Build, setup, and run all tests
 	@echo "All tests completed successfully."
