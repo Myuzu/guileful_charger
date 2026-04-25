@@ -4,18 +4,18 @@ This document outlines the essential commands and code style guidelines for agen
 
 ## Build/Lint/Test Commands
 
-*   **Install Dependencies**: `bundle install`
-*   **Run All Tests**: `make test`
-*   **Run a Single Test**: `make test spec/models/customer_spec.rb:123 --seed 123` (e.g., `make test spec/models/customer_spec.rb`)
-*   **Run Linter**: `bin/rubocop`
-*   **Run Security Scan**: `bin/brakeman`
+*   **Show Available Make Targets**: `make` or `make help`
+*   **Install Dependencies Locally**: `bundle install`
+*   **Fetch Ruby Dependencies (Docker)**: `make bootstrap`
+*   **Run All Tests (Docker)**: `make test`
+*   **Run a Single Test (Docker)**: `make test RSPEC_ARGS="spec/models/customer_spec.rb:123 --seed 123"` (e.g., `make test RSPEC_ARGS="spec/models/customer_spec.rb"`)
 *   **Build Test Docker Image**: `make docker-build-test`
 *   **Start Test Services**: `make docker-compose-up-test`
 *   **Prepare Test Database**: `make db-test-prepare`
-*   **Fetch Ruby Dependencies (Docker)**: `make bootstrap`
-*   **Run All Tests (Docker)**: `make test`
 *   **Full Test Workflow (Docker)**: `make test-all`
 *   **Clean Test Docker Environment**: `make clean-docker-test`
+*   **Run Linter**: `bin/rubocop`
+*   **Run Security Scan**: `bin/brakeman`
 
 ## Language Server Protocol (LSP)
 
