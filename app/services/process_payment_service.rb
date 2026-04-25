@@ -1,16 +1,27 @@
 class ProcessPaymentService < ApplicationService
   include Dry::Monads[:result]
 
+  SystemErrorResponse = Struct.new(:status, :transaction_id, :message, keyword_init: true) do
+    def to_h
+      { status:         status,
+        transaction_id: transaction_id,
+        message:        message }
+    end
+  end
+
   param :payment_attempt
   param :payment_gateway
 
   def call
-    # FIXME: probably skip on all other statuses except `scheduled`
     return Failure[:already_in_processing, payment_attempt] if payment_attempt.processing?
 
+    claim_result = claim_payment_attempt
+    return claim_result if claim_result.failure?
+
+    @response = process_payment
+
     ActiveRecord::Base.transaction(isolation: :serializable) do
-      payment_attempt.start_processing!
-      @response = process_payment
+      payment_attempt.reload
       handle_api_response
     end
   rescue StandardError => ex
@@ -20,6 +31,28 @@ class ProcessPaymentService < ApplicationService
   private
 
   attr_reader :response
+
+  def claim_payment_attempt
+    result = nil
+
+    ActiveRecord::Base.transaction(isolation: :serializable) do
+      payment_attempt.lock!
+      payment_attempt.subscription.lock!
+
+      result = validate_claimable_payment_attempt
+      payment_attempt.start_processing! if result.success?
+    end
+
+    result
+  end
+
+  def validate_claimable_payment_attempt
+    return Failure[:already_in_processing, payment_attempt] if payment_attempt.processing?
+    return Failure[:not_scheduled, payment_attempt] unless payment_attempt.scheduled?
+    return Failure[:subscription_not_active, payment_attempt] unless payment_attempt.subscription.active?
+
+    Success(payment_attempt)
+  end
 
   def process_payment
     payment_gateway.charge(
@@ -33,8 +66,9 @@ class ProcessPaymentService < ApplicationService
     when :success            then handle_api_success
     when :insufficient_funds then handle_api_insufficient_funds
     when :failed             then handle_api_failure
+    when :system_error       then handle_api_system_error
     else
-      raise StandardError.new("Unknow Payment Gateway API response status: #{response.status}")
+      raise StandardError.new("Unknown Payment Gateway API response status: #{response.status}")
     end
   end
 
@@ -53,8 +87,19 @@ class ProcessPaymentService < ApplicationService
     Failure[:gateway_error, payment_attempt]
   end
 
-  def handle_exception(ex)
+  def handle_api_system_error
     payment_attempt.fail!(response, :system_error)
     Failure[:system_error, payment_attempt]
+  end
+
+  def handle_exception(ex)
+    payment_attempt.fail!(response || system_error_response(ex), :system_error) if payment_attempt.processing?
+    Failure[:system_error, payment_attempt]
+  end
+
+  def system_error_response(ex)
+    SystemErrorResponse.new(status: :system_error,
+                            transaction_id: nil,
+                            message: ex.message)
   end
 end

@@ -40,19 +40,25 @@ Fields:
 
 - `id`
 - `customer_id`
-- `status`: `active`, `cancelled`
+- `status`: `active`, `paused`, `cancelled`
 - `amount_cents`
 - `current_period_start`
 - `current_period_end`
-- AASM timestamp fields: `active_at`, `cancelled_at`
-- `cancellation_reason`
+- AASM timestamp fields: `active_at`, `paused_at`, `cancelled_at`
+- lifecycle metadata: `pause_reason`, `resumed_at`, `resume_reason`, `cancellation_reason`, `state_version`
 - timestamps
 
 Implemented behavior:
 
 - Belongs to a customer.
 - Has many invoices.
+- Supports `active -> paused -> active`, `active -> cancelled`, and `paused -> cancelled` lifecycle transitions.
+- Active subscriptions are billable and service-accessible.
+- Paused subscriptions are not billable and not service-accessible.
+- Resuming a paused subscription refreshes `active_at`, extends `current_period_end` by the pause duration, and re-enqueues existing scheduled payment attempts.
+- Cancelled subscriptions are terminal.
 - Can issue a draft invoice for its current billing period via `issue_new_invoice!`.
+- Has a lock-and-recheck invoice issuing path via `issue_new_invoice_if_due!`.
 - Has a uniqueness-protected invoice period through the invoice table/index.
 - Has scopes intended to find active subscriptions due for billing and avoid duplicate invoices.
 
@@ -113,22 +119,28 @@ The intended flow in the current code is:
 
 1. `PaymentScheduler#run!`
    - Finds active subscriptions due for billing.
-   - Locks rows with `FOR UPDATE SKIP LOCKED`.
-   - Creates a draft invoice.
-   - Publishes `invoice.created`.
+   - Locks and re-checks each subscription inside `issue_new_invoice_if_due!` before creating a draft invoice.
+   - Enqueues `invoice.created` in the outbox.
 
 2. `InvoiceConsumer`
    - Consumes `invoice.created`.
+   - Deduplicates the message with `ProcessedMessage`.
+   - Re-locks and re-checks invoice/subscription state and message version.
    - Opens a draft invoice.
    - Creates the first payment attempt.
    - Schedules the payment attempt.
-   - Publishes `billing.attempt.new` with `payment_attempt_id`.
+   - Enqueues `billing.attempt.new` in the outbox with `payment_attempt_id` and subscription state version.
 
 3. `BillingProcessorConsumer`
    - Consumes `billing.attempt.*`.
+   - Deduplicates the message with `ProcessedMessage`.
    - Loads a payment attempt.
+   - Re-checks that the payment attempt is scheduled and the subscription is active.
+   - Records `billing.payment.skipped` when the attempt is not currently processable.
    - Calls `ProcessPaymentService` with `PaymentGatewayApiMock`.
-   - Publishes `billing.payment.full.success` on success.
+   - Enqueues `billing.payment.full.success` in the outbox on success.
+   - Enqueues `billing.payment.failed` for gateway/insufficient-funds/system failures.
+   - Raises on retryable system failures so Hutch can nack/dead-letter according to RabbitMQ policy.
 
 4. `ProcessPaymentService`
    - Attempts to move a payment attempt to `processing`.
@@ -157,10 +169,10 @@ The previous documentation described several capabilities that are not implement
 
 ### Partially implemented or currently inconsistent
 
-- **Message delivery guarantees**: Hutch publisher confirms are configured, but the app does not implement an outbox, inbox, idempotency keys, deduplication table, or transactional message publishing. Treat RabbitMQ delivery as at-least-once and make consumers idempotent before depending on stronger guarantees.
+- **Message delivery guarantees**: Hutch publisher confirms, an outbox table, and a processed-message inbox table are present, but consumers should still be treated as at-least-once. Consumers re-check PostgreSQL state/version before side effects; exactly-once delivery is still not claimed.
 - **Concurrency**: invoice scheduling uses database transactions and `FOR UPDATE SKIP LOCKED`, and invoices have a unique index per subscription billing period. This helps prevent duplicate invoices, but it is not a full end-to-end concurrency/idempotency strategy.
 - **PostgreSQL high availability**: local Docker and Kubernetes manifests define a single PostgreSQL instance with a PVC. They do not configure one synchronous standby plus asynchronous standbys or otherwise guarantee zero RPO.
-- **Subscription state machine**: the enum only supports `active` and `cancelled`, while some AASM transitions reference `paused`.
+- **Pause side effects are intentionally limited**: pausing prevents new billing and service access, and removes unstarted current-period draft invoices, but it does not void open invoices, refund completed payments, or cancel already-created payment attempts.
 
 ## Rebilling Status
 
@@ -256,6 +268,8 @@ bin/brakeman
 ## Deployment and Infrastructure Notes
 
 - `.devcontainer/compose.yaml` starts Rails, PostgreSQL, and RabbitMQ for development/test use.
+- RabbitMQ/Hutch is configured for durable publishing defaults, publisher confirms, manual acknowledgements, low prefetch, quorum consumer queues, dead-letter routing, retry queues with TTL/DLX, and single-active-consumer queue arguments.
+- Subscription-scoped outbox messages are also mirrored to a consistent-hash exchange by `subscription_id` for shard-oriented processing/inspection; primary Hutch consumers still re-check PostgreSQL state/version because RabbitMQ delivery can be duplicate or out of order.
 - `k8s/` contains development-style Kubernetes manifests for single-instance PostgreSQL, RabbitMQ, and Rails deployments.
 - `config/deploy.yml` is the generated Kamal-style deployment scaffold and still contains placeholder hosts/image names.
 - The repository does not currently include production-grade PostgreSQL HA, RabbitMQ HA, secret management, backup/restore, or disaster-recovery configuration.

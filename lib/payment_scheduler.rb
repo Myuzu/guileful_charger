@@ -16,17 +16,8 @@ class PaymentScheduler
 
   def run!
     Subscription.due_for_payment
-                .lock("FOR UPDATE SKIP LOCKED")
                 .find_each(batch_size: 25) do |subscription|
-                  subscription.issue_new_invoice!
-                  publish_invoice_created(subscription)
+                  subscription.issue_new_invoice_if_due!
                 end
-  end
-
-  private
-
-  def publish_invoice_created(subscription)
-    payload = { invoice_id: subscription.latest_invoice.id }
-    Hutch.publish("invoice.created", payload)
   end
 end

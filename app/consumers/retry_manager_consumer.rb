@@ -4,16 +4,14 @@
 
 class RetryManagerConsumer
   include Hutch::Consumer
+  include ConsumerIdempotency
+
   consume "billing.payment.*"
+  BillingConsumerQueueOptions.apply(self, dead_letter_routing_key: "billing.retry.dead")
 
   def process(message)
-    logger.info "Message content #{message.body.to_json}"
-  end
-
-  private
-
-  def find_payment_attempt(message)
-    attempt_id = message.body.fetch(:payment_attempt_id)
-    PaymentAttempt.find(attempt_id)
+    process_once(message) do
+      logger.info "Message content #{message.body.to_json}"
+    end
   end
 end
