@@ -1,16 +1,21 @@
+# rubocop:disable RSpec/MultipleExpectations
 require "rails_helper"
 
 RSpec.describe InvoiceConsumer, type: :consumer do
   describe "#process" do
-    before do
-      allow(Hutch).to receive(:publish)
-    end
-
     context "with draft Invoice" do
       let(:drafted_invoice) { FactoryBot.create(:invoice) }
-      let(:message) { instance_double(Hutch::Message, body: { invoice_id: drafted_invoice.id }) }
+      let(:message) do
+        instance_double(Hutch::Message,
+                        body:       { invoice_id: drafted_invoice.id },
+                        message_id: SecureRandom.uuid)
+      end
       let(:payment_attempt) { drafted_invoice.payment_attempts.first }
-      let(:expected_payload) { { payment_attempt_id: payment_attempt.id } }
+      let(:expected_payload) do
+        { payment_attempt_id:         payment_attempt.id,
+          subscription_id:            drafted_invoice.subscription_id,
+          subscription_state_version: drafted_invoice.subscription.state_version }
+      end
 
       it "opens the invoice" do
         described_class.new.process(message)
@@ -24,10 +29,20 @@ RSpec.describe InvoiceConsumer, type: :consumer do
         expect(drafted_invoice.payment_attempts.first).to be_scheduled
       end
 
-      it "publishes the created payment attempt for processing" do
+      it "records an outbox message for processing the payment attempt" do
         described_class.new.process(message)
 
-        expect(Hutch).to have_received(:publish).with("billing.attempt.new", expected_payload)
+        outbox_message = OutboxMessage.find_by!(topic: "billing.attempt.new")
+        expect(outbox_message.payload).to eq(expected_payload.stringify_keys)
+      end
+
+      it "does not open invoices for paused subscriptions" do
+        drafted_invoice.subscription.pause!("customer requested pause")
+
+        described_class.new.process(message)
+
+        expect(drafted_invoice.reload).to be_draft
+        expect(OutboxMessage.where(topic: "billing.attempt.new")).to be_empty
       end
     end
   end

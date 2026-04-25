@@ -29,6 +29,30 @@ FactoryBot.define do
     current_period_start { Time.current.beginning_of_month }
     current_period_end { Time.current.end_of_month  }
 
+    trait :active do
+      after(:build) do |subscription|
+        subscription[:status] = :active
+      end
+    end
+
+    trait :paused do
+      paused_at { Time.current }
+      pause_reason { "customer requested pause" }
+
+      after(:build) do |subscription|
+        subscription[:status] = :paused
+      end
+    end
+
+    trait :cancelled do
+      cancelled_at { Time.current }
+      cancellation_reason { "customer requested cancellation" }
+
+      after(:build) do |subscription|
+        subscription[:status] = :cancelled
+      end
+    end
+
     customer
   end
 

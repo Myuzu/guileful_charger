@@ -2,5 +2,9 @@ mq_username: guest
 mq_password: guest
 mq_host: rabbitmq
 mq_exchange: billing.events
+mq_exchange_type: topic
+mq_exchange_options:
+  durable: true
 mq_api_host: rabbitmq
+channel_prefetch: 1
 force_publisher_confirms: true
