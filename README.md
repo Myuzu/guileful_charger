@@ -27,7 +27,10 @@ Fields:
 - `billing_address`
 - timestamps
 
-Current model associations include `has_many :subscriptions`. The model also declares `has_many :invoices` and `has_many :payments`, but those associations do not match the current schema because invoices belong to subscriptions and there is no `payments` table/model.
+Current model associations:
+
+- `has_many :subscriptions`
+- `has_many :invoices, through: :subscriptions`
 
 #### Subscription
 
@@ -118,7 +121,8 @@ The intended flow in the current code is:
    - Consumes `invoice.created`.
    - Opens a draft invoice.
    - Creates the first payment attempt.
-   - Publishes `billing.attempt.new`.
+   - Schedules the payment attempt.
+   - Publishes `billing.attempt.new` with `payment_attempt_id`.
 
 3. `BillingProcessorConsumer`
    - Consumes `billing.attempt.*`.
@@ -156,11 +160,8 @@ The previous documentation described several capabilities that are not implement
 - **Message delivery guarantees**: Hutch publisher confirms are configured, but the app does not implement an outbox, inbox, idempotency keys, deduplication table, or transactional message publishing. Treat RabbitMQ delivery as at-least-once and make consumers idempotent before depending on stronger guarantees.
 - **Concurrency**: invoice scheduling uses database transactions and `FOR UPDATE SKIP LOCKED`, and invoices have a unique index per subscription billing period. This helps prevent duplicate invoices, but it is not a full end-to-end concurrency/idempotency strategy.
 - **PostgreSQL high availability**: local Docker and Kubernetes manifests define a single PostgreSQL instance with a PVC. They do not configure one synchronous standby plus asynchronous standbys or otherwise guarantee zero RPO.
-- **Payment attempt state flow**: `Invoice#open_new!` creates a `pending` payment attempt, but `ProcessPaymentService` starts from `scheduled`. There is currently no implemented scheduler/consumer step that schedules the initial pending attempt before processing.
 - **Consumer payloads**: `InvoiceConsumer` publishes `payment_attempt_id`, which is what `BillingProcessorConsumer` expects. `BillingService`, however, builds a different payload and references an undefined `subscription` method.
-- **Consumer implementation details**: several consumers define `find_payment_attempt` methods that reference `message` outside the `process(message)` method scope.
 - **Subscription state machine**: the enum only supports `active` and `cancelled`, while some AASM transitions reference `paused`.
-- **Customer associations**: `Customer#has_many :invoices` and `Customer#has_many :payments` are stale relative to the schema.
 
 ## Rebilling Status
 
