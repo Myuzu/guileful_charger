@@ -5,7 +5,7 @@ class BillingProcessorConsumer
   def process(message)
     logger.info "Message content: #{message.body.to_json}"
 
-    payment_attempt = find_payment_attempt
+    payment_attempt = find_payment_attempt(message)
 
     # we can inject different gateway implementation that supports #charge
     result = ProcessPaymentService.call(payment_attempt, PaymentGatewayApiMock.new)
@@ -32,7 +32,7 @@ class BillingProcessorConsumer
 
   private
 
-  def find_payment_attempt
+  def find_payment_attempt(message)
     attempt_id = message.body.fetch(:payment_attempt_id)
     PaymentAttempt.find(attempt_id)
   end

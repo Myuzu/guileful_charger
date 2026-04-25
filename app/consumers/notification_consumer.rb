@@ -16,7 +16,7 @@ class NotificationConsumer
 
   private
 
-  def find_payment_attempt
+  def find_payment_attempt(message)
     attempt_id = message.body.fetch(:payment_attempt_id)
     PaymentAttempt.find(attempt_id)
   end
