@@ -13,8 +13,9 @@
 #
 #  index_customers_on_email  (email) UNIQUE
 #
-require 'rails_helper'
+require "rails_helper"
 
 RSpec.describe Customer, type: :model do
-  pending "add some examples to (or delete) #{__FILE__}"
+  it { is_expected.to have_many(:subscriptions) }
+  it { is_expected.to have_many(:invoices).through(:subscriptions) }
 end
