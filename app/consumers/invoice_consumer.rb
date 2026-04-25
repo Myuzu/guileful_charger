@@ -11,6 +11,7 @@ class InvoiceConsumer
 
     invoice.open_new!
     payment_attempt = invoice.payment_attempts.first
+    payment_attempt.schedule! if payment_attempt.pending?
 
     Hutch.publish("billing.attempt.new", { payment_attempt_id: payment_attempt.id })
   end

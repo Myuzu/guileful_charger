@@ -8,22 +8,26 @@ RSpec.describe InvoiceConsumer, type: :consumer do
 
     context "with draft Invoice" do
       let(:drafted_invoice) { FactoryBot.create(:invoice) }
+      let(:message) { instance_double(Hutch::Message, body: { invoice_id: drafted_invoice.id }) }
+      let(:payment_attempt) { drafted_invoice.payment_attempts.first }
+      let(:expected_payload) { { payment_attempt_id: payment_attempt.id } }
 
-      let(:properties) do
-        instance_double(Hutch::Message::Properties, content_type: "application/json",
-                                                    message_id:   SecureRandom.uuid,
-                                                    timestamp:    Time.current)
+      it "opens the invoice" do
+        described_class.new.process(message)
+
+        expect(drafted_invoice.reload).to be_open
       end
 
-      it "opens Invoice and queue for `billing.attempt.new`" do
-        skip "This test requires a more comprehensive integration test setup and is currently pending."
-        message = Hutch::Message.new(instance_double(Hutch::Message::DeliveryInfo, routing_key: "invoice.created"),
-                                     properties,
-                                     { invoice_id: drafted_invoice.id }.with_indifferent_access.to_json,
-                                     Hutch::Config[:serializer])
-        # expect {
-        #   described_class.new.process(message)
-        # }.to call(Hutch.publish)
+      it "schedules the created payment attempt" do
+        described_class.new.process(message)
+
+        expect(drafted_invoice.payment_attempts.first).to be_scheduled
+      end
+
+      it "publishes the created payment attempt for processing" do
+        described_class.new.process(message)
+
+        expect(Hutch).to have_received(:publish).with("billing.attempt.new", expected_payload)
       end
     end
   end
