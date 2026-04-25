@@ -160,7 +160,6 @@ The previous documentation described several capabilities that are not implement
 - **Message delivery guarantees**: Hutch publisher confirms are configured, but the app does not implement an outbox, inbox, idempotency keys, deduplication table, or transactional message publishing. Treat RabbitMQ delivery as at-least-once and make consumers idempotent before depending on stronger guarantees.
 - **Concurrency**: invoice scheduling uses database transactions and `FOR UPDATE SKIP LOCKED`, and invoices have a unique index per subscription billing period. This helps prevent duplicate invoices, but it is not a full end-to-end concurrency/idempotency strategy.
 - **PostgreSQL high availability**: local Docker and Kubernetes manifests define a single PostgreSQL instance with a PVC. They do not configure one synchronous standby plus asynchronous standbys or otherwise guarantee zero RPO.
-- **Consumer payloads**: `InvoiceConsumer` publishes `payment_attempt_id`, which is what `BillingProcessorConsumer` expects. `BillingService`, however, builds a different payload and references an undefined `subscription` method.
 - **Subscription state machine**: the enum only supports `active` and `cancelled`, while some AASM transitions reference `paused`.
 
 ## Rebilling Status
