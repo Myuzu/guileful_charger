@@ -525,5 +525,8 @@ DEPENDENCIES
   thruster
   tzinfo-data
 
+RUBY VERSION
+  ruby 4.0.3
+
 BUNDLED WITH
   4.0.6
