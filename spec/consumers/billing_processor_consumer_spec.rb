@@ -4,14 +4,9 @@ require "rails_helper"
 RSpec.describe BillingProcessorConsumer, type: :consumer do
   describe "#find_payment_attempt" do
     let(:payment_attempt) { FactoryBot.create(:payment_attempt) }
-    let(:message) do
-      instance_double(Hutch::Message,
-                      body:       { payment_attempt_id: payment_attempt.id },
-                      message_id: SecureRandom.uuid)
-    end
 
-    it "finds the payment attempt from the message payload" do
-      expect(described_class.new.send(:find_payment_attempt, message)).to eq(payment_attempt)
+    it "finds the payment attempt from the validated payload" do
+      expect(described_class.new.send(:find_payment_attempt, payment_attempt_id: payment_attempt.id)).to eq(payment_attempt)
     end
   end
 
@@ -30,6 +25,22 @@ RSpec.describe BillingProcessorConsumer, type: :consumer do
 
         expect(payment_attempt.reload).to be_completed
         expect(OutboxMessage.last.topic).to eq("billing.payment.full.success")
+      end
+    end
+
+    context "with an invalid payload" do
+      let(:payment_attempt) { FactoryBot.create(:payment_attempt, :scheduled, amount_attempted_cents: 500) }
+      let(:message) do
+        instance_double(Hutch::Message,
+                        body:       { subscription_id: payment_attempt.subscription.id },
+                        message_id: SecureRandom.uuid)
+      end
+
+      it "acks the malformed message without processing a payment" do
+        described_class.new.process(message)
+
+        expect(payment_attempt.reload).to be_scheduled
+        expect(OutboxMessage.where(topic: "billing.payment.full.success")).to be_empty
       end
     end
 

@@ -1,24 +1,31 @@
 class BillingProcessorConsumer
   PaymentProcessingRetryableError = Class.new(StandardError)
 
-  include Hutch::Consumer
-  include ConsumerIdempotency
+  include ActiveConsumer
   include Dry::Monads[:result]
 
   consume "billing.attempt.*"
-  BillingConsumerQueueOptions.apply(self, dead_letter_routing_key: "billing.attempt.dead")
 
-  def process(message)
-    process_once(message) { process_message(message) }
+  consumer_options do
+    quorum_queue
+    dead_letter routing_key: "billing.attempt.dead"
+    delivery_limit
+    single_active_consumer
+  end
+
+  message_schema do
+    required(:payment_attempt_id).filled(:string)
+    optional(:subscription_id).filled(:string)
+    optional(:subscription_state_version).maybe(:integer)
   end
 
   private
 
-  def process_message(message)
+  def process_message(message, payload)
     logger.info "Message content: #{message.body.to_json}"
 
-    payment_attempt = find_payment_attempt(message)
-    skipped_reason = unprocessable_reason(payment_attempt, message)
+    payment_attempt = find_payment_attempt(payload)
+    skipped_reason = unprocessable_reason(payment_attempt, payload)
 
     if skipped_reason
       publish_payment_skipped(payment_attempt, skipped_reason)
@@ -37,18 +44,21 @@ class BillingProcessorConsumer
     end
   end
 
-  def find_payment_attempt(message)
-    attempt_id = message_value(message, :payment_attempt_id)
-    PaymentAttempt.find(attempt_id)
+  def find_payment_attempt(payload)
+    PaymentAttempt.find(payload.fetch(:payment_attempt_id))
   end
 
-  def unprocessable_reason(payment_attempt, message)
+  def unprocessable_reason(payment_attempt, payload)
     payment_attempt.reload
     subscription = payment_attempt.subscription
 
     return :not_scheduled unless payment_attempt.scheduled?
     return :subscription_not_active unless subscription.active?
-    :stale_message if stale_message?(message, subscription)
+    :stale_message if stale_payload?(payload, subscription)
+  end
+
+  def stale_payload?(payload, subscription)
+    payload[:subscription_state_version].present? && payload[:subscription_state_version] < subscription.state_version
   end
 
   def handle_payment_failure(error_type, processed_attempt)
