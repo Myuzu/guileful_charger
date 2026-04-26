@@ -90,6 +90,15 @@ RSpec.describe ProcessPaymentService, type: :service do
         expect(result.failure.first).to eq :insufficient_funds
       end
 
+      it "returns shared payment attempt failure metadata" do
+        result = described_class.call(payment_attempt, payment_gateway)
+
+        expect(result.failure.last).to include(payment_attempt:        payment_attempt,
+                                               payment_attempt_id:     payment_attempt.id,
+                                               payment_attempt_status: "failed",
+                                               invoice_id:             payment_attempt.invoice_id)
+      end
+
       it "marks the payment attempt as failed" do
         result = described_class.call(payment_attempt, payment_gateway)
         expect(result.failure.last.fetch(:payment_attempt).failed?).to be(true)

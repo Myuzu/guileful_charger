@@ -47,14 +47,29 @@ class ApplicationService
 
   private
 
-  def service_failure(code, **metadata)
+  def failure_result(code, **metadata)
     Failure[code, metadata]
   end
 
-  def subscription_failure(code, subscription)
-    service_failure(code,
-                    subscription_id: subscription.id,
-                    status:          subscription.status,
-                    state_version:   subscription.state_version)
+  def subscription_metadata(subscription)
+    { subscription_id: subscription.id,
+      status:          subscription.status,
+      state_version:   subscription.state_version }
+  end
+
+  def subscription_failure(code, subscription, **metadata)
+    failure_result(code, **metadata.merge(subscription_metadata(subscription)))
+  end
+
+  def payment_attempt_metadata(payment_attempt)
+    { payment_attempt_id:     payment_attempt.id,
+      payment_attempt_status: payment_attempt.status,
+      invoice_id:             payment_attempt.invoice_id }
+  end
+
+  def payment_attempt_failure(code, payment_attempt, **metadata)
+    structured_metadata = { payment_attempt: payment_attempt }.merge(payment_attempt_metadata(payment_attempt))
+
+    failure_result(code, **metadata.merge(structured_metadata))
   end
 end
