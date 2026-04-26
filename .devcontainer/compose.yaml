@@ -27,18 +27,18 @@ services:
       - rabbitmq
 
   postgres:
-    image: postgres:16.1
+    image: postgres:18.3
     restart: unless-stopped
     networks:
       - default
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
 
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:4.3.0-management
     restart: unless-stopped
     configs:
       - source: plugins

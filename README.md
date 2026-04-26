@@ -289,7 +289,7 @@ bin/brakeman
 
 ## Deployment and Infrastructure Notes
 
-- `.devcontainer/compose.yaml` starts Rails, PostgreSQL, and RabbitMQ for development/test use.
+- `.devcontainer/compose.yaml` starts Rails, PostgreSQL 18, and RabbitMQ 4 for development/test use. PostgreSQL 18+ mounts data at `/var/lib/postgresql` rather than `/var/lib/postgresql/data`; drop the postgres volume when upgrading an existing environment.
 - RabbitMQ/Hutch is configured for durable publishing defaults, publisher confirms, manual acknowledgements, low prefetch, quorum consumer queues, dead-letter routing, retry queues with TTL/DLX, and single-active-consumer queue arguments. Per-consumer queue arguments are declared with `consumer_options` blocks.
 - Subscription-scoped outbox messages are also mirrored to a consistent-hash exchange by `subscription_id` for shard-oriented processing/inspection; primary Hutch consumers still re-check PostgreSQL state/version because RabbitMQ delivery can be duplicate or out of order.
 - `k8s/` contains development-style Kubernetes manifests for single-instance PostgreSQL, RabbitMQ, and Rails deployments.
