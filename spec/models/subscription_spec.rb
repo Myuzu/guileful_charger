@@ -36,13 +36,13 @@ RSpec.describe Subscription, type: :model do
 
   describe "state machine" do
     it "starts active" do
-      subscription = FactoryBot.create(:subscription)
+      subscription = create(:subscription)
 
       expect(subscription).to be_active
     end
 
     it "pauses an active subscription" do
-      subscription = FactoryBot.create(:subscription)
+      subscription = create(:subscription)
 
       subscription.pause!("customer requested pause")
 
@@ -50,7 +50,7 @@ RSpec.describe Subscription, type: :model do
     end
 
     it "resumes a paused subscription" do
-      subscription = FactoryBot.create(:subscription, :paused)
+      subscription = create(:subscription, :paused)
 
       subscription.resume!("customer requested resume")
 
@@ -58,7 +58,7 @@ RSpec.describe Subscription, type: :model do
     end
 
     it "cancels an active subscription" do
-      subscription = FactoryBot.create(:subscription)
+      subscription = create(:subscription)
 
       subscription.cancel!("customer requested cancellation")
 
@@ -66,7 +66,7 @@ RSpec.describe Subscription, type: :model do
     end
 
     it "cancels a paused subscription" do
-      subscription = FactoryBot.create(:subscription, :paused)
+      subscription = create(:subscription, :paused)
 
       subscription.cancel!("customer requested cancellation")
 
@@ -74,7 +74,7 @@ RSpec.describe Subscription, type: :model do
     end
 
     it "does not resume a cancelled subscription" do
-      subscription = FactoryBot.create(:subscription, :cancelled)
+      subscription = create(:subscription, :cancelled)
 
       expect { subscription.resume! }.to raise_error(AASM::InvalidTransition)
     end
@@ -82,7 +82,7 @@ RSpec.describe Subscription, type: :model do
 
   describe "pause metadata" do
     it "sets paused metadata and increments the state version" do
-      subscription = FactoryBot.create(:subscription)
+      subscription = create(:subscription)
 
       expect {
         subscription.pause!("customer requested pause")
@@ -98,7 +98,7 @@ RSpec.describe Subscription, type: :model do
       now = Time.current
       paused_at = 2.days.ago
       current_period_end = 1.week.from_now
-      subscription = FactoryBot.create(:subscription, :paused,
+      subscription = create(:subscription, :paused,
                                        paused_at:          paused_at,
                                        current_period_end: current_period_end)
 
@@ -117,7 +117,7 @@ RSpec.describe Subscription, type: :model do
 
   describe "cancellation metadata" do
     it "sets cancellation metadata and increments the state version" do
-      subscription = FactoryBot.create(:subscription)
+      subscription = create(:subscription)
 
       expect {
         subscription.cancel!("customer requested cancellation")
@@ -130,9 +130,9 @@ RSpec.describe Subscription, type: :model do
 
   describe "domain state predicates" do
     it "is billable and service-accessible only while active" do
-      active_subscription = FactoryBot.build(:subscription)
-      paused_subscription = FactoryBot.build(:subscription, :paused)
-      cancelled_subscription = FactoryBot.build(:subscription, :cancelled)
+      active_subscription = build(:subscription)
+      paused_subscription = build(:subscription, :paused)
+      cancelled_subscription = build(:subscription, :cancelled)
 
       expect(active_subscription).to be_billable
       expect(active_subscription).to be_service_accessible

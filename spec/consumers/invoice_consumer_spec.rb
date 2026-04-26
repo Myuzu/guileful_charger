@@ -4,7 +4,7 @@ require "rails_helper"
 RSpec.describe InvoiceConsumer, type: :consumer do
   describe "#process" do
     context "with draft Invoice" do
-      let(:drafted_invoice) { FactoryBot.create(:invoice) }
+      let(:drafted_invoice) { create(:invoice) }
       let(:message) do
         instance_double(Hutch::Message,
                         body:       { invoice_id: drafted_invoice.id },

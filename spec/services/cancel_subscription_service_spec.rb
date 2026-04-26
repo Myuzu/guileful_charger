@@ -4,7 +4,7 @@ require "rails_helper"
 RSpec.describe CancelSubscriptionService, type: :service do
   describe ".call" do
     it "cancels an active subscription and records a versioned outbox event" do
-      subscription = FactoryBot.create(:subscription)
+      subscription = create(:subscription)
 
       result = described_class.call(subscription, reason: "customer requested cancellation")
       outbox_message = OutboxMessage.find_by!(topic: "subscription.cancelled")
@@ -17,7 +17,7 @@ RSpec.describe CancelSubscriptionService, type: :service do
     end
 
     it "cancels a paused subscription" do
-      subscription = FactoryBot.create(:subscription, :paused)
+      subscription = create(:subscription, :paused)
 
       result = described_class.call(subscription, reason: "customer requested cancellation")
 
@@ -26,7 +26,7 @@ RSpec.describe CancelSubscriptionService, type: :service do
     end
 
     it "is idempotent when the subscription is already cancelled" do
-      subscription = FactoryBot.create(:subscription, :cancelled)
+      subscription = create(:subscription, :cancelled)
       original_state_version = subscription.state_version
 
       result = described_class.call(subscription, reason: "duplicate cancellation")
@@ -37,12 +37,12 @@ RSpec.describe CancelSubscriptionService, type: :service do
     end
 
     it "does not clean up invoices or payment attempts" do
-      subscription = FactoryBot.create(:subscription)
-      invoice = FactoryBot.create(:invoice,
+      subscription = create(:subscription)
+      invoice = create(:invoice,
                                   subscription:         subscription,
                                   billing_period_start: subscription.current_period_start,
                                   billing_period_end:   subscription.current_period_end)
-      payment_attempt = FactoryBot.create(:payment_attempt, invoice: invoice)
+      payment_attempt = create(:payment_attempt, invoice: invoice)
 
       described_class.call(subscription, reason: "customer requested cancellation")
 
@@ -51,7 +51,7 @@ RSpec.describe CancelSubscriptionService, type: :service do
     end
 
     it "rejects invalid command input" do
-      subscription = FactoryBot.create(:subscription)
+      subscription = create(:subscription)
 
       result = described_class.call(subscription, reason: 123)
 

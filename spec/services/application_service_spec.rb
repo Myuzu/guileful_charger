@@ -3,8 +3,8 @@ require "rails_helper"
 
 RSpec.describe ApplicationService, type: :service do
   describe "result helpers" do
-    let(:subscription) { FactoryBot.create(:subscription, :cancelled) }
-    let(:payment_attempt) { FactoryBot.create(:payment_attempt, :scheduled) }
+    let(:subscription) { create(:subscription, :cancelled) }
+    let(:payment_attempt) { create(:payment_attempt, :scheduled) }
 
     it "builds structured failure results" do
       service_class = Class.new(described_class) do
@@ -113,7 +113,7 @@ RSpec.describe ApplicationService, type: :service do
     end
 
     it "keeps structured payment attempt metadata when extra metadata conflicts" do
-      replacement_attempt = FactoryBot.create(:payment_attempt)
+      replacement_attempt = create(:payment_attempt)
       service_class = Class.new(described_class) do
         param :payment_attempt
         param :replacement_attempt
@@ -138,7 +138,7 @@ RSpec.describe ApplicationService, type: :service do
   end
 
   describe ".input_schema" do
-    let(:subscription) { FactoryBot.create(:subscription) }
+    let(:subscription) { create(:subscription) }
 
     let(:service_class) do
       Class.new(described_class) do

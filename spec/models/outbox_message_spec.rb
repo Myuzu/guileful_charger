@@ -89,7 +89,7 @@ RSpec.describe OutboxMessage, type: :model do
 
   describe ".enqueue!" do
     it "creates an unpublished outbox message for an aggregate" do
-      subscription = FactoryBot.create(:subscription)
+      subscription = create(:subscription)
 
       message = described_class.enqueue!(topic:             "subscription.paused",
                                          payload:           subscription.lifecycle_payload(reason: "pause"),

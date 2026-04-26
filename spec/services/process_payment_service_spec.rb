@@ -4,7 +4,7 @@ require 'payment_gateway_api_mock'
 
 RSpec.describe ProcessPaymentService, type: :service do
   context "with PaymentAttempt be already in processing" do
-    let(:payment_attempt) { FactoryBot.create(:payment_attempt, :processing) }
+    let(:payment_attempt) { create(:payment_attempt, :processing) }
     let(:payment_gateway) { PaymentGatewayApiMock.new }
 
     before do
@@ -23,7 +23,7 @@ RSpec.describe ProcessPaymentService, type: :service do
   end
 
   context "with PaymentAttempt not scheduled" do
-    let(:payment_attempt) { FactoryBot.create(:payment_attempt) }
+    let(:payment_attempt) { create(:payment_attempt) }
     let(:payment_gateway) { instance_double(PaymentGatewayApiMock, charge: nil) }
 
     it "returns :not_scheduled without charging the gateway" do
@@ -36,9 +36,9 @@ RSpec.describe ProcessPaymentService, type: :service do
   end
 
   context "with inactive subscription" do
-    let(:subscription) { FactoryBot.create(:subscription, :paused) }
-    let(:invoice) { FactoryBot.create(:invoice, subscription: subscription) }
-    let(:payment_attempt) { FactoryBot.create(:payment_attempt, :scheduled, invoice: invoice) }
+    let(:subscription) { create(:subscription, :paused) }
+    let(:invoice) { create(:invoice, subscription: subscription) }
+    let(:payment_attempt) { create(:payment_attempt, :scheduled, invoice: invoice) }
     let(:payment_gateway) { instance_double(PaymentGatewayApiMock, charge: nil) }
 
     it "returns :subscription_not_active without charging the gateway" do
@@ -51,7 +51,7 @@ RSpec.describe ProcessPaymentService, type: :service do
   end
 
   context "with PaymentAttempt scheduled" do
-    let(:payment_attempt) { FactoryBot.create(:payment_attempt, :scheduled) }
+    let(:payment_attempt) { create(:payment_attempt, :scheduled) }
     let(:payment_gateway) { PaymentGatewayApiMock.new }
 
     context "with Payment Gateway returning `success`" do

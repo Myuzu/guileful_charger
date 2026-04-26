@@ -4,6 +4,9 @@ inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 plugins:
   - rubocop-performance
   - rubocop-rspec
+  - rubocop-rspec_rails
+  - rubocop-factory_bot
+  - rubocop-rake
 
 # Overwrite or add rules to create your own house style
 #
@@ -16,3 +19,6 @@ AllCops:
 
 Layout/HashAlignment:
   EnforcedColonStyle: table
+
+RSpecRails/InferredSpecType:
+  Enabled: false

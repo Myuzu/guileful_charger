@@ -47,7 +47,7 @@ FactoryBot.define do
     invoice
   end
 
-  factory :random_payment_attempt, class: PaymentAttempt do
+  factory :random_payment_attempt, class: 'PaymentAttempt' do
     status { :pending }
     traits_for_enum :status, PaymentAttempt::VALID_STATUSES
 

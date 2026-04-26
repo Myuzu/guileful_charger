@@ -32,7 +32,7 @@ require 'rails_helper'
 
 RSpec.describe Invoice, type: :model do
   describe "#open_new" do
-    let(:invoice) { FactoryBot.create(:invoice) }
+    let(:invoice) { create(:invoice) }
 
     it "sets the invoice status to open" do
       invoice.open_new!

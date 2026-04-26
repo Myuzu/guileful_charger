@@ -85,8 +85,11 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
 
+  gem "rubocop-factory_bot", require: false
   gem "rubocop-performance", require: false
+  gem "rubocop-rake", require: false
   gem "rubocop-rspec", require: false
+  gem "rubocop-rspec_rails", require: false
 
   # rspec-rails
   gem "rspec-rails"
