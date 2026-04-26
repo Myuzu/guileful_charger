@@ -1,15 +1,17 @@
 class ResumeSubscriptionService < ApplicationService
-  include Dry::Monads[:result]
-
   param :subscription
   option :reason, optional: true
+
+  input_schema do
+    optional(:reason).maybe(:string)
+  end
 
   def call
     Subscription.transaction do
       subscription.lock!
 
       return Success(subscription) if subscription.active?
-      return Failure[:already_cancelled, subscription] if subscription.cancelled?
+      return subscription_failure(:already_cancelled, subscription) if subscription.cancelled?
 
       subscription.resume!(reason)
       enqueue_subscription_resumed

@@ -39,8 +39,8 @@ class BillingProcessorConsumer
     when Success
       publish_payment_success(result.value!)
     when Failure
-      error_type, processed_attempt = result.failure
-      handle_payment_failure(error_type, processed_attempt)
+      error_type, metadata = result.failure
+      handle_payment_failure(error_type, metadata.fetch(:payment_attempt))
     end
   end
 

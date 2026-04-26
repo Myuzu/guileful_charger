@@ -1,8 +1,10 @@
 class CancelSubscriptionService < ApplicationService
-  include Dry::Monads[:result]
-
   param :subscription
   option :reason, optional: true
+
+  input_schema do
+    optional(:reason).maybe(:string)
+  end
 
   def call
     Subscription.transaction do

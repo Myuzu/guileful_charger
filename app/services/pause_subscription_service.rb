@@ -1,15 +1,17 @@
 class PauseSubscriptionService < ApplicationService
-  include Dry::Monads[:result]
-
   param :subscription
   option :reason, optional: true
+
+  input_schema do
+    optional(:reason).maybe(:string)
+  end
 
   def call
     Subscription.transaction do
       subscription.lock!
 
       return Success(subscription) if subscription.paused?
-      return Failure[:already_cancelled, subscription] if subscription.cancelled?
+      return subscription_failure(:already_cancelled, subscription) if subscription.cancelled?
 
       subscription.pause!(reason)
       destroy_unstarted_current_period_draft_invoices
