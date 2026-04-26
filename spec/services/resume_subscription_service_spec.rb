@@ -4,7 +4,7 @@ require "rails_helper"
 RSpec.describe ResumeSubscriptionService, type: :service do
   describe ".call" do
     it "resumes a paused subscription and records a versioned outbox event" do
-      subscription = FactoryBot.create(:subscription, :paused)
+      subscription = create(:subscription, :paused)
 
       result = described_class.call(subscription, reason: "customer requested resume")
       outbox_message = OutboxMessage.find_by!(topic: "subscription.resumed")
@@ -20,7 +20,7 @@ RSpec.describe ResumeSubscriptionService, type: :service do
       now = Time.current
       paused_at = 2.days.ago
       current_period_end = 1.week.from_now
-      subscription = FactoryBot.create(:subscription, :paused,
+      subscription = create(:subscription, :paused,
                                        paused_at:          paused_at,
                                        current_period_end: current_period_end)
 
@@ -33,9 +33,9 @@ RSpec.describe ResumeSubscriptionService, type: :service do
     end
 
     it "re-enqueues scheduled payment attempts" do
-      subscription = FactoryBot.create(:subscription, :paused)
-      invoice = FactoryBot.create(:invoice, subscription: subscription)
-      payment_attempt = FactoryBot.create(:payment_attempt, :scheduled, invoice: invoice)
+      subscription = create(:subscription, :paused)
+      invoice = create(:invoice, subscription: subscription)
+      payment_attempt = create(:payment_attempt, :scheduled, invoice: invoice)
 
       described_class.call(subscription, reason: "customer requested resume")
 
@@ -45,7 +45,7 @@ RSpec.describe ResumeSubscriptionService, type: :service do
     end
 
     it "succeeds without billing attempt events when there are no scheduled payment attempts" do
-      subscription = FactoryBot.create(:subscription, :paused)
+      subscription = create(:subscription, :paused)
 
       result = described_class.call(subscription, reason: "customer requested resume")
 
@@ -56,7 +56,7 @@ RSpec.describe ResumeSubscriptionService, type: :service do
 
     it "resumes without extending the period when paused_at is not recorded" do
       current_period_end = 1.week.from_now
-      subscription = FactoryBot.create(:subscription, :paused, current_period_end: current_period_end)
+      subscription = create(:subscription, :paused, current_period_end: current_period_end)
       subscription.update_column(:paused_at, nil) # rubocop:disable Rails/SkipsModelValidations
 
       described_class.call(subscription, reason: "customer requested resume")
@@ -65,7 +65,7 @@ RSpec.describe ResumeSubscriptionService, type: :service do
     end
 
     it "is idempotent when the subscription is already active" do
-      subscription = FactoryBot.create(:subscription)
+      subscription = create(:subscription)
 
       result = described_class.call(subscription, reason: "duplicate resume")
 
@@ -74,7 +74,7 @@ RSpec.describe ResumeSubscriptionService, type: :service do
     end
 
     it "rejects cancelled subscriptions with structured failure metadata" do
-      subscription = FactoryBot.create(:subscription, :cancelled)
+      subscription = create(:subscription, :cancelled)
 
       result = described_class.call(subscription, reason: "too late")
 
@@ -84,7 +84,7 @@ RSpec.describe ResumeSubscriptionService, type: :service do
     end
 
     it "rejects invalid command input" do
-      subscription = FactoryBot.create(:subscription, :paused)
+      subscription = create(:subscription, :paused)
 
       result = described_class.call(subscription, reason: 123)
 

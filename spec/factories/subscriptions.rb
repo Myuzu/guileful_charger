@@ -56,7 +56,7 @@ FactoryBot.define do
     customer
   end
 
-  factory :random_subscription, class: Subscription do
+  factory :random_subscription, class: 'Subscription' do
     amount_cents { Faker::Number.between(from: 1000, to: 10_000) }
     current_period_start { Time.current.beginning_of_month }
     current_period_end { Time.current.end_of_month }

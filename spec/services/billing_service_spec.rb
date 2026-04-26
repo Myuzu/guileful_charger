@@ -3,7 +3,7 @@ require "rails_helper"
 
 RSpec.describe BillingService, type: :service do
   describe ".call" do
-    let(:payment_attempt) { FactoryBot.create(:payment_attempt) }
+    let(:payment_attempt) { create(:payment_attempt) }
     let(:payload) do
       { payment_attempt_id:         payment_attempt.id,
         subscription_id:            payment_attempt.subscription.id,

@@ -3,7 +3,7 @@ require "rails_helper"
 
 RSpec.describe BillingProcessorConsumer, type: :consumer do
   describe "#find_payment_attempt" do
-    let(:payment_attempt) { FactoryBot.create(:payment_attempt) }
+    let(:payment_attempt) { create(:payment_attempt) }
 
     it "finds the payment attempt from the validated payload" do
       expect(described_class.new.send(:find_payment_attempt, payment_attempt_id: payment_attempt.id)).to eq(payment_attempt)
@@ -18,7 +18,7 @@ RSpec.describe BillingProcessorConsumer, type: :consumer do
     end
 
     context "with an active subscription and scheduled payment attempt" do
-      let(:payment_attempt) { FactoryBot.create(:payment_attempt, :scheduled, amount_attempted_cents: 500) }
+      let(:payment_attempt) { create(:payment_attempt, :scheduled, amount_attempted_cents: 500) }
 
       it "processes the payment attempt and records a success outbox message" do
         described_class.new.process(message)
@@ -29,7 +29,7 @@ RSpec.describe BillingProcessorConsumer, type: :consumer do
     end
 
     context "with an invalid payload" do
-      let(:payment_attempt) { FactoryBot.create(:payment_attempt, :scheduled, amount_attempted_cents: 500) }
+      let(:payment_attempt) { create(:payment_attempt, :scheduled, amount_attempted_cents: 500) }
       let(:message) do
         instance_double(Hutch::Message,
                         body:       { subscription_id: payment_attempt.subscription.id },
@@ -45,9 +45,9 @@ RSpec.describe BillingProcessorConsumer, type: :consumer do
     end
 
     context "with a paused subscription" do
-      let(:subscription) { FactoryBot.create(:subscription, :paused) }
-      let(:invoice) { FactoryBot.create(:invoice, subscription: subscription) }
-      let(:payment_attempt) { FactoryBot.create(:payment_attempt, :scheduled, invoice: invoice) }
+      let(:subscription) { create(:subscription, :paused) }
+      let(:invoice) { create(:invoice, subscription: subscription) }
+      let(:payment_attempt) { create(:payment_attempt, :scheduled, invoice: invoice) }
 
       it "does not process the payment attempt and records a skipped event" do
         described_class.new.process(message)
@@ -59,7 +59,7 @@ RSpec.describe BillingProcessorConsumer, type: :consumer do
     end
 
     context "with a completed payment attempt duplicate" do
-      let(:payment_attempt) { FactoryBot.create(:payment_attempt, :completed) }
+      let(:payment_attempt) { create(:payment_attempt, :completed) }
 
       it "treats the delivery as a no-op" do
         allow(ProcessPaymentService).to receive(:call)
@@ -72,7 +72,7 @@ RSpec.describe BillingProcessorConsumer, type: :consumer do
     end
 
     context "with a failed payment attempt duplicate" do
-      let(:payment_attempt) { FactoryBot.create(:payment_attempt, :failed) }
+      let(:payment_attempt) { create(:payment_attempt, :failed) }
 
       it "treats the delivery as a no-op" do
         allow(ProcessPaymentService).to receive(:call)
@@ -85,7 +85,7 @@ RSpec.describe BillingProcessorConsumer, type: :consumer do
     end
 
     context "with a processing payment attempt duplicate" do
-      let(:payment_attempt) { FactoryBot.create(:payment_attempt, :processing) }
+      let(:payment_attempt) { create(:payment_attempt, :processing) }
 
       it "treats the delivery as a no-op" do
         allow(ProcessPaymentService).to receive(:call)
@@ -98,7 +98,7 @@ RSpec.describe BillingProcessorConsumer, type: :consumer do
     end
 
     context "with a stale subscription-state message" do
-      let(:payment_attempt) { FactoryBot.create(:payment_attempt, :scheduled, amount_attempted_cents: 500) }
+      let(:payment_attempt) { create(:payment_attempt, :scheduled, amount_attempted_cents: 500) }
       let(:message) do
         payment_attempt.subscription.update!(state_version: 2)
         instance_double(Hutch::Message,
@@ -119,7 +119,7 @@ RSpec.describe BillingProcessorConsumer, type: :consumer do
     end
 
     context "with a pending payment attempt" do
-      let(:payment_attempt) { FactoryBot.create(:payment_attempt) }
+      let(:payment_attempt) { create(:payment_attempt) }
 
       it "records a skipped event" do
         described_class.new.process(message)
@@ -130,7 +130,7 @@ RSpec.describe BillingProcessorConsumer, type: :consumer do
     end
 
     context "with insufficient funds" do
-      let(:payment_attempt) { FactoryBot.create(:payment_attempt, :scheduled, amount_attempted_cents: 1500) }
+      let(:payment_attempt) { create(:payment_attempt, :scheduled, amount_attempted_cents: 1500) }
 
       it "records a failed payment event without raising" do
         described_class.new.process(message)
@@ -142,7 +142,7 @@ RSpec.describe BillingProcessorConsumer, type: :consumer do
     end
 
     context "with a retryable system error" do
-      let(:payment_attempt) { FactoryBot.create(:payment_attempt, :scheduled, amount_attempted_cents: 0) }
+      let(:payment_attempt) { create(:payment_attempt, :scheduled, amount_attempted_cents: 0) }
 
       it "records a failed payment event and raises for broker retry/dead-letter handling" do
         expect {
