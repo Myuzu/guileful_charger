@@ -23,7 +23,7 @@ RSpec.describe OutboxPublisherService, type: :service do
       expect(outbox_message.attempts).to eq(1)
     end
 
-    it "claims messages in uuidv7 id order instead of updated_at order" do
+    it "claims messages in uuidv7 id order instead of created_at order" do
       first_inserted = outbox_message
       second_inserted = OutboxMessage.create!(topic: "subscription.resumed", payload: payload, updated_at: 1.day.ago)
       first_inserted.update!(updated_at: 1.day.from_now)
