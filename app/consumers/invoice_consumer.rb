@@ -1,21 +1,27 @@
 class InvoiceConsumer
-  include Hutch::Consumer
-  include ConsumerIdempotency
+  include ActiveConsumer
 
   consume "invoice.created"
-  BillingConsumerQueueOptions.apply(self, dead_letter_routing_key: "invoice.created.dead")
 
-  def process(message)
-    process_once(message) { process_message(message) }
+  consumer_options do
+    quorum_queue
+    dead_letter routing_key: "invoice.created.dead"
+    delivery_limit
+    single_active_consumer
+  end
+
+  message_schema do
+    required(:invoice_id).filled(:string)
+    optional(:subscription_state_version).maybe(:integer)
   end
 
   private
 
-  def process_message(message)
+  def process_message(message, payload)
     logger.info "Message content: #{message.body.to_json}"
 
     Invoice.transaction do
-      invoice = Invoice.lock.find(message_value(message, :invoice_id))
+      invoice = Invoice.lock.find(payload.fetch(:invoice_id))
       subscription = invoice.subscription
       subscription.lock!
 

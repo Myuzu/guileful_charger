@@ -1,4 +1,4 @@
-# rubocop:disable RSpec/MultipleExpectations
+# rubocop:disable RSpec/ExampleLength, RSpec/MultipleExpectations
 require "rails_helper"
 
 RSpec.describe InvoiceConsumer, type: :consumer do
@@ -40,6 +40,17 @@ RSpec.describe InvoiceConsumer, type: :consumer do
         drafted_invoice.subscription.pause!("customer requested pause")
 
         described_class.new.process(message)
+
+        expect(drafted_invoice.reload).to be_draft
+        expect(OutboxMessage.where(topic: "billing.attempt.new")).to be_empty
+      end
+
+      it "acks invalid payloads without opening the invoice" do
+        invalid_message = instance_double(Hutch::Message,
+                                          body:       { subscription_id: drafted_invoice.subscription_id },
+                                          message_id: SecureRandom.uuid)
+
+        described_class.new.process(invalid_message)
 
         expect(drafted_invoice.reload).to be_draft
         expect(OutboxMessage.where(topic: "billing.attempt.new")).to be_empty

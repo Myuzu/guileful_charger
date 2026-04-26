@@ -1,6 +1,6 @@
 # GuilefulCharger
 
-GuilefulCharger is a Rails API application that sketches a subscription billing workflow using PostgreSQL, RabbitMQ/Hutch, AASM state machines, and MoneyRails. The current codebase is best treated as a prototype: the core database tables and first-pass payment-processing objects exist, while retries, partial rebilling, payment-method management, audit logging, and production delivery guarantees are not complete.
+GuilefulCharger is a Rails API application that sketches a subscription billing workflow using PostgreSQL, RabbitMQ/Hutch, AASM state machines, dry-validation contracts, and MoneyRails. The current codebase is best treated as a prototype: the core database tables and first-pass payment-processing objects exist, while retries, partial rebilling, payment-method management, audit logging, and production delivery guarantees are not complete.
 
 ## Current Implementation
 
@@ -11,6 +11,8 @@ GuilefulCharger is a Rails API application that sketches a subscription billing 
 - RabbitMQ messages via Hutch.
 - MoneyRails for cent-based monetary columns.
 - AASM for model state machines.
+- dry-validation for message payload contracts declared through the `ActiveConsumer.message_schema` DSL at consumer boundaries.
+- `ActiveConsumer.consumer_options` DSL for Hutch quorum queue, dead-letter, delivery-limit, and single-active-consumer queue settings.
 - RSpec test suite with FactoryBot.
 
 ### Implemented database-backed entities
@@ -125,6 +127,7 @@ The intended flow in the current code is:
 2. `InvoiceConsumer`
    - Consumes `invoice.created`.
    - Deduplicates the message with `ProcessedMessage`.
+   - Validates the message payload with the consumer's `message_schema` contract.
    - Re-locks and re-checks invoice/subscription state and message version.
    - Opens a draft invoice.
    - Creates the first payment attempt.
@@ -134,6 +137,7 @@ The intended flow in the current code is:
 3. `BillingProcessorConsumer`
    - Consumes `billing.attempt.*`.
    - Deduplicates the message with `ProcessedMessage`.
+   - Validates the message payload with the consumer's `message_schema` contract.
    - Loads a payment attempt.
    - Re-checks that the payment attempt is scheduled and the subscription is active.
    - Records `billing.payment.skipped` when the attempt is not currently processable.
@@ -169,8 +173,8 @@ The previous documentation described several capabilities that are not implement
 
 ### Partially implemented or currently inconsistent
 
-- **Message delivery guarantees**: Hutch publisher confirms, an outbox table, and a processed-message inbox table are present, but consumers should still be treated as at-least-once. Consumers re-check PostgreSQL state/version before side effects; exactly-once delivery is still not claimed.
-- **Concurrency**: invoice scheduling uses database transactions and `FOR UPDATE SKIP LOCKED`, and invoices have a unique index per subscription billing period. This helps prevent duplicate invoices, but it is not a full end-to-end concurrency/idempotency strategy.
+- **Message delivery guarantees**: Hutch publisher confirms, an outbox table, and a processed-message inbox table are present, but consumers should still be treated as at-least-once. Consumers validate payloads, re-check PostgreSQL state/version before side effects, and record best-effort `billing.consumer.invalid_payload` outbox events for malformed payloads; exactly-once delivery is still not claimed. Invalid payloads are ACKed rather than retried because they are poison messages, so the invalid-payload observability event may be absent if recording it fails during a database outage.
+- **Concurrency**: invoice scheduling uses database transactions, row-level subscription locks, and a unique index per subscription billing period. This helps prevent duplicate invoices, but it is not a full end-to-end concurrency/idempotency strategy.
 - **PostgreSQL high availability**: local Docker and Kubernetes manifests define a single PostgreSQL instance with a PVC. They do not configure one synchronous standby plus asynchronous standbys or otherwise guarantee zero RPO.
 - **Pause side effects are intentionally limited**: pausing prevents new billing and service access, and removes unstarted current-period draft invoices, but it does not void open invoices, refund completed payments, or cancel already-created payment attempts.
 
@@ -268,7 +272,7 @@ bin/brakeman
 ## Deployment and Infrastructure Notes
 
 - `.devcontainer/compose.yaml` starts Rails, PostgreSQL, and RabbitMQ for development/test use.
-- RabbitMQ/Hutch is configured for durable publishing defaults, publisher confirms, manual acknowledgements, low prefetch, quorum consumer queues, dead-letter routing, retry queues with TTL/DLX, and single-active-consumer queue arguments.
+- RabbitMQ/Hutch is configured for durable publishing defaults, publisher confirms, manual acknowledgements, low prefetch, quorum consumer queues, dead-letter routing, retry queues with TTL/DLX, and single-active-consumer queue arguments. Per-consumer queue arguments are declared with `consumer_options` blocks.
 - Subscription-scoped outbox messages are also mirrored to a consistent-hash exchange by `subscription_id` for shard-oriented processing/inspection; primary Hutch consumers still re-check PostgreSQL state/version because RabbitMQ delivery can be duplicate or out of order.
 - `k8s/` contains development-style Kubernetes manifests for single-instance PostgreSQL, RabbitMQ, and Rails deployments.
 - `config/deploy.yml` is the generated Kamal-style deployment scaffold and still contains placeholder hosts/image names.
