@@ -1,4 +1,4 @@
-# rubocop:disable RSpec/MultipleExpectations
+# rubocop:disable RSpec/ExampleLength, RSpec/MultipleExpectations
 require "rails_helper"
 
 RSpec.describe BillingProcessorConsumer, type: :consumer do
@@ -55,6 +55,66 @@ RSpec.describe BillingProcessorConsumer, type: :consumer do
         outbox_message = OutboxMessage.find_by!(topic: "billing.payment.skipped")
         expect(payment_attempt.reload).to be_scheduled
         expect(outbox_message.payload["skipped_reason"]).to eq("subscription_not_active")
+      end
+    end
+
+    context "with a completed payment attempt duplicate" do
+      let(:payment_attempt) { FactoryBot.create(:payment_attempt, :completed) }
+
+      it "treats the delivery as a no-op" do
+        allow(ProcessPaymentService).to receive(:call)
+
+        described_class.new.process(message)
+
+        expect(ProcessPaymentService).not_to have_received(:call)
+        expect(OutboxMessage.where(topic: "billing.payment.skipped")).to be_empty
+      end
+    end
+
+    context "with a failed payment attempt duplicate" do
+      let(:payment_attempt) { FactoryBot.create(:payment_attempt, :failed) }
+
+      it "treats the delivery as a no-op" do
+        allow(ProcessPaymentService).to receive(:call)
+
+        described_class.new.process(message)
+
+        expect(ProcessPaymentService).not_to have_received(:call)
+        expect(OutboxMessage.where(topic: "billing.payment.skipped")).to be_empty
+      end
+    end
+
+    context "with a processing payment attempt duplicate" do
+      let(:payment_attempt) { FactoryBot.create(:payment_attempt, :processing) }
+
+      it "treats the delivery as a no-op" do
+        allow(ProcessPaymentService).to receive(:call)
+
+        described_class.new.process(message)
+
+        expect(ProcessPaymentService).not_to have_received(:call)
+        expect(OutboxMessage.where(topic: "billing.payment.skipped")).to be_empty
+      end
+    end
+
+    context "with a stale subscription-state message" do
+      let(:payment_attempt) { FactoryBot.create(:payment_attempt, :scheduled, amount_attempted_cents: 500) }
+      let(:message) do
+        payment_attempt.subscription.update!(state_version: 2)
+        instance_double(Hutch::Message,
+                        body:       { payment_attempt_id: payment_attempt.id, subscription_state_version: 1 },
+                        message_id: SecureRandom.uuid)
+      end
+
+      it "does not process the payment attempt and records a skipped event" do
+        allow(ProcessPaymentService).to receive(:call)
+
+        described_class.new.process(message)
+
+        outbox_message = OutboxMessage.find_by!(topic: "billing.payment.skipped")
+        expect(ProcessPaymentService).not_to have_received(:call)
+        expect(payment_attempt.reload).to be_scheduled
+        expect(outbox_message.payload["skipped_reason"]).to eq("stale_message")
       end
     end
 

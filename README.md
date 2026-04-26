@@ -7,7 +7,7 @@ GuilefulCharger is a Rails API application that sketches a subscription billing 
 ### Runtime stack
 
 - Rails API application, Ruby 4.0.3 from `.ruby-version` and `Gemfile`.
-- PostgreSQL database with UUID primary keys and PostgreSQL enum columns.
+- PostgreSQL database with UUID primary keys, PostgreSQL enum columns, and PostgreSQL 18 `uuidv7()` support for time-ordered outbox message IDs.
 - RabbitMQ messages via Hutch.
 - MoneyRails for cent-based monetary columns.
 - AASM for model state machines.
@@ -16,6 +16,7 @@ GuilefulCharger is a Rails API application that sketches a subscription billing 
 - Shared `ApplicationService` result helpers for structured `Failure[:code, metadata]` values and common subscription/payment-attempt metadata.
 - `ActiveConsumer.consumer_options` DSL for Hutch quorum queue, dead-letter, delivery-limit, and single-active-consumer queue settings.
 - RSpec test suite with FactoryBot.
+- Outbox partition maintenance uses PostgreSQL extensions: `pg_partman` for published-message partition retention and `pg_cron` for scheduled database maintenance.
 
 ### Implemented database-backed entities
 
@@ -129,9 +130,9 @@ The intended flow in the current code is:
 
 2. `InvoiceConsumer`
    - Consumes `invoice.created`.
-   - Deduplicates the message with `ProcessedMessage`.
    - Validates the message payload with the consumer's `message_schema` contract.
    - Re-locks and re-checks invoice/subscription state and message version.
+   - Uses invoice domain state for idempotency: only draft invoices can be opened, so duplicate deliveries for already-open invoices are no-ops.
    - Opens a draft invoice.
    - Creates the first payment attempt.
    - Schedules the payment attempt.
@@ -139,11 +140,11 @@ The intended flow in the current code is:
 
 3. `BillingProcessorConsumer`
    - Consumes `billing.attempt.*`.
-   - Deduplicates the message with `ProcessedMessage`.
    - Validates the message payload with the consumer's `message_schema` contract.
    - Loads a payment attempt.
+   - Uses payment-attempt domain state for idempotency: terminal or already-processing attempts are duplicate/no-op deliveries.
    - Re-checks that the payment attempt is scheduled and the subscription is active.
-   - Records `billing.payment.skipped` when the attempt is not currently processable.
+   - Records `billing.payment.skipped` when the attempt is not currently processable for non-duplicate reasons.
    - Calls `ProcessPaymentService` with `PaymentGatewayApiMock`.
    - Enqueues `billing.payment.full.success` in the outbox on success.
    - Enqueues `billing.payment.failed` for gateway/insufficient-funds/system failures.
@@ -155,6 +156,44 @@ The intended flow in the current code is:
    - Marks the attempt `completed` for gateway success.
    - Marks the attempt `failed` for insufficient funds, gateway failures, or mapped system errors.
    - Returns structured `Failure[:code, metadata]` results that include payment-attempt context.
+
+### Outbox partitioning and retention
+
+`outbox_messages` uses PostgreSQL native partitioning so the publisher works against a small hot unpublished partition instead of a table dominated by historical published rows.
+
+The partition shape is:
+
+```text
+outbox_messages
+├── outbox_messages_unpublished  -- published_at IS NULL
+└── outbox_messages_published    -- published_at IS NOT NULL
+    ├── daily published partitions managed by pg_partman
+    └── default published partition for safety
+```
+
+Important behavior:
+
+- Outbox IDs are generated with PostgreSQL 18 `uuidv7()` so they are globally unique and time-ordered enough for publisher claim ordering.
+- `outbox_messages` intentionally omits `created_at`; creation/backlog age is derived from `uuid_extract_timestamp(id)`.
+- The publisher claims unpublished work in `id` order with `FOR UPDATE SKIP LOCKED` and a small batch size.
+- Setting `published_at` moves a row from `outbox_messages_unpublished` into the published partition tree.
+- Published rows are retained for 7 days by `pg_partman` and then removed by dropping old published partitions.
+- Unpublished rows, including failed or stale-locked rows, are never removed by retention. A multi-day publisher backlog grows the unpublished partition but is not deleted by the 7-day published retention policy. Monitor backlog age with `MIN(uuid_extract_timestamp(id)) WHERE published_at IS NULL`.
+- Published outbox history is operational/debug data only. Long-term audit history should be exported outside the primary database if it becomes necessary.
+- `pg_cron` schedules `pg_partman` maintenance and periodic reindexing of the hot unpublished partition indexes. The unpublished partition is expected to remain tiny, so scheduled reindex jobs use plain `REINDEX INDEX` because `REINDEX INDEX CONCURRENTLY` cannot run inside pg_cron's transaction wrapper.
+
+Because partitioning and `pg_partman` metadata are PostgreSQL-specific, migrations are the schema source of truth for the outbox. Rails schema dumps are disabled because schema-only dumps do not preserve `pg_partman`'s extension-managed retention configuration.
+
+### Consumer idempotency
+
+The app does not maintain a generic processed-message inbox table. RabbitMQ delivery is treated as at-least-once, and consumers must be safe under duplicate delivery by checking PostgreSQL domain state under locks before side effects.
+
+Current idempotency boundaries:
+
+- `InvoiceConsumer` only opens draft invoices; duplicate deliveries for already-open invoices are no-ops.
+- `BillingProcessorConsumer` only charges scheduled payment attempts; duplicate deliveries for processing, completed, or failed attempts are no-ops.
+- Stale subscription-scoped messages carry state versions and are ignored/skipped after the current PostgreSQL state is reloaded.
+- Future consumers that perform external side effects, such as notifications or retry creation, must introduce a domain idempotency key or uniqueness constraint for that side effect instead of relying on a generic inbox table.
 
 ## Current Gaps and Inaccurate Assumptions Found During Review
 
@@ -177,7 +216,7 @@ The previous documentation described several capabilities that are not implement
 
 ### Partially implemented or currently inconsistent
 
-- **Message delivery guarantees**: Hutch publisher confirms, an outbox table, and a processed-message inbox table are present, but consumers should still be treated as at-least-once. Consumers validate payloads, re-check PostgreSQL state/version before side effects, and record best-effort `billing.consumer.invalid_payload` outbox events for malformed payloads; exactly-once delivery is still not claimed. Invalid payloads are ACKed rather than retried because they are poison messages, so the invalid-payload observability event may be absent if recording it fails during a database outage.
+- **Message delivery guarantees**: Hutch publisher confirms and an outbox table are present, but consumers should still be treated as at-least-once. There is intentionally no generic processed-message inbox table; consumers validate payloads and re-check PostgreSQL domain state/version before side effects. Malformed payloads are ACKed as poison messages and recorded best-effort as `billing.consumer.invalid_payload` outbox events, so the invalid-payload observability event may be absent if recording it fails during a database outage. Exactly-once delivery is not claimed.
 - **Concurrency**: invoice scheduling uses database transactions, row-level subscription locks, and a unique index per subscription billing period. This helps prevent duplicate invoices, but it is not a full end-to-end concurrency/idempotency strategy.
 - **PostgreSQL high availability**: local Docker and Kubernetes manifests define a single PostgreSQL instance with a PVC. They do not configure one synchronous standby plus asynchronous standbys or otherwise guarantee zero RPO.
 - **Pause side effects are intentionally limited**: pausing prevents new billing and service access, and removes unstarted current-period draft invoices, but it does not void open invoices, refund completed payments, or cancel already-created payment attempts.
@@ -289,7 +328,7 @@ bin/brakeman
 
 ## Deployment and Infrastructure Notes
 
-- `.devcontainer/compose.yaml` starts Rails, PostgreSQL 18, and RabbitMQ 4 for development/test use. PostgreSQL 18+ mounts data at `/var/lib/postgresql` rather than `/var/lib/postgresql/data`; drop the postgres volume when upgrading an existing environment.
+- `.devcontainer/compose.yaml` starts Rails, PostgreSQL 18, and RabbitMQ 4 for development/test use. PostgreSQL 18+ mounts data at `/var/lib/postgresql` rather than `/var/lib/postgresql/data`; drop the postgres volume when upgrading an existing environment. The local PostgreSQL image extends the official `postgres:18.3` image with versioned `postgresql-18-partman` and `postgresql-18-cron` packages. `pg_cron` is preloaded with `cron.database_name=guileful_charger_development`; Rails migrations create the extension and schedule outbox maintenance jobs.
 - RabbitMQ/Hutch is configured for durable publishing defaults, publisher confirms, manual acknowledgements, low prefetch, quorum consumer queues, dead-letter routing, retry queues with TTL/DLX, and single-active-consumer queue arguments. Per-consumer queue arguments are declared with `consumer_options` blocks.
 - Subscription-scoped outbox messages are also mirrored to a consistent-hash exchange by `subscription_id` for shard-oriented processing/inspection; primary Hutch consumers still re-check PostgreSQL state/version because RabbitMQ delivery can be duplicate or out of order.
 - `k8s/` contains development-style Kubernetes manifests for single-instance PostgreSQL, RabbitMQ, and Rails deployments.

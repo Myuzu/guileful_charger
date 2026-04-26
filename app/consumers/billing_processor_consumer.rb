@@ -28,7 +28,7 @@ class BillingProcessorConsumer
     skipped_reason = unprocessable_reason(payment_attempt, payload)
 
     if skipped_reason
-      publish_payment_skipped(payment_attempt, skipped_reason)
+      handle_unprocessable_attempt(payment_attempt, skipped_reason)
       return
     end
 
@@ -52,6 +52,8 @@ class BillingProcessorConsumer
     payment_attempt.reload
     subscription = payment_attempt.subscription
 
+    return :already_terminal if payment_attempt.completed? || payment_attempt.failed?
+    return :already_processing if payment_attempt.processing?
     return :not_scheduled unless payment_attempt.scheduled?
     return :subscription_not_active unless subscription.active?
     :stale_message if stale_payload?(payload, subscription)
@@ -59,6 +61,15 @@ class BillingProcessorConsumer
 
   def stale_payload?(payload, subscription)
     payload[:subscription_state_version].present? && payload[:subscription_state_version] < subscription.state_version
+  end
+
+  def handle_unprocessable_attempt(payment_attempt, skipped_reason)
+    case skipped_reason
+    when :already_terminal, :already_processing
+      logger.info("Payment attempt #{payment_attempt.id} duplicate delivery ignored: #{skipped_reason}")
+    else
+      publish_payment_skipped(payment_attempt, skipped_reason)
+    end
   end
 
   def handle_payment_failure(error_type, processed_attempt)

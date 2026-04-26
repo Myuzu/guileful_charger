@@ -16,7 +16,7 @@ class OutboxPublisherService < ApplicationService
 
     OutboxMessage.transaction do
       claimed_messages = OutboxMessage.claimable(Time.current - lock_timeout)
-                                      .order(:created_at)
+                                      .order(:id)
                                       .lock("FOR UPDATE SKIP LOCKED")
                                       .limit(batch_size)
                                       .to_a

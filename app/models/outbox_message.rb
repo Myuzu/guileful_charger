@@ -1,4 +1,6 @@
 class OutboxMessage < ApplicationRecord
+  self.primary_key = :id
+
   validates :topic, presence: true
   validates :payload, presence: true
 
