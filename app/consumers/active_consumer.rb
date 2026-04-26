@@ -1,3 +1,5 @@
+require "digest"
+
 module ActiveConsumer
   extend ActiveSupport::Concern
 
@@ -38,7 +40,6 @@ module ActiveConsumer
 
   included do
     include Hutch::Consumer
-    include ConsumerIdempotency
   end
 
   class_methods do
@@ -83,10 +84,8 @@ module ActiveConsumer
   end
 
   def process(message)
-    process_once(message) do
-      payload = validate_message_payload(message)
-      process_message(message, payload) if payload
-    end
+    payload = validate_message_payload(message)
+    process_message(message, payload) if payload
   end
 
   private
@@ -101,7 +100,7 @@ module ActiveConsumer
 
   def record_invalid_payload(message, errors)
     payload = { consumer_name: self.class.name,
-                message_id:     idempotency_message_id(message),
+                message_id:     message_identifier(message),
                 errors:         errors,
                 body:           message.body }
 
@@ -112,5 +111,15 @@ module ActiveConsumer
     # Preserve broker liveness by ACKing them even if the best-effort observability
     # event cannot be recorded during a database outage.
     logger.error("Failed to record invalid #{self.class.name} payload: #{ex.class}: #{ex.message}")
+  end
+
+  def stale_message?(message, subscription)
+    message_version = message.body[:subscription_state_version] || message.body["subscription_state_version"]
+    message_version.present? && message_version.to_i < subscription.state_version
+  end
+
+  def message_identifier(message)
+    explicit_message_id = message.message_id if message.respond_to?(:message_id)
+    explicit_message_id.presence || Digest::SHA256.hexdigest("#{self.class.name}:#{message.body.to_json}")
   end
 end

@@ -35,6 +35,9 @@
 
 # Ignore development files
 /.devcontainer
+!/.devcontainer/
+!/.devcontainer/postgres/
+!/.devcontainer/postgres/**
 
 # Ignore Docker-related files
 /.dockerignore

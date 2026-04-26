@@ -40,6 +40,10 @@ module GuilefulCharger
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+    # PostgreSQL partitioning and pg_partman retention config are migration-owned.
+    # Rails schema dumps do not preserve pg_partman's extension-managed config data.
+    config.active_record.schema_format = :sql
+    config.active_record.dump_schema_after_migration = false
 
     config.generators do |generate|
       generate.orm :active_record, primary_key_type: :uuid

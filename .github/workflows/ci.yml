@@ -41,26 +41,33 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=3
-      
       rabbitmq:
-        image: rabbitmq:3
+        image: rabbitmq:4.3.0-management
         ports:
           - 5672:5672
           - 15672:15672
+
     steps:
       - name: Install packages
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y curl libjemalloc2 libvips postgresql-client libpq-dev
 
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Build and start PostgreSQL with pg_partman and pg_cron
+        run: |
+          docker build -f .devcontainer/postgres/Dockerfile -t guileful-postgres .
+          docker run -d \
+            --name postgres \
+            -e POSTGRES_USER=postgres \
+            -e POSTGRES_PASSWORD=postgres \
+            -e POSTGRES_DB=guileful_charger_development \
+            -p 5432:5432 \
+            guileful-postgres \
+            postgres \
+              -c shared_preload_libraries=pg_cron \
+              -c cron.database_name=guileful_charger_development
+          until pg_isready -h localhost -U postgres; do sleep 1; done
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -72,5 +79,5 @@ jobs:
         env:
           RAILS_ENV: test
           DATABASE_URL: postgres://postgres:postgres@localhost:5432
-        run: bin/rails db:setup spec
+        run: bin/rails db:create db:migrate spec
 

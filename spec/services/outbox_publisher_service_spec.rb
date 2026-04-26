@@ -23,6 +23,17 @@ RSpec.describe OutboxPublisherService, type: :service do
       expect(outbox_message.attempts).to eq(1)
     end
 
+    it "claims messages in uuidv7 id order instead of created_at order" do
+      first_inserted = outbox_message
+      second_inserted = OutboxMessage.create!(topic: "subscription.resumed", payload: payload, updated_at: 1.day.ago)
+      first_inserted.update!(updated_at: 1.day.from_now)
+
+      described_class.call(batch_size: 1)
+
+      expect(Hutch).to have_received(:publish).with("subscription.paused", payload.stringify_keys, { message_id: first_inserted.id })
+      expect(second_inserted.reload.published_at).to be_nil
+    end
+
     it "records publish failures and leaves the message unpublished" do
       allow(Hutch).to receive(:publish).and_raise(Hutch::ConnectionError)
 

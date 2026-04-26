@@ -33,7 +33,6 @@ RSpec.describe ActiveConsumer do
     consumer.process(message)
 
     expect(consumer.processed_payload).to eq(event_id: "event-1", state_version: 2)
-    expect(ProcessedMessage.exists?(consumer_name: "SchemaConsumer", message_id: "message-1")).to be(true)
   end
 
   it "acks invalid payloads without calling process_message and records an invalid-payload event" do
@@ -45,8 +44,8 @@ RSpec.describe ActiveConsumer do
 
     outbox_message = OutboxMessage.find_by!(topic: "billing.consumer.invalid_payload")
     expect(consumer.processed_payload).to be_nil
-    expect(ProcessedMessage.exists?(consumer_name: "SchemaConsumer", message_id: "message-2")).to be(true)
     expect(outbox_message.payload["consumer_name"]).to eq("SchemaConsumer")
+    expect(outbox_message.payload["message_id"]).to eq("message-2")
   end
 
   it "declares Hutch queue options with a consumer_options block" do
@@ -102,7 +101,7 @@ RSpec.describe ActiveConsumer do
 
     outbox_message = OutboxMessage.find_by!(topic: "billing.consumer.invalid_payload")
     expect(rule_consumer.processed_payload).to be_nil
-    expect(ProcessedMessage.exists?(consumer_name: "RuleConsumer", message_id: "message-3")).to be(true)
     expect(outbox_message.payload["consumer_name"]).to eq("RuleConsumer")
+    expect(outbox_message.payload["message_id"]).to eq("message-3")
   end
 end

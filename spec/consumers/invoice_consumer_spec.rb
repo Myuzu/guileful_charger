@@ -45,6 +45,26 @@ RSpec.describe InvoiceConsumer, type: :consumer do
         expect(OutboxMessage.where(topic: "billing.attempt.new")).to be_empty
       end
 
+      it "does not open invoices for stale subscription-state messages" do
+        drafted_invoice.subscription.update!(state_version: 2)
+        stale_message = instance_double(Hutch::Message,
+                                        body:       { invoice_id: drafted_invoice.id, subscription_state_version: 1 },
+                                        message_id: SecureRandom.uuid)
+
+        described_class.new.process(stale_message)
+
+        expect(drafted_invoice.reload).to be_draft
+        expect(OutboxMessage.where(topic: "billing.attempt.new")).to be_empty
+      end
+
+      it "ignores duplicate deliveries for already-open invoices" do
+        drafted_invoice.open_new!
+
+        expect {
+          described_class.new.process(message)
+        }.not_to change { OutboxMessage.where(topic: "billing.attempt.new").count }
+      end
+
       it "acks invalid payloads without opening the invoice" do
         invalid_message = instance_double(Hutch::Message,
                                           body:       { subscription_id: drafted_invoice.subscription_id },
