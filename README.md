@@ -13,6 +13,7 @@ GuilefulCharger is a Rails API application that sketches a subscription billing 
 - AASM for model state machines.
 - dry-validation for message payload contracts declared through the `ActiveConsumer.message_schema` DSL at consumer boundaries.
 - dry-validation for service command input schemas; declared keys are strictly validated and undeclared keyword arguments are preserved for `Dry::Initializer` options rather than silently dropped.
+- Shared `ApplicationService` result helpers for structured `Failure[:code, metadata]` values and common subscription/payment-attempt metadata.
 - `ActiveConsumer.consumer_options` DSL for Hutch quorum queue, dead-letter, delivery-limit, and single-active-consumer queue settings.
 - RSpec test suite with FactoryBot.
 
@@ -266,6 +267,20 @@ bin/rspec
 During this review, direct local `bin/rspec` could not run because required gems were not installed locally. Use `bundle install` or `make bootstrap` first.
 
 ### Linting and security scan
+
+```bash
+make lint
+make security-check
+```
+
+Pass tool-specific arguments through variables:
+
+```bash
+make lint RUBOCOP_ARGS="app/services"
+make security-check BRAKEMAN_ARGS="--no-pager"
+```
+
+Local, non-Docker equivalents are still available:
 
 ```bash
 bin/rubocop
