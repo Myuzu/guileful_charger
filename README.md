@@ -1,6 +1,6 @@
 # GuilefulCharger
 
-GuilefulCharger is a Rails API application that sketches a subscription billing workflow using PostgreSQL, RabbitMQ/Hutch, AASM state machines, dry-validation contracts, and MoneyRails. The current codebase is best treated as a prototype: the core database tables and first-pass payment-processing objects exist, while retries, partial rebilling, payment-method management, audit logging, and production delivery guarantees are not complete.
+GuilefulCharger is a Rails API application that sketches a subscription billing workflow using PostgreSQL, RabbitMQ/Hutch, AASM state machines, dry-validation contracts/command schemas, and MoneyRails. The current codebase is best treated as a prototype: the core database tables and first-pass payment-processing objects exist, while retries, partial rebilling, payment-method management, audit logging, and production delivery guarantees are not complete.
 
 ## Current Implementation
 
@@ -12,6 +12,7 @@ GuilefulCharger is a Rails API application that sketches a subscription billing 
 - MoneyRails for cent-based monetary columns.
 - AASM for model state machines.
 - dry-validation for message payload contracts declared through the `ActiveConsumer.message_schema` DSL at consumer boundaries.
+- dry-validation for service command input schemas; declared keys are strictly validated and undeclared keyword arguments are preserved for `Dry::Initializer` options rather than silently dropped.
 - `ActiveConsumer.consumer_options` DSL for Hutch quorum queue, dead-letter, delivery-limit, and single-active-consumer queue settings.
 - RSpec test suite with FactoryBot.
 
@@ -57,6 +58,7 @@ Implemented behavior:
 - Supports `active -> paused -> active`, `active -> cancelled`, and `paused -> cancelled` lifecycle transitions.
 - Active subscriptions are billable and service-accessible.
 - Paused subscriptions are not billable and not service-accessible.
+- Pause/resume/cancel command services validate keyword input with `ApplicationService.input_schema` and return structured `Failure[:code, metadata]` results for non-happy paths.
 - Resuming a paused subscription refreshes `active_at`, extends `current_period_end` by the pause duration, and re-enqueues existing scheduled payment attempts.
 - Cancelled subscriptions are terminal.
 - Can issue a draft invoice for its current billing period via `issue_new_invoice!`.
@@ -151,6 +153,7 @@ The intended flow in the current code is:
    - Calls a gateway object that responds to `#charge`.
    - Marks the attempt `completed` for gateway success.
    - Marks the attempt `failed` for insufficient funds, gateway failures, or mapped system errors.
+   - Returns structured `Failure[:code, metadata]` results that include payment-attempt context.
 
 ## Current Gaps and Inaccurate Assumptions Found During Review
 

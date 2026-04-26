@@ -1,6 +1,4 @@
 class ProcessPaymentService < ApplicationService
-  include Dry::Monads[:result]
-
   SystemErrorResponse = Struct.new(:status, :transaction_id, :message, keyword_init: true) do
     def to_h
       { status:         status,
@@ -13,7 +11,7 @@ class ProcessPaymentService < ApplicationService
   param :payment_gateway
 
   def call
-    return Failure[:already_in_processing, payment_attempt] if payment_attempt.processing?
+    return payment_attempt_failure(:already_in_processing) if payment_attempt.processing?
 
     claim_result = claim_payment_attempt
     return claim_result if claim_result.failure?
@@ -47,9 +45,9 @@ class ProcessPaymentService < ApplicationService
   end
 
   def validate_claimable_payment_attempt
-    return Failure[:already_in_processing, payment_attempt] if payment_attempt.processing?
-    return Failure[:not_scheduled, payment_attempt] unless payment_attempt.scheduled?
-    return Failure[:subscription_not_active, payment_attempt] unless payment_attempt.subscription.active?
+    return payment_attempt_failure(:already_in_processing) if payment_attempt.processing?
+    return payment_attempt_failure(:not_scheduled) unless payment_attempt.scheduled?
+    return payment_attempt_failure(:subscription_not_active) unless payment_attempt.subscription.active?
 
     Success(payment_attempt)
   end
@@ -79,22 +77,30 @@ class ProcessPaymentService < ApplicationService
 
   def handle_api_insufficient_funds
     payment_attempt.fail!(response, :insufficient_funds)
-    Failure[:insufficient_funds, payment_attempt]
+    payment_attempt_failure(:insufficient_funds)
   end
 
   def handle_api_failure
     payment_attempt.fail!(response, :gateway_error)
-    Failure[:gateway_error, payment_attempt]
+    payment_attempt_failure(:gateway_error)
   end
 
   def handle_api_system_error
     payment_attempt.fail!(response, :system_error)
-    Failure[:system_error, payment_attempt]
+    payment_attempt_failure(:system_error)
   end
 
   def handle_exception(ex)
     payment_attempt.fail!(response || system_error_response(ex), :system_error) if payment_attempt.processing?
-    Failure[:system_error, payment_attempt]
+    payment_attempt_failure(:system_error)
+  end
+
+  def payment_attempt_failure(code)
+    service_failure(code,
+                    payment_attempt:        payment_attempt,
+                    payment_attempt_id:     payment_attempt.id,
+                    payment_attempt_status: payment_attempt.status,
+                    invoice_id:             payment_attempt.invoice_id)
   end
 
   def system_error_response(ex)

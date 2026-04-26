@@ -1,3 +1,4 @@
+# rubocop:disable RSpec/MultipleExpectations
 require 'rails_helper'
 require 'payment_gateway_api_mock'
 
@@ -18,6 +19,34 @@ RSpec.describe ProcessPaymentService, type: :service do
     it "returns :already_in_processing as the failure reason" do
       result = described_class.call(payment_attempt, payment_gateway)
       expect(result.failure.first).to eq :already_in_processing
+    end
+  end
+
+  context "with PaymentAttempt not scheduled" do
+    let(:payment_attempt) { FactoryBot.create(:payment_attempt) }
+    let(:payment_gateway) { instance_double(PaymentGatewayApiMock, charge: nil) }
+
+    it "returns :not_scheduled without charging the gateway" do
+      result = described_class.call(payment_attempt, payment_gateway)
+
+      expect(result).to be_failure
+      expect(result.failure.first).to eq(:not_scheduled)
+      expect(payment_gateway).not_to have_received(:charge)
+    end
+  end
+
+  context "with inactive subscription" do
+    let(:subscription) { FactoryBot.create(:subscription, :paused) }
+    let(:invoice) { FactoryBot.create(:invoice, subscription: subscription) }
+    let(:payment_attempt) { FactoryBot.create(:payment_attempt, :scheduled, invoice: invoice) }
+    let(:payment_gateway) { instance_double(PaymentGatewayApiMock, charge: nil) }
+
+    it "returns :subscription_not_active without charging the gateway" do
+      result = described_class.call(payment_attempt, payment_gateway)
+
+      expect(result).to be_failure
+      expect(result.failure.first).to eq(:subscription_not_active)
+      expect(payment_gateway).not_to have_received(:charge)
     end
   end
 
@@ -63,12 +92,12 @@ RSpec.describe ProcessPaymentService, type: :service do
 
       it "marks the payment attempt as failed" do
         result = described_class.call(payment_attempt, payment_gateway)
-        expect(result.failure.last.failed?).to be(true)
+        expect(result.failure.last.fetch(:payment_attempt).failed?).to be(true)
       end
 
       it "sets the payment attempt status to failed" do
         result = described_class.call(payment_attempt, payment_gateway)
-        expect(result.failure.last.status).to eq("failed")
+        expect(result.failure.last.fetch(:payment_attempt).status).to eq("failed")
       end
     end
 
@@ -89,12 +118,12 @@ RSpec.describe ProcessPaymentService, type: :service do
 
       it "marks the payment attempt as failed" do
         result = described_class.call(payment_attempt, payment_gateway)
-        expect(result.failure.last.failed?).to be(true)
+        expect(result.failure.last.fetch(:payment_attempt).failed?).to be(true)
       end
 
       it "sets the payment attempt status to failed" do
         result = described_class.call(payment_attempt, payment_gateway)
-        expect(result.failure.last.status).to eq("failed")
+        expect(result.failure.last.fetch(:payment_attempt).status).to eq("failed")
       end
     end
 
@@ -115,12 +144,12 @@ RSpec.describe ProcessPaymentService, type: :service do
 
       it "marks the payment attempt as failed" do
         result = described_class.call(payment_attempt, payment_gateway)
-        expect(result.failure.last.failed?).to be(true)
+        expect(result.failure.last.fetch(:payment_attempt).failed?).to be(true)
       end
 
       it "sets the payment attempt status to failed" do
         result = described_class.call(payment_attempt, payment_gateway)
-        expect(result.failure.last.status).to eq("failed")
+        expect(result.failure.last.fetch(:payment_attempt).status).to eq("failed")
       end
     end
 
@@ -139,7 +168,22 @@ RSpec.describe ProcessPaymentService, type: :service do
 
       it "marks the payment attempt as failed" do
         result = described_class.call(payment_attempt, payment_gateway)
-        expect(result.failure.last.failed?).to be(true)
+        expect(result.failure.last.fetch(:payment_attempt).failed?).to be(true)
+      end
+    end
+
+    context "with an exception while finalizing a gateway response" do
+      before do
+        payment_attempt.update!(status: :scheduled, amount_attempted_cents: 500)
+        allow(payment_attempt).to receive(:succeed!).and_raise(StandardError, "database timeout")
+      end
+
+      it "marks the processing attempt as failed using the existing gateway response" do
+        result = described_class.call(payment_attempt, payment_gateway)
+
+        expect(result.failure.first).to eq(:system_error)
+        expect(payment_attempt.reload).to be_failed
+        expect(payment_attempt.gateway_response["status"]).to eq("success")
       end
     end
   end
