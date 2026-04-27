@@ -26,6 +26,7 @@ require 'rspec/rails'
 # Rails.root.glob('spec/support/**/*.rb').sort_by(&:to_s).each { |f| require f }
 
 require 'support/factory_bot.rb'
+require 'support/rebilling_helpers.rb'
 
 Shoulda::Matchers.configure do |config|
   config.integrate do |with|
