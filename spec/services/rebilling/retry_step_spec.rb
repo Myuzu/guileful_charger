@@ -102,6 +102,7 @@ RSpec.describe Rebilling::RetryStep do
       aggregate_failures do
         expect { described_class.new(percentage: 25, basis: :unknown, delay: 1.day) }.to raise_error(ArgumentError, /basis must be one of/)
         expect { described_class.new(percentage: 25, delay: 1.day, on_success: :jump) }.to raise_error(ArgumentError, /transition must be one of/)
+        expect { described_class.new(percentage: 25, delay: 1.day, jitter: 0...120) }.to raise_error(ArgumentError, /jitter must use an inclusive Range/)
       end
     end
   end

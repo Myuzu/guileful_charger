@@ -6,9 +6,26 @@ module Rebilling
       new(status:              outcome.status,
           reason:              outcome.reason,
           plan:                plan,
-          diagnostics:         diagnostics,
-          trace:               trace,
+          diagnostics:         immutable_copy(diagnostics),
+          trace:               immutable_copy(trace),
           notification_intent: notification_intent)
+    end
+
+    def self.immutable_copy(value)
+      case value
+      when Hash
+        value.each_with_object({}) do |(key, child_value), copy|
+          copy[immutable_copy(key)] = immutable_copy(child_value)
+        end.freeze
+      when Array
+        value.map { |child_value| immutable_copy(child_value) }.freeze
+      when NilClass, TrueClass, FalseClass, Numeric, Symbol
+        value
+      else
+        value.dup.freeze
+      end
+    rescue TypeError
+      value
     end
 
     def scheduled?

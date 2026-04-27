@@ -279,7 +279,7 @@ Responsibilities:
 Suggested configuration:
 
 ```ruby
-order: :primary_then_recent_success
+order: :primary_then_recent_success # active primary first, then most recently successful backups, then id
 exhaust_methods_per_step: true
 retry_same_method_after_soft_decline: false
 skip_hard_declined_methods: true
@@ -351,7 +351,7 @@ Suggested fields:
 id
 attempt_number
 status
-amount_attempted_cents
+amount_attempted_cents # non-negative cents
 failure_reason
 failure_category
 retry_step_key
@@ -491,7 +491,7 @@ Potential reasons:
 :no_eligible_payment_method
 ```
 
-Diagnostics should be log-friendly.
+Diagnostics should be log-friendly. Decision metadata such as `diagnostics` and `trace` should be copied and frozen when the decision is built so callers cannot mutate a recorded decision after the fact.
 
 Example:
 
@@ -1177,7 +1177,7 @@ Rebilling::RetryStep.new(
 )
 ```
 
-Determinism is preserved by seeding the jitter from `(invoice_id, attempt_number)` rather than randomness — same input, same output. Non-zero lower bounds are part of the retry window: `jitter: 30..120.seconds` means the retry is scheduled between `delay + 30s` and `delay + 120s`, not between `delay` and `delay + 120s`.
+Determinism is preserved by seeding the jitter from `(invoice_id, attempt_number)` rather than randomness — same input, same output. Non-zero lower bounds are part of the retry window: `jitter: 30..120.seconds` means the retry is scheduled between `delay + 30s` and `delay + 120s`, not between `delay` and `delay + 120s`. Exclusive ranges are rejected so upper-bound semantics remain unambiguous.
 
 ### G11. Notification Ladder Is Detached from Retry Schedule
 

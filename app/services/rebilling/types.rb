@@ -104,6 +104,7 @@ module Rebilling
     JitterRange = Nominal::Any.constructor do |value|
       range = value || (0..0)
       raise ArgumentError, "jitter must be a Range" unless range.is_a?(::Range)
+      raise ArgumentError, "jitter must use an inclusive Range" if range.exclude_end?
 
       start_seconds = Seconds[range.begin]
       end_seconds = Seconds[range.end]

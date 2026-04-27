@@ -8,7 +8,7 @@ module Rebilling
     option :id
     option :attempt_number, Types::Coercible::Integer
     option :status, Types::Coercible::Symbol
-    option :amount_attempted_cents, Types::Coercible::Integer
+    option :amount_attempted_cents, Types::NonNegativeInteger
     option :failure_reason, Types::Nil | Types::Coercible::Symbol, optional: true
     option :failure_category, Types::Nil | Types::Coercible::Symbol, optional: true
     option :retry_step_key, Types::Nil | Types::Coercible::Symbol, optional: true

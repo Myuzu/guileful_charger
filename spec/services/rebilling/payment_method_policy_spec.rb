@@ -7,11 +7,22 @@ RSpec.describe Rebilling::PaymentMethodPolicy do
   let(:step) { Rebilling::RetryStep.new(percentage: 25, delay: 1.minute) }
   let(:policy) { described_class.default }
 
-  it "prefers the active primary payment method" do
+  it "uses the configured order to prefer the active primary payment method" do
     backup = build_payment_method("pm_backup", primary: false, last_successful_at: 1.day.ago)
     primary = build_payment_method("pm_primary", primary: true)
 
-    expect(policy.select(build_context(payment_methods: [ backup, primary ]), step).id).to eq("pm_primary")
+    context = build_context(payment_methods: [ backup, primary ])
+
+    expect(described_class.new(order: :primary_then_recent_success).select(context, step).id).to eq("pm_primary")
+  end
+
+  it "uses the configured order to prefer the most recently successful backup" do
+    stale_backup = build_payment_method("pm_stale", primary: false, last_successful_at: 2.days.ago)
+    recent_backup = build_payment_method("pm_recent", primary: false, last_successful_at: 1.day.ago)
+
+    context = build_context(payment_methods: [ stale_backup, recent_backup ])
+
+    expect(described_class.new(order: :primary_then_recent_success).select(context, step).id).to eq("pm_recent")
   end
 
   it "skips inactive and hard-declined methods" do

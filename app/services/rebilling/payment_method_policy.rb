@@ -61,6 +61,13 @@ module Rebilling
     end
 
     def sort_candidates(candidates)
+      case order
+      when :primary_then_recent_success
+        sort_primary_then_recent_success(candidates)
+      end
+    end
+
+    def sort_primary_then_recent_success(candidates)
       candidates.sort_by do |payment_method|
         [ payment_method.primary ? 0 : 1,
          payment_method.last_successful_at ? -payment_method.last_successful_at.to_i : 0,
