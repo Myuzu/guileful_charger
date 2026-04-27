@@ -23,7 +23,7 @@ gem "solid_queue"
 gem "solid_cable"
 
 # A system for processing messages from RabbitMQ
-gem "hutch", "~> 1.3.0"
+gem "hutch", "~> 1.4.0"
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
