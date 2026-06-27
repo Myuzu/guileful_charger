@@ -443,8 +443,8 @@ GEM
     ruby-progressbar (1.13.0)
     securerandom (0.4.1)
     shellany (0.0.1)
-    shoulda-matchers (7.0.1)
-      activesupport (>= 7.1)
+    shoulda-matchers (8.0.1)
+      activesupport (>= 7.2)
     solid_cable (4.0.0)
       actioncable (>= 7.2)
       activejob (>= 7.2)
@@ -530,7 +530,7 @@ DEPENDENCIES
   rubocop-rspec
   rubocop-rspec_rails
   ruby-lsp
-  shoulda-matchers (~> 7.0)
+  shoulda-matchers (~> 8.0)
   solid_cable
   solid_cache
   solid_queue

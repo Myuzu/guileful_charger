@@ -93,5 +93,5 @@ group :development, :test do
 
   # rspec-rails
   gem "rspec-rails"
-  gem "shoulda-matchers", "~> 7.0"
+  gem "shoulda-matchers", "~> 8.0"
 end
