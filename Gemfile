@@ -38,7 +38,7 @@ gem "thruster", require: false
 gem "money-rails", "~> 3.0.0"
 
 # State machines for Ruby classes
-gem "aasm", "~> 5.5.2"
+gem "aasm", "~> 6.0.0"
 
 gem "csv"
 
