@@ -90,7 +90,7 @@ RSpec.describe "Sorbet boot configuration" do # rubocop:disable RSpec/DescribeCl
     end
   end
 
-  it "preserves a runtime policy selected by a preloaded tool" do
+  it "warns local tools when a preloaded runtime already evaluated signatures" do
     script = <<~RUBY
       require "sorbet-runtime"
       T::Configuration.default_checked_level = :always
@@ -103,11 +103,11 @@ RSpec.describe "Sorbet boot configuration" do # rubocop:disable RSpec/DescribeCl
       require ARGV.fetch(0)
       puts ToolProbe.call
     RUBY
-    env = keys.to_h { |key| [ key, nil ] }.merge("RAILS_ENV" => "production")
+    env = keys.to_h { |key| [ key, nil ] }.merge("RAILS_ENV" => "test")
     output, status = Open3.capture2e(env, RbConfig.ruby, "-e", script, application)
 
     expect(status).to be_success, output
-    expect(output.strip).to eq("preloaded")
+    expect(output).to include("Sorbet runtime policy could not be applied", "preloaded")
   end
 
   it "honors an explicit default checked level in a fresh production process" do
@@ -136,13 +136,56 @@ RSpec.describe "Sorbet boot configuration" do # rubocop:disable RSpec/DescribeCl
       require ARGV.fetch(0)
       ENV["RAILS_ENV"] = "production"
       require ARGV.fetch(1)
-      puts ENV.fetch("SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS", "disabled")
+      class LateProductionProbe
+        extend T::Sig
+        sig { params(value: Integer).returns(String) }
+        def self.call(value) = "unchecked"
+      end
+      puts LateProductionProbe.call("wrong type")
     RUBY
     env = keys.to_h { |key| [ key, nil ] }
     output, status = Open3.capture2e(env, RbConfig.ruby, "-e", script, boot, application)
 
     expect(status).to be_success, output
-    expect(output.strip).to eq("disabled")
+    expect(output.strip).to eq("unchecked")
+  end
+
+  it "applies production policy when sorbet-runtime was preloaded without evaluated signatures" do
+    script = <<~RUBY
+      require "sorbet-runtime"
+      require ARGV.fetch(0)
+      class PreloadedProbe
+        extend T::Sig
+        sig { params(value: Integer).returns(String) }
+        def self.call(value) = "unchecked"
+      end
+      puts PreloadedProbe.call("wrong type")
+    RUBY
+    env = keys.to_h { |key| [ key, nil ] }.merge("RAILS_ENV" => "production")
+    output, status = Open3.capture2e(env, RbConfig.ruby, "-e", script, application)
+
+    expect(status).to be_success, output
+    expect(output.strip).to eq("unchecked")
+  end
+
+  it "rejects production startup when evaluated preloaded signatures locked the default" do
+    script = <<~RUBY
+      require "sorbet-runtime"
+      class LockedPolicyProbe
+        extend T::Sig
+        sig { params(value: Integer).returns(Integer) }
+        def self.call(value) = value
+      end
+      LockedPolicyProbe.call(1)
+      require ARGV.fetch(0)
+      abort "Production booted with a locked runtime policy"
+    RUBY
+    env = keys.to_h { |key| [ key, nil ] }.merge("RAILS_ENV" => "production")
+    output, status = Open3.capture2e(env, RbConfig.ruby, "-e", script, application)
+
+    expect(status).not_to be_success
+    expect(output).to include("SorbetRuntimeConfiguration::PolicyError", "Sorbet runtime policy could not be applied")
+    expect(output).not_to include("Production booted with a locked runtime policy")
   end
 
   it "normalizes explicit false-like values instead of enabling production checks by presence" do

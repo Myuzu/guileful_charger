@@ -27,24 +27,10 @@ services:
       - rabbitmq
 
   postgres:
-    build:
-      context: ..
-      dockerfile: .devcontainer/postgres/Dockerfile
+    extends:
+      file: postgres/compose.yaml
+      service: postgres
     restart: unless-stopped
-    command:
-      - postgres
-      - -c
-      - shared_preload_libraries=pg_cron
-      - -c
-      - cron.database_name=guileful_charger_development
-    networks:
-      - default
-    volumes:
-      - postgres-data:/var/lib/postgresql
-    environment:
-      POSTGRES_DB: guileful_charger_development
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
 
   rabbitmq:
     image: rabbitmq:4.4.0-management

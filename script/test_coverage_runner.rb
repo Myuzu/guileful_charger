@@ -8,7 +8,7 @@ module TestCoverageRunner
   PROFILES = {
     "automation" => {
       specs: %w[test/tooling/automation],
-      files: %w[script/dependabot_rbi.rb script/test_coverage_runner.rb bin/test_tooling config/boot.rb lib/dry_type_catalog.rb]
+      files: %w[script/dependabot_rbi.rb script/test_coverage_runner.rb bin/test_tooling config/boot.rb lib/dry_type_catalog.rb lib/sorbet_runtime_configuration.rb]
     },
     "compiler" => {
       specs: %w[test/tooling/tapioca/dsl/compilers/dry_type_namespaces_spec.rb],

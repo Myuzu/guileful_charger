@@ -25,6 +25,7 @@ RSpec.describe DryTypeCatalog do
 
   it "loads Rebilling types without Rails and isolates them from global application extensions" do
     script = <<~RUBY
+      class Money; end
       require ARGV.fetch(0)
       abort "Rails initializer required" if defined?(::Types)
       abort "Wrong primitive" unless Rebilling::Types::Coercible::Integer["42"] == 42
@@ -38,8 +39,11 @@ RSpec.describe DryTypeCatalog do
       end
       abort "Reopening hid primitives" unless Types::Strict::Integer[42] == 42
       abort "Extension missing" unless Types::Strict::Money["amount"] == "amount"
-      abort "Application extension leaked" if Rebilling::Types.const_defined?(:ApplicationOnly)
-      abort "Nested extension leaked" if Rebilling::Types::Strict.const_defined?(:Money)
+      owns_extension = ->(namespace, name) { namespace.ancestors.any? { |ancestor| ancestor.const_defined?(name, false) } }
+      abort "Application extension missing" unless owns_extension.call(Types, :ApplicationOnly)
+      abort "Nested extension missing" unless owns_extension.call(Types::Strict, :Money)
+      abort "Application extension leaked" if owns_extension.call(Rebilling::Types, :ApplicationOnly)
+      abort "Nested extension leaked" if owns_extension.call(Rebilling::Types::Strict, :Money)
       puts "standalone and isolated"
     RUBY
     path = File.expand_path("../../../app/services/rebilling/types.rb", __dir__)
@@ -47,5 +51,37 @@ RSpec.describe DryTypeCatalog do
 
     expect(status).to be_success, output
     expect(output.strip).to eq("standalone and isolated")
+  end
+
+  it "preserves nested extensions and ancestors when the catalog is included again" do
+    namespace = Module.new { include ::DryTypeCatalog }
+    strict = namespace::Strict
+    strict.const_set(:Money, namespace::String)
+    ancestors = namespace.ancestors
+
+    expect { namespace.include(described_class) }.not_to output.to_stderr
+    expect(namespace.ancestors).to eq(ancestors)
+    expect(namespace::Strict).to equal(strict)
+    expect(namespace::Strict::Money["amount"]).to eq("amount")
+    expect(namespace::Strict::Integer[42]).to eq(42)
+  end
+
+  it "can reload the Rails initializer without warnings or losing application extensions" do
+    script = <<~RUBY
+      require ARGV.fetch(0)
+      module Types::Strict
+        Money = Types::String
+      end
+      original = Types::Strict
+      load ARGV.fetch(0)
+      abort "Namespace replaced" unless Types::Strict.equal?(original)
+      abort "Extension lost" unless Types::Strict::Money["amount"] == "amount"
+      abort "Primitive lost" unless Types::Strict::Integer[42] == 42
+    RUBY
+    initializer = File.expand_path("../../../config/initializers/dry.rb", __dir__)
+    stdout, stderr, status = Open3.capture3(RbConfig.ruby, "-w", "-e", script, initializer)
+
+    expect(status).to be_success, stdout + stderr
+    expect(stderr).not_to include("already initialized constant")
   end
 end
