@@ -132,11 +132,16 @@ Follow the upstream [upgrade](https://www.rabbitmq.com/docs/upgrade) and
 
 ## CI and deployment scope
 
-[`script/ci_postgres.sh`](../script/ci_postgres.sh) reads development Compose with
-a [CI override](../.github/ci/postgres.compose.yml) for port publishing and restart
-policy. Project `guileful-charger-ci` isolates its containers/volumes from local
-development. Re-runs replace that project's DB; failures print the last 200 log
-lines before cleanup. Successful runs leave the CI service for subsequent steps.
+[`script/ci_postgres.sh`](../script/ci_postgres.sh) loads only the
+[shared PostgreSQL model](../.devcontainer/postgres/compose.yaml) with a
+[CI override](../.github/ci/postgres.compose.yml) for port publishing and restart
+policy. Development extends the same database model; unrelated Rails/RabbitMQ
+configuration does not affect CI startup. The bootstrap requires the Compose
+plugin or standalone Compose 2+, and rejects legacy standalone v1.
+Project `guileful-charger-ci` isolates its containers/volumes from local development.
+The exact legacy `guileful-charger-ci-postgres` container is removed before startup
+to release its port. Re-runs replace the CI project's DB; failures print the last
+200 log lines before cleanup. Successful runs leave the service for subsequent steps.
 
 [`config/deploy.yml`](../config/deploy.yml) is a Kamal scaffold with placeholder
 hosts/image names. The tracked configuration does not provide production-grade

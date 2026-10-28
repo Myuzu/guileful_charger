@@ -4,7 +4,7 @@
 
 ## Container workflow
 
-Install Docker, a `docker-compose` command, and Make. The
+Install Docker, a Compose 2+ `docker-compose` command, and Make. The
 [Compose file](../.devcontainer/compose.yaml) shares the working tree with a Rails
 container and starts PostgreSQL and RabbitMQ.
 
@@ -110,7 +110,9 @@ broker hostname defaults to the Compose service `rabbitmq`.
 | Rails DSL drift | `CI=1 bin/tapioca dsl --verify` | Prepared test PostgreSQL |
 
 Both tooling profiles require **100% line coverage of their listed implementation
-files**. Dependencies load before coverage begins. The launcher preserves an
+files**, including the extracted Sorbet runtime policy. The launcher loads RSpec
+core/mocks/expectations and shared standard/dry-types dependencies before coverage
+begins; it also works with development gems excluded. The launcher preserves an
 outer coverage session, and entrypoint scenarios use child processes to avoid
 Ruby resetting coverage on repeated `load`.
 

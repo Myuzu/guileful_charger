@@ -87,6 +87,11 @@ skip, including the created commit URL. A retained branch merged in that narrow
 window can receive an orphan RBI commit; the already-merged default branch is
 unaffected. The publisher does not rewrite branch history to undo it.
 
+If this optional post-commit read fails, publication still succeeds and reports
+the landed URL with a warning. If the mutation fails with `NOT_FOUND` and the
+recovery read also fails, diagnostics retain the original mutation error.
+GraphQL errors include their bounded, validated error codes.
+
 </details>
 
 ## App setup and rotation

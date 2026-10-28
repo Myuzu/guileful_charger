@@ -42,10 +42,11 @@ module DependabotRbi
       end
       if !status.success? || (result.is_a?(Hash) && result.key?("errors"))
         errors = result.is_a?(Hash) ? result["errors"] : nil
-        codes = errors.is_a?(Array) ? errors.filter_map { |error| error["type"] if error.is_a?(Hash) }.grep(String) : []
+        codes = errors.is_a?(Array) ? errors.filter_map { |error| error["type"] if error.is_a?(Hash) }.grep(/\A[A-Z][A-Z0-9_]{0,63}\z/).uniq : []
         raise StaleHead, "PR head advanced during publication" if codes.include?("STALE_DATA")
 
         message = status.success? ? "GitHub rejected the request" : failure
+        message += " [#{codes.first(10).join(', ')}]" unless codes.empty?
         raise RequestError.new(message, codes: codes)
       end
       result
@@ -182,19 +183,32 @@ module DependabotRbi
               expectedHeadOid: plan.fetch("head_sha"),
               message:        { headline: "chore: refresh Dependabot RBI files [dependabot skip]" },
               fileChanges:    { additions: additions, deletions: deletions } }
-    result = api.call("POST", "graphql", { query: COMMIT_QUERY, variables: { input: input } })
+    result = begin
+      api.call("POST", "graphql", { query: COMMIT_QUERY, variables: { input: input } })
+    rescue RequestError => error
+      raise unless error.codes.include?("NOT_FOUND")
+
+      begin
+        current = api.call("GET", "repos/#{repository}/pulls/#{number}")
+        validate_pr(current, repository: repository, sha: plan.fetch("head_sha"))
+      rescue StaleHead
+        raise
+      rescue Error => verification_error
+        warn "Could not confirm PR state after publication failed: #{verification_error.message}"
+      end
+      raise error
+    end
     url = result.fetch("data").fetch("createCommitOnBranch").fetch("commit").fetch("url")
-    current = api.call("GET", "repos/#{repository}/pulls/#{number}")
+    current = begin
+      api.call("GET", "repos/#{repository}/pulls/#{number}")
+    rescue Error => error
+      warn "Published #{url}; could not recheck PR state: #{error.message}"
+      return url
+    end
     if current["state"] == "closed"
       raise StaleHead, "PR closed while publication was in flight; commit #{url} was created and may remain on the closed branch"
     end
     url
-  rescue RequestError => error
-    raise unless error.codes.include?("NOT_FOUND")
-
-    current = api.call("GET", "repos/#{repository}/pulls/#{number}")
-    validate_pr(current, repository: repository, sha: plan.fetch("head_sha"))
-    raise error
   end
 
   def self.run(args, env = ENV)

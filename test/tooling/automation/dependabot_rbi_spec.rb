@@ -310,6 +310,74 @@ RSpec.describe DependabotRbi do
     end
   end
 
+  it "preserves the mutation error when its missing-branch recovery read also fails" do
+    candidate = plan
+    mutation_error = described_class::RequestError.new("Original missing branch", codes: [ "NOT_FOUND" ])
+    verification_error = described_class::RequestError.new("Recovery GET failed with HTTP 502")
+    allow(api).to receive(:call).with("POST", "graphql", anything).and_raise(mutation_error)
+    reads = 0
+    allow(api).to receive(:call).with("GET", "repos/#{repository}/pulls/7") do
+      reads += 1
+      raise verification_error if reads > 1
+
+      pr
+    end
+
+    expect do
+      expect { described_class.publish(plan: candidate, repository: repository, api: api) }.to raise_error(mutation_error)
+    end.to output(/Could not confirm PR state.*Recovery GET failed with HTTP 502/).to_stderr
+  end
+
+  it "does not apply missing-branch recovery to failed preflight requests" do
+    failure = described_class::RequestError.new("Initial PR read failed", codes: [ "NOT_FOUND" ])
+    allow(api).to receive(:call).with("GET", "repos/#{repository}/pulls/7").and_raise(failure)
+
+    expect { described_class.publish(plan: plan, repository: repository, api: api) }.to raise_error(failure)
+    expect(api).to have_received(:call).with("GET", "repos/#{repository}/pulls/7").once
+    expect(api).not_to have_received(:call).with("POST", "graphql", anything)
+  end
+
+  it "returns a successful commit even when the optional post-publish PR read fails" do
+    candidate = plan
+    url = "https://github.com/owner/project/commit/new"
+    response = { "data" => { "createCommitOnBranch" => { "commit" => { "url" => url } } } }
+    allow(api).to receive(:call).with("POST", "graphql", anything).and_return(response)
+    failure = described_class::RequestError.new("Post-publish GET failed", codes: [ "NOT_FOUND" ])
+    reads = 0
+    allow(api).to receive(:call).with("GET", "repos/#{repository}/pulls/7") do
+      reads += 1
+      raise failure if reads > 1
+
+      pr
+    end
+
+    expect do
+      expect(described_class.publish(plan: candidate, repository: repository, api: api)).to eq(url)
+    end.to output("Published #{url}; could not recheck PR state: Post-publish GET failed\n").to_stderr
+    expect(reads).to eq(2)
+  end
+
+  it "prints the landed commit URL and succeeds when post-publish verification is rate limited" do
+    File.write(plan_path, JSON.generate(plan))
+    url = "https://github.com/owner/project/commit/new"
+    response = { "data" => { "createCommitOnBranch" => { "commit" => { "url" => url } } } }
+    allow(api).to receive(:call).with("POST", "graphql", anything).and_return(response)
+    allow(described_class::Github).to receive(:new).and_return(api)
+    reads = 0
+    allow(api).to receive(:call).with("GET", "repos/#{repository}/pulls/7") do
+      reads += 1
+      raise described_class::RequestError, "HTTP 403 rate limit exceeded" if reads > 1
+
+      pr
+    end
+
+    expect do
+      expect do
+        expect(described_class.run([ "publish", plan_path ], "GITHUB_REPOSITORY" => repository)).to eq(0)
+      end.to output("#{url}\n").to_stdout
+    end.to output(/Published #{Regexp.escape(url)}; could not recheck PR state: HTTP 403/).to_stderr
+  end
+
   it "reports an in-flight close after a successful commit without rewriting branch history" do
     candidate = plan
     closed = pr.merge("state" => "closed", "merged" => true)

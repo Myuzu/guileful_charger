@@ -60,11 +60,12 @@ file is adopted. `rubocop-sorbet` also checks valid sigils and signature style.
 
 ### Runtime checks
 
-Fresh Rails processes configure Sorbet through its API before `Bundler.require`.
+Rails processes configure Sorbet through its API before framework/gem loading.
 The default checked level is `:tests`; development/test enable checks, and
-production leaves them disabled. Tools that already loaded Sorbet, including
-Tapioca, retain their own policy. See the
-[runtime configuration](../config/application.rb) and
+production leaves them disabled. Preloaded runtimes are configured too, provided
+their signatures have not locked the default. See the measured
+[runtime policy](../lib/sorbet_runtime_configuration.rb), its
+[application entry point](../config/application.rb), and
 [Sorbet's runtime guide](https://sorbet.org/docs/runtime#changing-the-runtime-behavior).
 
 | Operator setting | Effect in a fresh Rails process |
@@ -80,6 +81,14 @@ API defaults create no environment variables, so a development process does not
 silently enable checks in a production child. Explicit operator settings remain
 inherited. There are no custom error handlers; `.checked(:always)`, inline
 assertions, and property validation retain Sorbet's normal behavior.
+
+If a preloader already evaluated signatures, Sorbet's public API cannot reset
+their default. Production then stops boot with `PolicyError`, rather than serving
+requests under an unexpected policy. Configure `SORBET_RUNTIME_DEFAULT_CHECKED_LEVEL`
+before preloading Sorbet, or load application configuration before evaluating
+signatures. A false-like test-checking flag must also be removed before preloading:
+Sorbet has already enabled it by presence and has no public disable API. Local
+tools such as Tapioca warn and retain their preconfigured policy when it is locked.
 
 Signature blocks still execute on first call at every checked level. The
 [signature spec](../spec/lib/sorbet_signatures_spec.rb) eagerly loads the app and
@@ -112,7 +121,9 @@ end
 ```
 
 Global `Types` extensions do not silently become Rebilling inputs. Rebilling's
-types load without Rails. The explicitly required catalog is excluded from
+types load without Rails. Including the catalog again preserves directly owned
+nested modules and application extensions without constant redefinition warnings.
+The explicitly required catalog is excluded from
 Zeitwerk reloading; restart after editing it. The local
 [`DryTypeNamespaces` compiler](../sorbet/tapioca/compilers/dry_type_namespaces.rb)
 discovers catalog includers and emits their constants, nested namespaces, and
