@@ -77,21 +77,6 @@ attempt**. Each child belongs to exactly one parent; each parent can have no
 children or many. The diagram shows selected fields rather than the full schema.
 
 ```mermaid
----
-config:
-  look: handDrawn
-  layout: dagre
-  theme: base
-  handDrawnSeed: 42
-  fontFamily: '"Comic Sans MS", "Chalkboard", cursive'
-  themeVariables:
-    primaryColor: '#e7f5ff'
-    primaryTextColor: '#212529'
-    primaryBorderColor: '#495057'
-    lineColor: '#495057'
-    secondaryColor: '#fff3bf'
-    tertiaryColor: '#d3f9d8'
----
 erDiagram
     direction LR
     Customer ||--o{ Subscription : has
@@ -142,21 +127,6 @@ automatic schema dumps are disabled to preserve extension-managed outbox setup.
 The subscription lifecycle makes cancellation terminal:
 
 ```mermaid
----
-config:
-  look: handDrawn
-  layout: dagre
-  theme: base
-  handDrawnSeed: 42
-  fontFamily: '"Comic Sans MS", "Chalkboard", cursive'
-  themeVariables:
-    primaryColor: '#e7f5ff'
-    primaryTextColor: '#212529'
-    primaryBorderColor: '#495057'
-    lineColor: '#495057'
-    secondaryColor: '#fff3bf'
-    tertiaryColor: '#d3f9d8'
----
 stateDiagram-v2
     [*] --> active
     active --> paused: pause
@@ -177,21 +147,6 @@ terminal; these commands do not refund charges or void open invoices.
 <summary>Payment-attempt transitions and invoice status limits</summary>
 
 ```mermaid
----
-config:
-  look: handDrawn
-  layout: dagre
-  theme: base
-  handDrawnSeed: 42
-  fontFamily: '"Comic Sans MS", "Chalkboard", cursive'
-  themeVariables:
-    primaryColor: '#e7f5ff'
-    primaryTextColor: '#212529'
-    primaryBorderColor: '#495057'
-    lineColor: '#495057'
-    secondaryColor: '#fff3bf'
-    tertiaryColor: '#d3f9d8'
----
 stateDiagram-v2
     [*] --> pending
     pending --> scheduled: schedule
@@ -211,41 +166,32 @@ billing period.
 
 ## Billing flow
 
-This flow shows one processable initial attempt. Each stage writes its next event
-to the outbox; a separate publisher pass delivers it with RabbitMQ confirms.
+This sequence shows one processable initial attempt. Each outbox write happens
+before a separate publisher invocation sends the event to RabbitMQ. The billing
+worker groups `BillingProcessorConsumer` and its `ProcessPaymentService` call.
 
 ```mermaid
----
-config:
-  look: handDrawn
-  layout: dagre
-  theme: base
-  handDrawnSeed: 42
-  fontFamily: '"Comic Sans MS", "Chalkboard", cursive'
-  themeVariables:
-    primaryColor: '#e7f5ff'
-    primaryTextColor: '#212529'
-    primaryBorderColor: '#495057'
-    lineColor: '#495057'
-    secondaryColor: '#fff3bf'
-    tertiaryColor: '#d3f9d8'
----
-flowchart TB
-    subgraph Schedule["1. Schedule an invoice"]
-        direction LR
-        Scheduler["PaymentScheduler<br/>lock and recheck subscription"] --> Draft[("Draft invoice +<br/>invoice.created in outbox")]
-    end
-    subgraph Open["2. Open the invoice"]
-        direction LR
-        PublishInvoice["Outbox publisher<br/>claim, confirm, mark published"] --> Invoice["RabbitMQ → InvoiceConsumer<br/>lock/recheck and open draft"]
-        Invoice --> Attempt[("Scheduled attempt +<br/>billing.attempt.new in outbox")]
-    end
-    subgraph Charge["3. Process the payment"]
-        direction LR
-        PublishAttempt["Next publisher pass<br/>RabbitMQ → billing consumer"] --> Payment["ProcessPaymentService<br/>lock/claim and call mock"]
-        Payment --> Outcome[("Attempt completed/failed +<br/>payment outcome in outbox")]
-    end
-    Schedule --> Open --> Charge
+sequenceDiagram
+    autonumber
+    participant Scheduler as Scheduler
+    participant DB as Database / outbox
+    participant Publisher as Outbox publisher
+    participant MQ as RabbitMQ
+    participant Invoice as Invoice consumer
+    participant Billing as Billing worker
+
+    Scheduler->>DB: Lock/recheck, create draft + invoice.created
+    Publisher->>DB: Claim unpublished batch
+    Publisher->>MQ: Publish invoice.created with confirms
+    Publisher->>DB: Mark published
+    MQ->>Invoice: Deliver invoice.created
+    Invoice->>DB: Open draft, schedule attempt + billing.attempt.new
+    Publisher->>MQ: Publish billing.attempt.new from outbox
+    MQ->>Billing: Deliver billing.attempt.new
+    Billing->>DB: Check state/version, lock and claim attempt
+    Billing->>Billing: ProcessPaymentService calls mock gateway
+    Billing->>DB: Record completed or failed attempt
+    Billing->>DB: Enqueue payment outcome
 ```
 
 The entry points are [PaymentScheduler](lib/payment_scheduler.rb),
@@ -272,21 +218,6 @@ standalone rules-based planner. It computes a decision from snapshots and return
 an optional immutable `Plan`; the billing consumer does not execute those plans.
 
 ```mermaid
----
-config:
-  look: handDrawn
-  layout: dagre
-  theme: base
-  handDrawnSeed: 42
-  fontFamily: '"Comic Sans MS", "Chalkboard", cursive'
-  themeVariables:
-    primaryColor: '#e7f5ff'
-    primaryTextColor: '#212529'
-    primaryBorderColor: '#495057'
-    lineColor: '#495057'
-    secondaryColor: '#fff3bf'
-    tertiaryColor: '#d3f9d8'
----
 flowchart TD
     Context["Context snapshots"] --> Strategy["DunningStrategy#next_plan"]
     Steps["RetryStep rules"] --> Strategy
@@ -360,6 +291,4 @@ For manual regeneration and runtime-check policy, use the
 | [`sorbet/`](sorbet) | Static-check configuration, generated RBIs, and custom Tapioca compiler |
 | [`.devcontainer/`](.devcontainer) / [`.github/`](.github) | Local services / CI and dependency automation |
 
-Diagrams use [GitHub's native Mermaid support](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-diagrams)
-with a hand-drawn look. Edit the fenced source to update them; no image exports
-or external drawing service are required.
+Diagrams use [GitHub's native Mermaid support](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-diagrams).

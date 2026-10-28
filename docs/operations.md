@@ -9,21 +9,6 @@ uses PostgreSQL native partitioning to keep unpublished work separate from
 published history.
 
 ```mermaid
----
-config:
-  look: handDrawn
-  layout: dagre
-  theme: base
-  handDrawnSeed: 42
-  fontFamily: '"Comic Sans MS", "Chalkboard", cursive'
-  themeVariables:
-    primaryColor: '#e7f5ff'
-    primaryTextColor: '#212529'
-    primaryBorderColor: '#495057'
-    lineColor: '#495057'
-    secondaryColor: '#fff3bf'
-    tertiaryColor: '#d3f9d8'
----
 flowchart TD
     Root["outbox_messages"] --> Hot["Unpublished partition: published_at IS NULL"]
     Root --> Published["Published partition tree: published_at IS NOT NULL"]
@@ -66,21 +51,6 @@ extension configuration; schema-only dumps do not preserve `pg_partman` metadata
 [`ActiveConsumer`](../app/consumers/active_consumer.rb) supplies the queue DSL.
 
 ```mermaid
----
-config:
-  look: handDrawn
-  layout: dagre
-  theme: base
-  handDrawnSeed: 42
-  fontFamily: '"Comic Sans MS", "Chalkboard", cursive'
-  themeVariables:
-    primaryColor: '#e7f5ff'
-    primaryTextColor: '#212529'
-    primaryBorderColor: '#495057'
-    lineColor: '#495057'
-    secondaryColor: '#fff3bf'
-    tertiaryColor: '#d3f9d8'
----
 flowchart TD
     Outbox["OutboxPublisherService"] --> Main["billing.events: topic exchange"]
     Main --> Invoice["invoice.created → InvoiceConsumer"]

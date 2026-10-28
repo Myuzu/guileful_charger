@@ -21,21 +21,6 @@ Ruby interface files must follow gem changes. Generation loads PR dependencies;
 publishing uses trusted default-branch code and a separately scoped credential.
 
 ```mermaid
----
-config:
-  look: handDrawn
-  layout: dagre
-  theme: base
-  handDrawnSeed: 42
-  fontFamily: '"Comic Sans MS", "Chalkboard", cursive'
-  themeVariables:
-    primaryColor: '#e7f5ff'
-    primaryTextColor: '#212529'
-    primaryBorderColor: '#495057'
-    lineColor: '#495057'
-    secondaryColor: '#fff3bf'
-    tertiaryColor: '#d3f9d8'
----
 flowchart TD
     PR["Dependabot Bundler PR"] --> Generate
     subgraph Unprivileged["pull_request: read-only token, no publishing credentials"]
