@@ -1,7 +1,7 @@
-FROM postgres:18.3
+FROM postgres:18.6
 
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
        postgresql-18-cron \
        postgresql-18-partman \
     && rm -rf /var/lib/apt/lists/*

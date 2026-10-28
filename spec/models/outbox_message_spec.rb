@@ -36,14 +36,15 @@ RSpec.describe OutboxMessage, type: :model do
   describe "database defaults and partitioning" do
     it "configures pg_partman published retention for 7 days" do
       config = ActiveRecord::Base.connection.select_one(<<~SQL.squish)
-        SELECT retention, retention_keep_table, retention_keep_index
+        SELECT retention, retention_keep_table, retention_keep_index, infinite_time_partitions
         FROM partman.part_config
         WHERE parent_table = 'public.outbox_messages_published'
       SQL
 
       expect(config).to include("retention" => "7 days",
                                 "retention_keep_table" => false,
-                                "retention_keep_index" => false)
+                                "retention_keep_index" => false,
+                                "infinite_time_partitions" => true)
     end
 
     it "creates a default published partition as a safety net" do
