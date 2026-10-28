@@ -347,6 +347,8 @@ With the development containers already running, use `make typecheck` and
 types and gem interfaces separately, and checks DSL interfaces after preparing
 the test database. Tapioca's configured DSL environment is `test`, which avoids
 connecting Hutch to RabbitMQ during generation.
+The test environment also enables boot-time eager loading under Tapioca so Rails
+framework interfaces are identical locally and in CI.
 
 After updating dependencies or changing a model/DSL, regenerate and commit the
 relevant interfaces:
