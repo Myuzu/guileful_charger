@@ -6,7 +6,7 @@ GuilefulCharger is a Rails API application that sketches a subscription billing 
 
 ### Runtime stack
 
-- Rails API application, Ruby 4.0.3 from `.ruby-version` and `Gemfile`.
+- Rails API application, Ruby 4.0.9 from `.ruby-version` and `Gemfile`.
 - PostgreSQL database with UUID primary keys, PostgreSQL enum columns, and PostgreSQL 18 `uuidv7()` support for time-ordered outbox message IDs.
 - RabbitMQ messages via Hutch.
 - MoneyRails for cent-based monetary columns.
@@ -245,13 +245,14 @@ Missing pieces:
 
 ### Prerequisites
 
-- Ruby 4.0.3 from `.ruby-version` and enforced by `Gemfile`.
-- Bundler.
+- Ruby 4.0.9 from `.ruby-version` and enforced by `Gemfile`.
+- Bundler 4.0.23, pinned in `Gemfile.lock`.
 - Docker and Docker Compose for containerized dependencies/test runs.
 
 ### Fetch dependencies locally
 
 ```bash
+gem install bundler -v 4.0.23
 bundle install
 ```
 
