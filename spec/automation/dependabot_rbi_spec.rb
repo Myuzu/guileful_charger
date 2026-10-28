@@ -119,6 +119,7 @@ RSpec.describe DependabotRbi do
   end
 
   it "accepts existing generated RBI changes alongside the lockfile" do
+    pr["changed_files"] = 2
     allow(api).to receive(:call).with("GET", "repos/#{repository}/pulls/7/files?per_page=100&page=1")
       .and_return([ { "filename" => path }, { "filename" => "Gemfile" } ])
     expect(prepare).to be(true)
@@ -168,7 +169,7 @@ RSpec.describe DependabotRbi do
     expect(api).to have_received(:call).with("POST", "graphql", hash_including(variables: { input: {
       branch:          { repositoryNameWithOwner: repository, branchName: pr["head"]["ref"] },
       expectedHeadOid: sha,
-      message:        { headline: "chore: refresh Dependabot RBI files" },
+      message:        { headline: "chore: refresh Dependabot RBI files [dependabot skip]" },
       fileChanges:    { additions: [ { path: path, contents: Base64.strict_encode64(content) } ],
                         deletions: [ { path: "sorbet/rbi/gems/old@0.9.rbi" } ] }
     } }))
@@ -204,6 +205,56 @@ RSpec.describe DependabotRbi do
       expect(files.map { |file| file["path"] }).to contain_exactly(path, "sorbet/rbi/gems/new.rbi", "sorbet/rbi/gems/deleted.rbi")
       expect(files.find { |file| file["path"].include?("deleted") }.fetch("content")).to be_nil
     end
+  end
+
+  it "ignores inherited Git hook variables when operating on a fixture repository" do
+    foreign = File.join(directory, "foreign")
+    fixture = File.join(directory, "fixture")
+    FileUtils.mkdir_p([ foreign, fixture ])
+    Dir.chdir(foreign) { described_class.git("init", "-q") }
+    inherited = { "GIT_DIR" => File.join(foreign, ".git"), "GIT_INDEX_FILE" => File.join(foreign, "hook-index") }
+    previous = inherited.to_h { |name, _value| [ name, ENV[name] ] }
+    ENV.update(inherited)
+    Dir.chdir(fixture) do
+      described_class.git("init", "-q")
+      File.write("fixture.txt", "safe")
+      described_class.git("add", "fixture.txt")
+      described_class.git("-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false", "-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture")
+      expect(described_class.git("rev-parse", "--show-toplevel").strip).to eq(File.realpath(fixture))
+    end
+    expect(File).not_to exist(inherited.fetch("GIT_INDEX_FILE"))
+    Dir.chdir(foreign) { expect(described_class.git("log", "--all", "--oneline")).to eq("") }
+  ensure
+    previous&.each { |name, value| ENV[name] = value }
+  end
+
+  it "checks the terminal page at the file limit and rejects overflowing or incomplete listings" do
+    pr["changed_files"] = 1000
+    page = Array.new(100) { { "filename" => "Gemfile.lock" } }
+    (1..10).each do |number|
+      allow(api).to receive(:call).with("GET", "repos/#{repository}/pulls/7/files?per_page=100&page=#{number}").and_return(page)
+    end
+    terminal = "repos/#{repository}/pulls/7/files?per_page=100&page=11"
+    allow(api).to receive(:call).with("GET", terminal).and_return([])
+    expect(prepare).to be(true)
+    expect(api).to have_received(:call).with("GET", terminal)
+    allow(api).to receive(:call).with("GET", terminal).and_return([ { "filename" => "Gemfile.lock" } ])
+    expect { prepare }.to raise_error(described_class::Error, /listing exceeds/)
+    pr["changed_files"] = 999
+    allow(api).to receive(:call).with("GET", terminal).and_return([])
+    expect { prepare }.to raise_error(described_class::Error, /Incomplete/)
+  end
+
+  it "skips stale preparation and publication successfully without minting a changed result" do
+    env = { "GITHUB_REPOSITORY" => repository, "GITHUB_EVENT_PATH" => artifact,
+            "GITHUB_OUTPUT" => File.join(directory, "outputs") }
+    allow(described_class).to receive(:prepare).and_raise(described_class::StaleHead, "new head")
+    allow(described_class).to receive(:publish).and_raise(described_class::StaleHead, "new head")
+    expect do
+      expect(described_class.run([ "prepare", artifact, plan_path ], env)).to eq(0)
+      expect(described_class.run([ "publish", artifact ], env)).to eq(0)
+    end.to output(/Skipping outdated generation: new head/).to_stdout
+    expect(File.read(env["GITHUB_OUTPUT"])).to eq("changed=false\n")
   end
 
   it "rejects unexpected generated paths, symlinks, oversized bundles, and failed git commands" do

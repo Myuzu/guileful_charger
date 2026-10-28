@@ -38,15 +38,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev postgresql-client
 
       - name: Start a disposable test database
-        run: |
-          docker build -f .devcontainer/postgres/Dockerfile -t rbi-postgres .
-          docker run -d --name postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 rbi-postgres
-          for attempt in {1..60}; do
-            if pg_isready -h localhost -U postgres; then exit 0; fi
-            echo "Waiting for PostgreSQL ($attempt/60)"
-            sleep 1
-          done
-          exit 1
+        run: bash script/ci_postgres.sh
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -60,8 +52,6 @@ jobs:
           # Full regeneration also covers Tapioca/Sorbet and cross-gem changes.
           bin/tapioca gems --all
           CI=1 bin/tapioca dsl
-          bin/tapioca gems --verify
-          CI=1 bin/tapioca dsl --verify
           bundle exec srb tc
           bin/rspec
 

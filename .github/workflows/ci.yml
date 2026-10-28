@@ -50,17 +50,7 @@ jobs:
           bundler-cache: true
 
       - name: Test publisher with complete line coverage
-        run: |
-          bundle exec ruby -rcoverage <<'RUBY'
-          Coverage.start(lines: true)
-          require "rspec/core"
-          status = RSpec::Core::Runner.run(["spec/automation"])
-          lines = Coverage.result.fetch(File.expand_path("script/dependabot_rbi.rb")).fetch(:lines)
-          missed = lines.each_index.select { |index| lines[index] == 0 }.map { |index| index + 1 }
-          abort "Uncovered publisher lines: #{missed.join(', ')}" unless missed.empty?
-          puts "Publisher line coverage: 100%"
-          exit status
-          RUBY
+        run: bundle exec ruby bin/test_tooling automation
 
   typecheck:
     runs-on: ubuntu-latest
@@ -109,19 +99,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Build and start PostgreSQL with pg_partman and pg_cron
-        run: |
-          docker build -f .devcontainer/postgres/Dockerfile -t guileful-postgres .
-          docker run -d \
-            --name postgres \
-            -e POSTGRES_USER=postgres \
-            -e POSTGRES_PASSWORD=postgres \
-            -e POSTGRES_DB=guileful_charger_development \
-            -p 5432:5432 \
-            guileful-postgres \
-            postgres \
-              -c shared_preload_libraries=pg_cron \
-              -c cron.database_name=guileful_charger_development
-          until pg_isready -h localhost -U postgres; do sleep 1; done
+        run: bash script/ci_postgres.sh
 
       - name: Enable RabbitMQ plugins and check deprecated features
         env:
@@ -146,18 +124,13 @@ jobs:
 
       - name: Run tests
         if: ${{ !cancelled() && steps.test_database.outcome == 'success' }}
-        run: |
-          bundle exec ruby -rcoverage <<'RUBY'
-          Coverage.start(lines: true)
-          require "rspec/core"
-          status = RSpec::Core::Runner.run(["spec"])
-          results = Coverage.result
-          %w[config/initializers/sorbet.rb lib/sorbet_runtime_policy.rb sorbet/tapioca/compilers/dry_type_namespaces.rb].each do |path|
-            lines = results.fetch(File.expand_path(path)).fetch(:lines)
-            missed = lines.each_index.select { |index| lines[index] == 0 }.map { |index| index + 1 }
-            abort "Uncovered lines in #{path}: #{missed.join(', ')}" unless missed.empty?
-            puts "#{path}: 100% line coverage"
-          end
-          exit status
-          RUBY
+        run: bin/rspec
+
+      - name: Test runtime policy with coverage in a separate process
+        if: ${{ !cancelled() && steps.test_database.outcome == 'success' }}
+        run: bundle exec ruby bin/test_tooling runtime
+
+      - name: Test Tapioca compiler with coverage in a separate process
+        if: ${{ !cancelled() && steps.test_database.outcome == 'success' }}
+        run: bundle exec ruby bin/test_tooling compiler
 

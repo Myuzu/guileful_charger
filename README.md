@@ -376,10 +376,15 @@ starts at `typed: true` with a typed return from the factory used by billing. Pr
 and add `sig` declarations with tests; a passing baseline does not mean the entire
 application is statically typed.
 
-Method signature violations raise in development/test. Production logs the method
-and violation kind without argument or return values; an annotation mismatch alone
-does not abort billing. This policy does not suppress dry-rb validation errors or
-explicit Sorbet assertions. The production image excludes development/test gems
+Method signature violations raise in development/test. Production reports call
+mismatches, signature builder errors, and signature validation errors through
+[Sorbet's supported handlers](https://sorbet.org/docs/tconfiguration). Logs include
+the method, violation kind, and source location, without argument/return values
+or exception messages. Reports are limited to once per method/kind per minute,
+with bounded tracking memory. Ruby exceptions inside lazy signature blocks
+(such as an undefined constant), dry-rb validation errors, and explicit Sorbet
+assertions still raise. Types named in signatures must exist at runtime.
+The production image excludes development/test gems
 and the RBI tree; only `sorbet-runtime` ships for application signatures.
 
 Compatibility findings (verified October 28, 2026):
@@ -425,19 +430,26 @@ updates remain individual PRs. Docker image updates are not configured here.
 
 Bundler PRs opened or updated by Dependabot trigger `Dependabot RBI generation`.
 It checks out the exact PR head without persisted credentials, prepares a disposable
-test database, regenerates gem and Rails DSL interfaces, and runs verification,
-Sorbet, and RSpec. Full gem generation accounts for Tapioca/Sorbet upgrades and
+test database, regenerates gem and Rails DSL interfaces, and runs Sorbet and
+RSpec. Both workflows use `script/ci_postgres.sh` for matching database/pg_cron
+configuration. Full gem generation accounts for Tapioca/Sorbet upgrades and
 cross-gem reflection changes. This job has no publishing credentials.
 
 `Publish Dependabot RBIs` runs from the default branch after successful generation.
 It downloads the JSON artifact into a temporary directory, validates the originating
 run and current PR, and permits only regular RBI content under `sorbet/rbi/gems`
 and `sorbet/rbi/dsl`. Forks, source/workflow changes, shim/annotation changes,
-traversal paths, oversized content, and stale heads are rejected. A dedicated
+traversal paths, oversized content, and incomplete PR file listings are rejected.
+Superseded PR heads skip successfully, including races during publication. A dedicated
 GitHub App commits the interfaces with an atomic expected-head check. The App's
 commit triggers normal CI; it does not trigger another generation run because
 generation requires the Dependabot actor. No dependency update is automatically
 merged, and the existing interface checks remain enabled.
+
+Generated commits include `[dependabot skip]`, which [allows Dependabot to rebase
+over those commits](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/manage-your-dependency-security/manage-dependabot-prs#allowing-dependabot-to-rebase-and-force-push-over-extra-commits).
+After a rebase, interfaces are regenerated for the new dependency head. This
+marker does not skip GitHub Actions CI.
 
 One-time App setup:
 
@@ -470,8 +482,17 @@ The publisher uses only Ruby standard libraries and `gh`. Run its regression tes
 without Rails or a database with:
 
 ```bash
-bundle exec rspec spec/automation
+bundle exec ruby bin/test_tooling automation
 ```
+
+CI runs the Rails suite without coverage instrumentation. Focused runtime policy
+and Tapioca compiler coverage run in separate Ruby processes with
+`bundle exec ruby bin/test_tooling runtime` and `bundle exec ruby bin/test_tooling compiler`.
+The compiler specs live outside `spec/` because `tapioca/internal` globally patches
+Ruby reflection, signatures, and autoloading. They must not load into the Rails
+suite. Each tooling profile requires 100% line coverage of its implementation.
+`make test-tooling` runs all three profiles in containers after preparing the test
+database; `make check` and `make test-all` include them.
 
 ## Deployment and Infrastructure Notes
 

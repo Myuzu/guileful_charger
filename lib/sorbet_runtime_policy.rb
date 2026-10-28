@@ -1,11 +1,72 @@
-# Keep gradual signatures observable without turning annotation mistakes into
-# failed billing operations. Never log inspected arguments or return values.
+# Report Sorbet's supported failures without logging inspected values or error
+# messages. Ruby exceptions inside sig blocks and inline assertions still raise.
 module SorbetRuntimePolicy
-  def self.configure(production:, logger:)
+  class Reporter
+    INTERVAL = 60
+    MAX_KEYS = 1000
+
+    def initialize(logger, clock)
+      @logger = logger
+      @clock = clock
+      @reported = {}
+      @lock = Mutex.new
+    end
+
+    def report(kind:, method: nil, location: nil)
+      label = method_label(method)
+      source = source_label(location || method&.source_location)
+      key = [ label, kind, method.nil? ? source : nil ]
+      now = @clock.call
+      emit = @lock.synchronize do
+        previous = @reported[key]
+        next false if previous && now - previous < INTERVAL
+
+        @reported.clear if @reported.size >= MAX_KEYS && !@reported.key?(key)
+        @reported[key] = now
+        true
+      end
+      return unless emit
+
+      @logger.error("Sorbet #{kind}: #{label}#{source ? " at #{source}" : ''}")
+    end
+
+    private
+
+    def method_label(method)
+      return "unknown method" unless method
+
+      owner = method.owner
+      if owner.singleton_class?
+        attached = owner.attached_object
+        name = attached.is_a?(Module) ? attached.name : attached.class.name
+        "#{name || '(anonymous)'}.#{method.name}"
+      else
+        "#{owner.name || '(anonymous)'}##{method.name}"
+      end
+    end
+
+    def source_label(location)
+      case location
+      when Thread::Backtrace::Location
+        "#{location.path}:#{location.lineno}"
+      when Array
+        location.join(":")
+      end
+    end
+  end
+
+  def self.configure(production:, logger:, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) })
     return unless production
 
+    reporter = Reporter.new(logger, clock)
     T::Configuration.call_validation_error_handler = lambda do |signature, options|
-      logger.error("Sorbet signature mismatch: #{signature.method.owner}##{signature.method.name} (#{options[:kind]})")
+      reporter.report(kind: options[:kind], method: signature&.method, location: options[:location])
+    end
+    T::Configuration.sig_builder_error_handler = lambda do |error, location|
+      reporter.report(kind: "sig builder (#{error.class.name})", location: location)
+    end
+    T::Configuration.sig_validation_error_handler = lambda do |error, options|
+      reporter.report(kind: "sig validation (#{error.class.name})", method: options[:method])
     end
   end
 end

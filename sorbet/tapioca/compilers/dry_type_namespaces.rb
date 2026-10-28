@@ -11,7 +11,7 @@ module Tapioca
         ConstantType = type_member { { fixed: Module } }
 
         def self.gather_constants
-          [ ::Types, ::Rebilling::Types ]
+          all_modules.select { |namespace| namespace == ::Types || namespace < ::Types }
         end
 
         def decorate

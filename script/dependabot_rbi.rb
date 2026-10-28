@@ -8,6 +8,7 @@ require "open3"
 # or executing PR code. Artifact contents are data used only in a GitHub commit.
 module DependabotRbi
   class Error < StandardError; end
+  class StaleHead < Error; end
 
   MAX_FILES = 1000
   MAX_BYTES = 64 * 1024 * 1024
@@ -24,8 +25,11 @@ module DependabotRbi
       args = [ "gh", "api", "--method", method, path ]
       args.concat([ "--input", "-" ]) if body
       stdout, _stderr, status = Open3.capture3(*args, stdin_data: body ? JSON.generate(body) : "")
+      result = stdout.empty? ? {} : JSON.parse(stdout)
+      if result.is_a?(Hash) && Array(result["errors"]).any? { |error| error["type"] == "STALE_DATA" }
+        raise StaleHead, "PR head advanced during publication"
+      end
       DependabotRbi.check(status.success?, "GitHub request failed: #{method} #{path}")
-      result = JSON.parse(stdout)
       DependabotRbi.check(!result.is_a?(Hash) || !result.key?("errors"), "GitHub rejected the request; the branch may have advanced")
       result
     end
@@ -59,7 +63,8 @@ module DependabotRbi
   end
 
   def self.git(*args)
-    stdout, _stderr, status = Open3.capture3("git", *args)
+    environment = ENV.keys.grep(/\AGIT_/).to_h { |name| [ name, nil ] }
+    stdout, _stderr, status = Open3.capture3(environment, "git", *args)
     check(status.success?, "Git command failed")
     stdout
   end
@@ -88,7 +93,7 @@ module DependabotRbi
     branch = pr.dig("head", "ref")
     check(branch.is_a?(String) && branch.start_with?("dependabot/bundler/") &&
       %r{\A[A-Za-z0-9_./-]+\z}.match?(branch) && !branch.include?(".."), "Expected a Bundler Dependabot branch")
-    check(pr.dig("head", "sha") == sha, "PR head changed; wait for regeneration on the new commit")
+    raise StaleHead, "PR head changed; wait for regeneration on the new commit" unless pr.dig("head", "sha") == sha
   end
 
   def self.prepare(event:, artifact:, output:, repository:, api: Github.new)
@@ -107,16 +112,20 @@ module DependabotRbi
     check(pr.dig("base", "ref") == event.dig("repository", "default_branch"), "Expected the default target branch")
     check(pr.fetch("changed_files") <= MAX_FILES, "PR exceeds the file limit")
     page = 1
+    listed = 0
     loop do
       files = api.call("GET", "repos/#{repository}/pulls/#{number}/files?per_page=100&page=#{page}")
+      listed += files.size
+      check(listed <= MAX_FILES, "PR file listing exceeds the limit")
       files.each do |file|
         names = [ file.fetch("filename"), file["previous_filename"] ].compact
         check(names.all? { |name| %w[Gemfile Gemfile.lock].include?(name) || rbi_path?(name) }, "PR changes non-dependency source files")
       end
-      break if files.size < 100 || page == 10
+      break if files.size < 100
 
       page += 1
     end
+    check(listed == pr.fetch("changed_files"), "Incomplete or changed PR file listing")
     plan = payload.merge("head_ref" => pr.fetch("head").fetch("ref"), "files" => validate_files(payload.fetch("files")))
     File.write(output, JSON.generate(plan))
     !plan["files"].empty?
@@ -137,7 +146,7 @@ module DependabotRbi
     deletions = files.select { |file| file["content"].nil? }.map { |file| { path: file["path"] } }
     input = { branch:          { repositoryNameWithOwner: repository, branchName: plan.fetch("head_ref") },
               expectedHeadOid: plan.fetch("head_sha"),
-              message:        { headline: "chore: refresh Dependabot RBI files" },
+              message:        { headline: "chore: refresh Dependabot RBI files [dependabot skip]" },
               fileChanges:    { additions: additions, deletions: deletions } }
     result = api.call("POST", "graphql", { query: COMMIT_QUERY, variables: { input: input } })
     result.fetch("data").fetch("createCommitOnBranch").fetch("commit").fetch("url")
@@ -157,6 +166,12 @@ module DependabotRbi
       puts publish(plan: read_json(args.fetch(1)), repository: repository)
     else
       raise Error, "Expected collect, prepare, or publish"
+    end
+    0
+  rescue StaleHead => error
+    puts "Skipping outdated generation: #{error.message}"
+    if args.first == "prepare"
+      File.open(env.fetch("GITHUB_OUTPUT"), "a") { |file| file.puts("changed=false") }
     end
     0
   rescue Error, IndexError, JSON::ParserError, ArgumentError => error

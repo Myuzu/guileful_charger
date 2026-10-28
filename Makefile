@@ -2,7 +2,7 @@
 DOCKER_COMPOSE_FILE := .devcontainer/compose.yaml
 RAILS_APP_SERVICE := rails-app
 
-.PHONY: all help docker-build-test docker-compose-up-test docker-compose-down-test db-test-prepare bootstrap test lint typecheck rbi-verify security-check test-all check clean-docker-test
+.PHONY: all help docker-build-test docker-compose-up-test docker-compose-down-test db-test-prepare bootstrap test test-tooling lint typecheck rbi-verify security-check test-all check clean-docker-test
 
 .DEFAULT_GOAL := help
 
@@ -28,6 +28,11 @@ db-test-prepare: docker-compose-up-test ## Prepare the test database inside the 
 test: db-test-prepare ## Run RSpec tests inside the Docker container. Usage: make test RSPEC_ARGS="spec/models/customer_spec.rb:123 --seed 123"
 	docker-compose -f $(DOCKER_COMPOSE_FILE) exec $(RAILS_APP_SERVICE) bin/rspec $(RSPEC_ARGS)
 
+test-tooling: db-test-prepare ## Check tooling coverage in isolated Ruby processes
+	docker-compose -f $(DOCKER_COMPOSE_FILE) exec -T $(RAILS_APP_SERVICE) bundle exec ruby bin/test_tooling automation
+	docker-compose -f $(DOCKER_COMPOSE_FILE) exec -T $(RAILS_APP_SERVICE) bundle exec ruby bin/test_tooling runtime
+	docker-compose -f $(DOCKER_COMPOSE_FILE) exec -T -e CI=1 $(RAILS_APP_SERVICE) bundle exec ruby bin/test_tooling compiler
+
 lint: docker-compose-up-test ## Run RuboCop inside the Docker container. Usage: make lint RUBOCOP_ARGS="app/services"
 	docker-compose -f $(DOCKER_COMPOSE_FILE) exec $(RAILS_APP_SERVICE) bin/rubocop $(RUBOCOP_ARGS)
 
@@ -41,10 +46,10 @@ rbi-verify: db-test-prepare ## Verify committed gem and DSL interfaces after pre
 	docker-compose -f $(DOCKER_COMPOSE_FILE) exec -T $(RAILS_APP_SERVICE) bin/tapioca gems --verify
 	docker-compose -f $(DOCKER_COMPOSE_FILE) exec -T -e CI=1 $(RAILS_APP_SERVICE) bin/tapioca dsl --verify
 
-test-all: docker-build-test docker-compose-up-test db-test-prepare test ## Build, setup, and run all tests
+test-all: docker-build-test docker-compose-up-test db-test-prepare test test-tooling ## Build, setup, and run all tests
 	@echo "All tests completed successfully."
 
-check: test lint typecheck rbi-verify ## Run tests, linting, type checking, and interface verification
+check: test test-tooling lint typecheck rbi-verify ## Run tests, tooling coverage, linting, type checking, and interface verification
 	@echo "Checks completed successfully."
 
 clean-docker-test: ## Remove test Docker images and volumes

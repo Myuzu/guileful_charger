@@ -12,11 +12,18 @@ RSpec.describe DependabotRbi::Github do
     expect(Open3).to have_received(:capture3).with("gh", "api", "--method", "POST", "graphql", "--input", "-", stdin_data: '{"value":"$(unsafe)"}')
   end
 
-  it "rejects HTTP and GraphQL errors including concurrent head changes" do
+  it "rejects HTTP and GraphQL errors" do
     success = instance_double(Process::Status, success?: true)
     failure = instance_double(Process::Status, success?: false)
-    allow(Open3).to receive(:capture3).and_return([ "", "private detail", failure ], [ '{"errors":[{"type":"STALE_DATA"}]}', "", success ])
+    allow(Open3).to receive(:capture3).and_return([ "", "private detail", failure ], [ '{"errors":[{"type":"FORBIDDEN"}]}', "", success ])
     expect { described_class.new.call("GET", "repos/owner/project") }.to raise_error(DependabotRbi::Error, /request failed/)
     expect { described_class.new.call("POST", "graphql", {}) }.to raise_error(DependabotRbi::Error, /branch may have advanced/)
+  end
+
+  it "recognizes concurrent head changes even when gh exits unsuccessfully" do
+    failure = instance_double(Process::Status, success?: false)
+    allow(Open3).to receive(:capture3).and_return([ '{"errors":[{"type":"STALE_DATA"}]}', "", failure ])
+
+    expect { described_class.new.call("POST", "graphql", {}) }.to raise_error(DependabotRbi::StaleHead)
   end
 end
