@@ -1,7 +1,7 @@
-# typed: ignore
+# typed: false
 
-# Dry.Types builds a module dynamically; its used constants are declared in
-# sorbet/rbi/dsl/types.rbi for static analysis.
+require_relative "../../lib/dry_type_catalog"
+
 module Types
-  include Dry.Types
+  include ::DryTypeCatalog
 end

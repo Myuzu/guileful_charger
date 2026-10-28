@@ -52,6 +52,21 @@ jobs:
       - name: Test publisher with complete line coverage
         run: bundle exec ruby bin/test_tooling automation
 
+  compiler:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Test standalone compiler with complete line coverage
+        run: bin/test_tooling compiler
+
   typecheck:
     runs-on: ubuntu-latest
     steps:
@@ -125,8 +140,4 @@ jobs:
       - name: Run tests
         if: ${{ !cancelled() && steps.test_database.outcome == 'success' }}
         run: bin/rspec
-
-      - name: Test Tapioca compiler with coverage in a separate process
-        if: ${{ !cancelled() && steps.test_database.outcome == 'success' }}
-        run: bundle exec ruby bin/test_tooling compiler
 

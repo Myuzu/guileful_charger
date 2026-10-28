@@ -69,4 +69,5 @@ jobs:
           name: dependabot-rbi-${{ github.event.pull_request.head.sha }}
           path: tmp/dependabot-rbi.json
           if-no-files-found: error
+          overwrite: true
           retention-days: 3

@@ -1,19 +1,21 @@
 # typed: false
 
 # rubocop:disable RSpec/ExampleLength, RSpec/MultipleExpectations
-require_relative "../../../../../spec/rails_helper"
+require "spec_helper"
 require "tapioca/internal"
 require "tmpdir"
 require "open3"
+require_relative "../../../../../config/initializers/dry"
+require_relative "../../../../../app/services/rebilling/types"
 require_relative "../../../../../sorbet/tapioca/compilers/dry_type_namespaces"
 
 RSpec.describe Tapioca::Dsl::Compilers::DryTypeNamespaces do
   let(:pipeline) { Tapioca::Dsl::Pipeline.new(requested_constants: described_class.gather_constants) }
 
   it "discovers both namespaces and generates the complete shared validator catalog" do
-    expect(described_class.gather_constants).to include(::Types, ::Rebilling::Types)
+    expect(described_class.gather_constants).to include(::DryTypeCatalog, ::Types, ::Rebilling::Types)
 
-    [ ::Types, ::Rebilling::Types ].each do |namespace|
+    [ ::DryTypeCatalog, ::Types, ::Rebilling::Types ].each do |namespace|
       file = RBI::File.new(strictness: "true")
       compiler = described_class.new(pipeline, file.root, namespace)
       compiler.decorate
@@ -37,9 +39,9 @@ RSpec.describe Tapioca::Dsl::Compilers::DryTypeNamespaces do
   end
 
   it "reflects new validators in both namespaces and skips helper values and classes" do
-    stub_const("Types::NewValidator", ::Types::String)
-    stub_const("Types::HelperValue", 42)
-    stub_const("Types::HelperClass", Class.new)
+    stub_const("DryTypeCatalog::NewValidator", ::Types::String)
+    stub_const("DryTypeCatalog::HelperValue", 42)
+    stub_const("DryTypeCatalog::HelperClass", Class.new)
 
     [ ::Types, ::Rebilling::Types ].each do |namespace|
       file = RBI::File.new(strictness: "true")

@@ -34,7 +34,7 @@ Sorbet/TrueSigil:
 Sorbet/FalseSigil:
   Exclude:
     # Dry.Types creates the ancestor dynamically; Sorbet cannot resolve it.
-    - "config/initializers/dry.rb"
+    - "lib/dry_type_catalog.rb"
 
 Sorbet/ConstantsFromStrings:
   Exclude:

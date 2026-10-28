@@ -408,12 +408,14 @@ Compatibility findings (verified October 28, 2026):
   The project uses Ruby 4.0.9.
 - **dry-types 1.9.1:** runtime coercions and constraints remain in dry-rb.
   `Dry.Types` generates a module dynamically, which [Sorbet cannot use as a static ancestor](https://sorbet.org/docs/error-reference#4002).
-  Only `config/initializers/dry.rb` uses `typed: ignore`; the tested local
-  `DryTypeNamespaces` compiler generates both namespaces from the runtime catalog,
+  Only `lib/dry_type_catalog.rb` uses `typed: ignore`; the tested local
+  `DryTypeNamespaces` compiler generates the shared catalog and both namespaces,
   including inherited constants and dry-types builder methods, without duplicated
   hand-kept shim lists.
-  `Rebilling::Types` includes the named
-  global module. These validator objects are explicitly untyped and must not be
+  `Types` and `Rebilling::Types` include the explicit `DryTypeCatalog` primitives.
+  Rebilling loads without Rails; application extensions added to global `Types`
+  do not flow into it. The explicitly required catalog is excluded from Zeitwerk
+  reloading, so restart after editing it. Validator objects are untyped and must not be
   used as Sorbet class types; use `::Integer`, `::String`, `T.nilable`, etc. in signatures.
 - **dry-monads 1.11.0:** the public `Dry::Monads::Result::Mixin` makes ancestors
   visible to Sorbet. Reflected gem RBIs expose the API, but do not infer generic
@@ -467,6 +469,14 @@ commit triggers normal CI; it does not trigger another generation run because
 generation requires the Dependabot actor. No dependency update is automatically
 merged, and the existing interface checks remain enabled.
 
+Missing run PR associations are checked against current PR state before the
+association requirement: closed or advanced heads skip; an unassociated current
+head is still rejected. A recorded regression uses the empty run association and
+closed state from [run 40694907972](https://github.com/Myuzu/guileful_charger/actions/runs/40694907972)
+and [PR #276](https://github.com/Myuzu/guileful_charger/pull/276), replayed with a
+generation-origin header. Artifact uploads overwrite the same head's previous
+artifact so re-running generation succeeds.
+
 Generated commits include `[dependabot skip]`, which [allows Dependabot to rebase
 over those commits](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/manage-your-dependency-security/manage-dependabot-prs#allowing-dependabot-to-rebase-and-force-push-over-extra-commits).
 After a rebase, interfaces are regenerated for the new dependency head. This
@@ -506,15 +516,25 @@ without Rails or a database with:
 bundle exec ruby bin/test_tooling automation
 ```
 
+The shared PostgreSQL bootstrap replaces only its dedicated
+`guileful-charger-ci-postgres` container on retry and removes it on failure.
+
 CI runs the Rails suite, including eager signature validation, without coverage
 instrumentation. Focused tooling specs live under `test/tooling/` and do not also
 run in `bin/rspec`. Automation/boot and Tapioca compiler coverage run in separate
 Ruby processes with `bin/test_tooling automation` and `bin/test_tooling compiler`.
+Both profiles run without a database. Compiler dependencies load before coverage;
+this profile loads the standalone catalogs and Tapioca, without booting Rails.
+It has a separate CI job. An existing outer coverage session is preserved with
+`Coverage.peek_result`; the runner stops only sessions started by its launcher.
+Profile paths resolve from the project root, and missing files report a coverage
+failure instead of a backtrace. In-process boot tests stub Bootsnap setup; fresh
+child processes exercise the real startup path.
 The compiler specs live outside `spec/` because `tapioca/internal` globally patches
 Ruby reflection, signatures, and autoloading. They must not load into the Rails
 suite. Each tooling profile requires 100% line coverage of its implementation.
-`make test-tooling` runs both profiles in containers after preparing the test
-database; `make check` and `make test-all` include them.
+`make test-tooling` runs both profiles in containers; `make check` and
+`make test-all` include them.
 
 ## Deployment and Infrastructure Notes
 

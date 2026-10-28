@@ -7,7 +7,14 @@ require "open3"
 RSpec.describe "Sorbet boot configuration" do # rubocop:disable RSpec/DescribeClass
   let(:boot) { File.expand_path("../../../config/boot.rb", __dir__) }
   let(:application) { File.expand_path("../../../config/application.rb", __dir__) }
-  let(:keys) { %w[RAILS_ENV RACK_ENV SORBET_RUNTIME_DEFAULT_CHECKED_LEVEL SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS] }
+  let(:keys) { %w[BUNDLE_GEMFILE RAILS_ENV RACK_ENV SORBET_RUNTIME_DEFAULT_CHECKED_LEVEL SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS] }
+
+  before do
+    # Exercise boot's assignments in-process without installing global cache hooks.
+    # Fresh-process examples below exercise the real requires.
+    allow(TOPLEVEL_BINDING.receiver).to receive(:require).and_call_original
+    allow(TOPLEVEL_BINDING.receiver).to receive(:require).with("bootsnap/setup").and_return(false)
+  end
 
   around do |example|
     previous = keys.to_h { |key| [ key, ENV[key] ] }

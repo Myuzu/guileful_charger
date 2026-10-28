@@ -2,6 +2,13 @@
 ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../Gemfile", __dir__)
 require "bundler/setup"
 require "coverage"
-Coverage.start(lines: true) unless Coverage.running?
+if ARGV.first == "compiler"
+  require "rspec"
+  require "tapioca/internal"
+  require_relative "../config/initializers/dry"
+  require_relative "../app/services/rebilling/types"
+end
+owns_coverage = !Coverage.running?
+Coverage.start(lines: true) if owns_coverage
 require_relative "../script/test_coverage_runner"
-exit TestCoverageRunner.run(ARGV)
+exit TestCoverageRunner.run(ARGV, owns_coverage: owns_coverage)

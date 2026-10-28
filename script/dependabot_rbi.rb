@@ -13,6 +13,7 @@ module DependabotRbi
   MAX_FILES = 1000
   MAX_BYTES = 64 * 1024 * 1024
   MAX_FILE_BYTES = 4 * 1024 * 1024
+  SHA_PATTERN = /\A[0-9a-f]{40}\z/
   PATH_PATTERN = %r{\Asorbet/rbi/(?:gems|dsl)/(?:[A-Za-z0-9_@.+-]+/)*[A-Za-z0-9_@.+-]+\.rbi\z}
   COMMIT_QUERY = <<~GRAPHQL
     mutation($input: CreateCommitOnBranchInput!) {
@@ -32,7 +33,9 @@ module DependabotRbi
         DependabotRbi.check(status.success?, failure)
         raise Error, "GitHub returned invalid JSON: #{method} #{path}"
       end
-      if result.is_a?(Hash) && Array(result["errors"]).any? { |error| error["type"] == "STALE_DATA" }
+      errors = result.is_a?(Hash) && result.key?("errors") ? result["errors"] : []
+      DependabotRbi.check(errors.is_a?(Array) && errors.all? { |error| error.is_a?(Hash) }, "Invalid GitHub errors response")
+      if errors.any? { |error| error["type"] == "STALE_DATA" }
         raise StaleHead, "PR head advanced during publication"
       end
       DependabotRbi.check(status.success?, failure)
@@ -51,7 +54,9 @@ module DependabotRbi
 
   def self.read_json(path)
     check(File.lstat(path).file? && File.size(path) <= MAX_BYTES, "Expected a regular JSON file smaller than 64 MiB")
-    JSON.parse(File.read(path, encoding: "UTF-8"))
+    result = JSON.parse(File.read(path, encoding: "UTF-8"))
+    check(result.is_a?(Hash), "Expected a JSON object")
+    result
   end
 
   def self.validate_files(files)
@@ -119,12 +124,17 @@ module DependabotRbi
       run.dig("head_repository", "full_name") == repository, "Unexpected generation workflow origin")
     payload = read_json(artifact)
     check(payload["version"] == 1 && payload["repository"] == repository &&
-      payload["head_sha"] == run["head_sha"] && /\A[0-9a-f]{40}\z/.match?(payload["head_sha"].to_s), "Artifact identity mismatch")
+      payload["head_sha"] == run["head_sha"] && SHA_PATTERN.match?(payload["head_sha"].to_s), "Artifact identity mismatch")
     number = payload["pull_request"]
-    check(number.is_a?(Integer) && number.positive? && run.fetch("pull_requests").any? { |pr| pr["number"] == number },
+    check(number.is_a?(Integer) && number.positive?, "Invalid artifact PR number")
+    associations = run.fetch("pull_requests")
+    check(associations.is_a?(Array) && associations.all? { |pr| pr.is_a?(Hash) }, "Invalid workflow PR associations")
+    associated = associations.any? { |pr| pr["number"] == number }
+    check(associations.empty? || associated,
       "Artifact does not belong to this workflow's PR")
     pr = api.call("GET", "repos/#{repository}/pulls/#{number}")
     validate_pr(pr, repository: repository, sha: payload["head_sha"])
+    check(associated, "Artifact does not belong to this workflow's current PR")
     check(pr.dig("base", "ref") == event.dig("repository", "default_branch"), "Expected the default target branch")
     check(pr.fetch("changed_files") <= MAX_FILES, "PR exceeds the file limit")
     page = 1
@@ -169,32 +179,33 @@ module DependabotRbi
   end
 
   def self.run(args, env = ENV)
-    repository = env.fetch("GITHUB_REPOSITORY")
-    check(%r{\A[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+\z}.match?(repository) &&
-      !%w[. ..].include?(repository.split("/").last), "Invalid repository")
-    case args.fetch(0)
-    when "gem-arguments"
-      base = args.fetch(1)
-      check(/\A[0-9a-f]{40}\z/.match?(base), "Invalid base SHA")
-      puts gem_arguments(git("show", "#{base}:Gemfile.lock"), File.read("Gemfile.lock"))
-    when "collect"
-      collect(repository: repository, number: env.fetch("PR_NUMBER"), output: args.fetch(1))
-    when "prepare"
-      changed = prepare(event: read_json(env.fetch("GITHUB_EVENT_PATH")), artifact: args.fetch(1), output: args.fetch(2), repository: repository)
-      File.open(env.fetch("GITHUB_OUTPUT"), "a") { |file| file.puts("changed=#{changed}") }
-    when "publish"
-      puts publish(plan: read_json(args.fetch(1)), repository: repository)
-    else
-      raise Error, "Expected gem-arguments, collect, prepare, or publish"
+    begin
+      repository = env.fetch("GITHUB_REPOSITORY")
+      check(%r{\A[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+\z}.match?(repository) &&
+        !%w[. ..].include?(repository.split("/").last), "Invalid repository")
+      case args.fetch(0)
+      when "gem-arguments"
+        base = args.fetch(1)
+        check(SHA_PATTERN.match?(base), "Invalid base SHA")
+        puts gem_arguments(git("show", "#{base}:Gemfile.lock"), File.read("Gemfile.lock"))
+      when "collect"
+        collect(repository: repository, number: env.fetch("PR_NUMBER"), output: args.fetch(1))
+      when "prepare"
+        changed = prepare(event: read_json(env.fetch("GITHUB_EVENT_PATH")), artifact: args.fetch(1), output: args.fetch(2), repository: repository)
+        File.open(env.fetch("GITHUB_OUTPUT"), "a") { |file| file.puts("changed=#{changed}") }
+      when "publish"
+        puts publish(plan: read_json(args.fetch(1)), repository: repository)
+      else
+        raise Error, "Expected gem-arguments, collect, prepare, or publish"
+      end
+    rescue StaleHead => error
+      puts "Skipping outdated generation: #{error.message}"
+      if args.first == "prepare"
+        File.open(env.fetch("GITHUB_OUTPUT"), "a") { |file| file.puts("changed=false") }
+      end
     end
     0
-  rescue StaleHead => error
-    puts "Skipping outdated generation: #{error.message}"
-    if args.first == "prepare"
-      File.open(env.fetch("GITHUB_OUTPUT"), "a") { |file| file.puts("changed=false") }
-    end
-    0
-  rescue Error, IndexError, JSON::ParserError, ArgumentError => error
+  rescue Error, IndexError, JSON::ParserError, ArgumentError, TypeError, SystemCallError => error
     warn error.message
     1
   end

@@ -47,6 +47,15 @@ RSpec.describe "CI PostgreSQL bootstrap" do # rubocop:disable RSpec/DescribeClas
 
     expect(status).not_to be_success
     expect(calls.scan("probe").size).to eq(60)
+    expect(calls.scan("rm -f guileful-charger-ci-postgres").size).to eq(2)
+  end
+
+  it "replaces only its dedicated CI container when run repeatedly" do
+    2.times { expect(bootstrap.last).to be_success }
+
+    expect(calls.scan("rm -f guileful-charger-ci-postgres").size).to eq(2)
+    expect(calls.scan("run -d --rm --name guileful-charger-ci-postgres").size).to eq(2)
+    expect(calls).not_to include("rm -f postgres")
   end
 
   it "stops when Docker fails" do

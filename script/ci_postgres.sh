@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+container=guileful-charger-ci-postgres
+trap 'if (( $? != 0 )); then docker rm -f "$container" >/dev/null 2>&1 || true; fi' EXIT
+docker rm -f "$container" >/dev/null 2>&1 || true
+
 docker build -f .devcontainer/postgres/Dockerfile -t guileful-postgres .
-docker run -d \
-  --name postgres \
+docker run -d --rm \
+  --name "$container" \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=postgres \
   -e POSTGRES_DB=guileful_charger_development \

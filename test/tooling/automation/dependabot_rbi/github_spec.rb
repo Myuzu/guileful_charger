@@ -44,4 +44,14 @@ RSpec.describe DependabotRbi::Github do
     expect { described_class.new.call("GET", "repos/owner/project") }
       .to raise_error(DependabotRbi::Error, "GitHub returned invalid JSON: GET repos/owner/project")
   end
+
+  it "rejects malformed GraphQL error containers and entries with friendly diagnostics" do
+    success = instance_double(Process::Status, success?: true)
+    [ { "type" => "STALE_DATA" }, [ "bad entry" ] ].each do |errors|
+      allow(Open3).to receive(:capture3).and_return([ JSON.generate("errors" => errors), "", success ])
+
+      expect { described_class.new.call("POST", "graphql", {}) }
+        .to raise_error(DependabotRbi::Error, "Invalid GitHub errors response")
+    end
+  end
 end

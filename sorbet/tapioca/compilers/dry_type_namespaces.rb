@@ -12,13 +12,13 @@ module Tapioca
         ConstantType = type_member { { fixed: Module } }
 
         def self.gather_constants
-          all_modules.select { |namespace| namespace == ::Types || namespace < ::Types }
+          all_modules.select { |namespace| namespace == ::DryTypeCatalog || namespace < ::DryTypeCatalog }
         end
 
         def decorate
           root.create_path(constant) do |scope|
             scope.create_extend("::Dry::Types::BuilderMethods")
-            emit_constants(scope, ::Types)
+            emit_constants(scope, ::DryTypeCatalog)
           end
         end
 

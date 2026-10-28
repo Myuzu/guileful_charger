@@ -72,6 +72,44 @@ RSpec.describe DependabotRbi do
     expect(api).not_to have_received(:call).with("POST", "graphql", anything)
   end
 
+  it "skips closed and superseded PRs even when GitHub omits their run associations" do
+    event["workflow_run"]["pull_requests"] = []
+    pr["state"] = "closed"
+    expect { prepare }.to raise_error(described_class::StaleHead, /closed/)
+    pr["state"] = "open"
+    pr["head"]["sha"] = "b" * 40
+    expect { prepare }.to raise_error(described_class::StaleHead, /head changed/)
+    expect(File).not_to exist(plan_path)
+  end
+
+  it "replays real GitHub empty-association data through the complete CLI preflight" do
+    recorded = JSON.parse(File.read(File.expand_path("../fixtures/closed_dependabot_run.json", __dir__)))
+    identity = { "repository" => recorded.fetch("repository"), "head_sha" => recorded.fetch("head_sha"), "pull_request" => recorded.dig("pr", "number") }
+    File.write(artifact, JSON.generate(payload.merge(identity)))
+    run = event.fetch("workflow_run").merge("head_sha" => identity["head_sha"], "pull_requests" => recorded["pull_requests"],
+      "head_repository" => { "full_name" => identity["repository"] })
+    event_path = File.join(directory, "event.json")
+    File.write(event_path, JSON.generate(event.merge("workflow_run" => run)))
+    allow(described_class::Github).to receive(:new).and_return(api)
+    allow(api).to receive(:call).with("GET", "repos/#{identity['repository']}/pulls/#{identity['pull_request']}").and_return(recorded.fetch("pr"))
+    env = { "GITHUB_REPOSITORY" => identity["repository"], "GITHUB_EVENT_PATH" => event_path,
+            "GITHUB_OUTPUT" => File.join(directory, "outputs") }
+
+    expect { expect(described_class.run([ "prepare", artifact, plan_path ], env)).to eq(0) }.to output(/Skipping outdated generation: PR is closed/).to_stdout
+    expect(File.read(env["GITHUB_OUTPUT"])).to eq("changed=false\n")
+    expect(File).not_to exist(plan_path)
+  end
+
+  it "rejects a current head with no association or a malformed association list" do
+    [ [], {} ].each do |associations|
+      event["workflow_run"]["pull_requests"] = associations
+      expect { prepare }.to raise_error(described_class::Error, /PR/)
+    end
+    payload["pull_request"] = "7"
+    File.write(artifact, JSON.generate(payload))
+    expect { prepare }.to raise_error(described_class::Error, /PR number/)
+  end
+
   it "rejects unknown PR states" do
     pr["state"] = "unexpected"
 
@@ -338,5 +376,23 @@ RSpec.describe DependabotRbi do
     expect { expect(described_class.run([], env.merge("GITHUB_REPOSITORY" => "../bad"))).to eq(1) }.to output(/Invalid repository/).to_stderr
     File.write(artifact, "bad json")
     expect { expect(described_class.run([ "publish", artifact ], env)).to eq(1) }.to output(/unexpected|parse|invalid/i).to_stderr
+  end
+
+  it "reports missing files, output paths, and non-object JSON without a backtrace" do
+    env = { "GITHUB_REPOSITORY" => repository, "GITHUB_EVENT_PATH" => artifact,
+            "GITHUB_OUTPUT" => File.join(directory, "missing", "outputs") }
+    expect { expect(described_class.run([ "publish", "#{artifact}.missing" ], env)).to eq(1) }.to output(/No such file/).to_stderr
+    File.write(artifact, "[]")
+    expect { expect(described_class.run([ "publish", artifact ], env)).to eq(1) }.to output(/JSON object/).to_stderr
+    File.write(artifact, JSON.generate(payload))
+    allow(described_class).to receive(:prepare).and_raise(described_class::StaleHead, "head changed")
+    allow(described_class).to receive(:puts)
+    expect { expect(described_class.run([ "prepare", artifact, plan_path ], env)).to eq(1) }.to output(/No such file/).to_stderr
+  end
+
+  it "reports invalid argument types through the CLI diagnostic boundary" do
+    env = { "GITHUB_REPOSITORY" => repository }
+
+    expect { expect(described_class.run([ "gem-arguments", {} ], env)).to eq(1) }.to output(/String/).to_stderr
   end
 end
