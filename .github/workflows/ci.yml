@@ -37,6 +37,31 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
+  automation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Test publisher with complete line coverage
+        run: |
+          bundle exec ruby -rcoverage <<'RUBY'
+          Coverage.start(lines: true)
+          require "rspec/core"
+          status = RSpec::Core::Runner.run(["spec/automation"])
+          lines = Coverage.result.fetch(File.expand_path("script/dependabot_rbi.rb")).fetch(:lines)
+          missed = lines.each_index.select { |index| lines[index] == 0 }.map { |index| index + 1 }
+          abort "Uncovered publisher lines: #{missed.join(', ')}" unless missed.empty?
+          puts "Publisher line coverage: 100%"
+          exit status
+          RUBY
+
   typecheck:
     runs-on: ubuntu-latest
     steps:

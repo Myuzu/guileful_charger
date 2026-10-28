@@ -405,6 +405,62 @@ describes the adapter approach, but neither adapter has been validated here agai
 Ruby 4, current dry-rb, and Tapioca 0.20. Local, tested interfaces are the next step
 when expanding static coverage of these DSLs.
 
+### Dependabot and generated interfaces
+
+Dependabot checks gems and GitHub Actions daily. Minor/patch updates to `dry-*`
+are grouped together, as are the Sorbet/Tapioca toolchain dependencies. Major
+updates remain individual PRs. Docker image updates are not configured here.
+
+Bundler PRs opened or updated by Dependabot trigger `Dependabot RBI generation`.
+It checks out the exact PR head without persisted credentials, prepares a disposable
+test database, regenerates gem and Rails DSL interfaces, and runs verification,
+Sorbet, and RSpec. Full gem generation accounts for Tapioca/Sorbet upgrades and
+cross-gem reflection changes. This job has no publishing credentials.
+
+`Publish Dependabot RBIs` runs from the default branch after successful generation.
+It downloads the JSON artifact into a temporary directory, validates the originating
+run and current PR, and permits only regular RBI content under `sorbet/rbi/gems`
+and `sorbet/rbi/dsl`. Forks, source/workflow changes, shim/annotation changes,
+traversal paths, oversized content, and stale heads are rejected. A dedicated
+GitHub App commits the interfaces with an atomic expected-head check. The App's
+commit triggers normal CI; it does not trigger another generation run because
+generation requires the Dependabot actor. No dependency update is automatically
+merged, and the existing interface checks remain enabled.
+
+One-time App setup:
+
+1. [Register the dedicated private RBI App](https://github.com/settings/apps/new?name=guileful-charger-rbi-myuzu&description=Publish%20generated%20Dependabot%20RBI%20interfaces&url=https%3A%2F%2Fgithub.com%2FMyuzu%2Fguileful_charger&public=false&webhook_active=false&contents=write&pull_requests=read).
+   Keep webhooks disabled. Permissions are repository **Contents: read/write** and
+   **Pull requests: read**; metadata read is automatic.
+2. Install the App on **only** `Myuzu/guileful_charger`, then generate and download
+   its private key from the App settings. No OAuth callback or webhook server is needed.
+3. Store its client ID as an Actions repository variable and its key as an Actions
+   repository secret (not Dependabot secrets):
+
+   ```bash
+   gh variable set RBI_APP_CLIENT_ID --repo Myuzu/guileful_charger --body '<App client ID>'
+   gh secret set RBI_APP_PRIVATE_KEY --repo Myuzu/guileful_charger < /path/to/private-key.pem
+   ```
+
+Until those values are configured, generation still produces a downloadable artifact,
+but publication fails with a setup message when changes are needed. The publisher
+workflow becomes active after it is merged into the default branch. Once configured,
+ask Dependabot to rebase an existing Bundler PR to exercise the complete flow.
+The first verification run can fail for stale committed RBIs; the App's follow-up
+commit runs CI again against the refreshed interfaces.
+
+For manual recovery, check out the dependency PR, run `bin/tapioca gems --all` and
+`RAILS_ENV=test bin/tapioca dsl` with a prepared test database, then commit the
+generated interfaces and rerun the normal checks. Never execute downloaded artifact
+content as Ruby or apply its paths outside the two generated directories.
+
+The publisher uses only Ruby standard libraries and `gh`. Run its regression tests
+without Rails or a database with:
+
+```bash
+bundle exec rspec spec/automation
+```
+
 ## Deployment and Infrastructure Notes
 
 - `.devcontainer/compose.yaml` starts Rails, PostgreSQL 18.6, and RabbitMQ 4.4.0 for development/test use. The PostgreSQL image extends `postgres:18.6` with the PostgreSQL 18 packages for `pg_partman` and `pg_cron` (verified with versions 5.5.0 and 1.6.8). PostgreSQL 18+ mounts data at `/var/lib/postgresql` rather than `/var/lib/postgresql/data`. `pg_cron` is preloaded with `cron.database_name=guileful_charger_development`; Rails migrations create the extension and schedule outbox maintenance jobs.

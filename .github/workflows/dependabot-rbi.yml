@@ -1,0 +1,79 @@
+name: Dependabot RBI generation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - Gemfile
+      - Gemfile.lock
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependabot-rbi-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    if: >-
+      github.actor == 'dependabot[bot]' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.head_ref, 'dependabot/bundler/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432
+
+    steps:
+      - name: Checkout the exact dependency update
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Install PostgreSQL build dependencies
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev postgresql-client
+
+      - name: Start a disposable test database
+        run: |
+          docker build -f .devcontainer/postgres/Dockerfile -t rbi-postgres .
+          docker run -d --name postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 rbi-postgres
+          for attempt in {1..60}; do
+            if pg_isready -h localhost -U postgres; then exit 0; fi
+            echo "Waiting for PostgreSQL ($attempt/60)"
+            sleep 1
+          done
+          exit 1
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Generate and validate candidate interfaces
+        run: |
+          bin/rails db:create db:migrate
+          # Full regeneration also covers Tapioca/Sorbet and cross-gem changes.
+          bin/tapioca gems --all
+          bin/tapioca dsl
+          bin/tapioca gems --verify
+          bin/tapioca dsl --verify
+          bundle exec srb tc
+          bin/rspec
+
+      - name: Collect only generated interfaces
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: ruby script/dependabot_rbi.rb collect tmp/dependabot-rbi.json
+
+      - name: Upload candidate interfaces
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dependabot-rbi-${{ github.event.pull_request.head.sha }}
+          path: tmp/dependabot-rbi.json
+          if-no-files-found: error
+          retention-days: 3

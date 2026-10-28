@@ -5,6 +5,18 @@ updates:
   schedule:
     interval: daily
   open-pull-requests-limit: 10
+  groups:
+    sorbet-toolchain:
+      patterns:
+      - "sorbet*"
+      - "tapioca"
+      - "spoom"
+      - "rbi"
+      - "rubydex"
+      update-types: [minor, patch]
+    dry-rb:
+      patterns: ["dry-*"]
+      update-types: [minor, patch]
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
