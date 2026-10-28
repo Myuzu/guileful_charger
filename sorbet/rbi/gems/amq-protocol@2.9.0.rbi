@@ -2338,13 +2338,13 @@ end
 # pkg:gem/amq-protocol#lib/amq/settings.rb:11
 AMQ::Settings::AMQPS = T.let(T.unsafe(nil), String)
 
-# pkg:gem/amq-protocol#lib/amq/uri.rb:11
+# pkg:gem/amq-protocol#lib/amq/uri.rb:6
 class AMQ::URI
   class << self
-    # pkg:gem/amq-protocol#lib/amq/uri.rb:32
+    # pkg:gem/amq-protocol#lib/amq/uri.rb:27
     def parse(connection_string); end
 
-    # pkg:gem/amq-protocol#lib/amq/uri.rb:88
+    # pkg:gem/amq-protocol#lib/amq/uri.rb:83
     def parse_amqp_url(s); end
 
     private
@@ -2352,15 +2352,15 @@ class AMQ::URI
     # Normalizes values returned by URI.decode_www_form.
     # @private
     #
-    # pkg:gem/amq-protocol#lib/amq/uri.rb:98
+    # pkg:gem/amq-protocol#lib/amq/uri.rb:93
     def as_boolean(val); end
   end
 end
 
 # @private
 #
-# pkg:gem/amq-protocol#lib/amq/uri.rb:13
+# pkg:gem/amq-protocol#lib/amq/uri.rb:8
 AMQ::URI::AMQP_DEFAULT_PORTS = T.let(T.unsafe(nil), Hash)
 
-# pkg:gem/amq-protocol#lib/amq/uri.rb:20
+# pkg:gem/amq-protocol#lib/amq/uri.rb:15
 AMQ::URI::DEFAULTS = T.let(T.unsafe(nil), Hash)
