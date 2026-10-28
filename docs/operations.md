@@ -70,7 +70,7 @@ Publishing uses durable defaults and confirms. These controls complement domain
 state/version checks; delivery can still be duplicate or out of order. The
 consistent-hash mirror is best-effort and does not replace primary Hutch routing.
 
-TTL retry queues are declared, but the rebilling planner is not wired to publish
+TTL retry queues are declared, but the [rebilling planner](rebilling.md#integration-contract) is not wired to publish
 plans into them. `RetryManagerConsumer` only logs. `NotificationConsumer` also
 only logs and currently binds `billing.*`: RabbitMQ's `*` matches one segment, so
 this does not match multi-segment keys such as `billing.payment.full.success`.
