@@ -1,6 +1,6 @@
 module Rebilling
   module Types
-    include Dry.Types()
+    include ::Types
 
     VALID_BASES = %i[invoice_total remaining_balance].freeze
     VALID_TRANSITIONS = %i[repeat next stop].freeze

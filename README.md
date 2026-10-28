@@ -327,6 +327,82 @@ bin/rubocop
 bin/brakeman
 ```
 
+### Sorbet and dry-rb
+
+Sorbet 0.6 and Tapioca 0.20 provide gradual static checking. `sorbet-runtime`
+loads with the application; the checker and interface generator are development
+and test dependencies. This follows [Sorbet's adoption guide](https://sorbet.org/docs/adopting):
+use Tapioca rather than the legacy `srb init`, and commit generated RBIs.
+The lockfile targets ARM64 and x86-64 on macOS/Linux, matching the native tooling
+binaries; the previous 32-bit ARM/x86 entries were removed during resolution.
+
+```bash
+bundle exec srb tc                 # Static check; no Rails boot or database
+bin/tapioca gems --verify          # Check gem RBI versions against the lockfile
+RAILS_ENV=test bin/tapioca dsl --verify # Check Rails DSL interfaces; needs test DB
+```
+
+With the development containers already running, use `make typecheck` and
+`make rbi-verify`. `make check` runs these alongside tests and linting. CI checks
+types and gem interfaces separately, and checks DSL interfaces after preparing
+the test database. Tapioca's configured DSL environment is `test`, which avoids
+connecting Hutch to RabbitMQ during generation.
+
+After updating dependencies or changing a model/DSL, regenerate and commit the
+relevant interfaces:
+
+```bash
+bin/tapioca gems
+RAILS_ENV=test bin/rails db:prepare
+RAILS_ENV=test bin/tapioca dsl
+bundle exec srb tc
+```
+
+Generated files in `sorbet/rbi/gems`, `annotations`, and `dsl` should not be edited
+by hand. `sorbet/rbi/shims` contains reviewed manual interfaces. Gem verification
+checks presence and version metadata; after upgrading Tapioca itself, use
+`bin/tapioca gems --all` to regenerate every gem interface. Community annotations
+can be refreshed explicitly with `bin/tapioca annotations`.
+
+Existing files without a sigil remain `typed: false`: Sorbet checks syntax and
+constant resolution, but does not check their method bodies. `Rebilling::Decision`
+starts at `typed: true` with boolean predicate signatures. Promote files gradually
+and add `sig` declarations with tests; a passing baseline does not mean the entire
+application is statically typed.
+
+Compatibility findings (verified October 28, 2026):
+
+- All ten dry-rb dependencies were checked against stable RubyGems releases.
+  `dry-configurable` was updated from 1.3.0 to 1.4.0; `dry-core` 1.2.0,
+  `dry-inflector` 1.3.1, and `dry-logic` 1.6.0 were already current, along with
+  the application dependencies below. `dry-configurable` 1.4 requires Ruby 3.3+
+  and adds `Config#to_data`; see its [release notes](https://github.com/dry-rb/dry-configurable/releases/tag/v1.4.0).
+  The project uses Ruby 4.0.9.
+- **dry-types 1.9.1:** runtime coercions and constraints remain in dry-rb.
+  `Dry.Types` generates a module dynamically, which [Sorbet cannot use as a static ancestor](https://sorbet.org/docs/error-reference#4002).
+  Only `config/initializers/dry.rb` uses `typed: ignore`; its used constants are
+  modeled in `sorbet/rbi/shims/dry_types.rbi`. `Rebilling::Types` includes the named
+  global module. These validator objects are explicitly untyped and must not be
+  used as Sorbet class types; use `::Integer`, `::String`, `T.nilable`, etc. in signatures.
+- **dry-monads 1.11.0:** the public `Dry::Monads::Result::Mixin` makes ancestors
+  visible to Sorbet. Reflected gem RBIs expose the API, but do not infer generic
+  success/failure payloads or narrowing from `success?`. Add explicit signatures
+  and typed boundary objects as each service is adopted.
+- **dry-initializer 3.2.0 and dry-struct 1.8.1:** Tapioca 0.20 has no bundled DSL
+  compilers for their generated constructors/readers. Those APIs remain untyped
+  until covered by a reviewed RBI or a tested local compiler. Arbitrary coercion
+  constructors must not be assumed to return their underlying nominal type.
+- **dry-validation 1.11.1:** runtime contracts continue to validate inputs. Sorbet
+  does not infer a typed record from a successful schema result; translate validated
+  data into a typed object or add an explicit signature at the service boundary.
+
+We do not install [dry-monads-sorbet](https://github.com/bellroy/dry-monads-sorbet)
+(archived in 2023) or [tapioca-compilers-dry_struct](https://github.com/YukiJikumaru/tapioca-compilers-dry_struct)
+(last repository update in 2022). The [upstream compiler discussion](https://github.com/Shopify/tapioca/issues/1210)
+describes the adapter approach, but neither adapter has been validated here against
+Ruby 4, current dry-rb, and Tapioca 0.20. Local, tested interfaces are the next step
+when expanding static coverage of these DSLs.
+
 ## Deployment and Infrastructure Notes
 
 - `.devcontainer/compose.yaml` starts Rails, PostgreSQL 18.6, and RabbitMQ 4.4.0 for development/test use. The PostgreSQL image extends `postgres:18.6` with the PostgreSQL 18 packages for `pg_partman` and `pg_cron` (verified with versions 5.5.0 and 1.6.8). PostgreSQL 18+ mounts data at `/var/lib/postgresql` rather than `/var/lib/postgresql/data`. `pg_cron` is preloaded with `cron.database_name=guileful_charger_development`; Rails migrations create the extension and schedule outbox maintenance jobs.

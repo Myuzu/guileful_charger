@@ -16,6 +16,8 @@ plugins:
 
 AllCops:
   NewCops: enable
+  Exclude:
+    - "sorbet/rbi/**/*"
 
 Layout/HashAlignment:
   EnforcedColonStyle: table

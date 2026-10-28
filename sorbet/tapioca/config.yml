@@ -1,0 +1,5 @@
+gem:
+  workers: 2
+dsl:
+  environment: test
+  workers: 2

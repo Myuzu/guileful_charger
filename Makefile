@@ -2,7 +2,7 @@
 DOCKER_COMPOSE_FILE := .devcontainer/compose.yaml
 RAILS_APP_SERVICE := rails-app
 
-.PHONY: all help docker-build-test docker-compose-up-test docker-compose-down-test db-test-prepare bootstrap test lint security-check test-all check clean-docker-test
+.PHONY: all help docker-build-test docker-compose-up-test docker-compose-down-test db-test-prepare bootstrap test lint typecheck rbi-verify security-check test-all check clean-docker-test
 
 .DEFAULT_GOAL := help
 
@@ -34,10 +34,17 @@ lint: docker-compose-up-test ## Run RuboCop inside the Docker container. Usage: 
 security-check: docker-compose-up-test ## Run Brakeman inside the Docker container. Usage: make security-check BRAKEMAN_ARGS="--no-pager"
 	docker-compose -f $(DOCKER_COMPOSE_FILE) exec $(RAILS_APP_SERVICE) bin/brakeman $(BRAKEMAN_ARGS)
 
+typecheck: ## Run Sorbet inside an existing Rails container (no database needed)
+	docker-compose -f $(DOCKER_COMPOSE_FILE) exec -T $(RAILS_APP_SERVICE) bundle exec srb tc
+
+rbi-verify: ## Verify committed gem and DSL interfaces (requires a prepared test database)
+	docker-compose -f $(DOCKER_COMPOSE_FILE) exec -T $(RAILS_APP_SERVICE) bin/tapioca gems --verify
+	docker-compose -f $(DOCKER_COMPOSE_FILE) exec -T -e RAILS_ENV=test $(RAILS_APP_SERVICE) bin/tapioca dsl --verify
+
 test-all: docker-build-test docker-compose-up-test db-test-prepare test ## Build, setup, and run all tests
 	@echo "All tests completed successfully."
 
-check: test lint ## Run tests and linting
+check: test lint typecheck rbi-verify ## Run tests, linting, type checking, and interface verification
 	@echo "Checks completed successfully."
 
 clean-docker-test: ## Remove test Docker images and volumes
