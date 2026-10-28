@@ -59,9 +59,9 @@ jobs:
           bin/rails db:create db:migrate
           # Full regeneration also covers Tapioca/Sorbet and cross-gem changes.
           bin/tapioca gems --all
-          bin/tapioca dsl
+          CI=1 bin/tapioca dsl
           bin/tapioca gems --verify
-          bin/tapioca dsl --verify
+          CI=1 bin/tapioca dsl --verify
           bundle exec srb tc
           bin/rspec
 

@@ -34,6 +34,15 @@
 /.github
 
 # Ignore development files
+/sorbet
+/spec
+/script/dependabot_rbi.rb
+/.claude
+/.entire
+/.rtk
+/.serena
+/.codex
+/.agents
 /.devcontainer
 !/.devcontainer/
 !/.devcontainer/postgres/

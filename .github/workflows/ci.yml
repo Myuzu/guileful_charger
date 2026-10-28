@@ -81,6 +81,9 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432
 
     services:
       rabbitmq:
@@ -134,12 +137,27 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
 
+      - name: Prepare test database
+        id: test_database
+        run: bin/rails db:create db:migrate
+
+      - name: Verify Rails interfaces
+        run: CI=1 bin/tapioca dsl --verify
+
       - name: Run tests
-        env:
-          RAILS_ENV: test
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432
+        if: ${{ !cancelled() && steps.test_database.outcome == 'success' }}
         run: |
-          bin/rails db:create db:migrate
-          bin/tapioca dsl --verify
-          bin/rails spec
+          bundle exec ruby -rcoverage <<'RUBY'
+          Coverage.start(lines: true)
+          require "rspec/core"
+          status = RSpec::Core::Runner.run(["spec"])
+          results = Coverage.result
+          %w[config/initializers/sorbet.rb lib/sorbet_runtime_policy.rb sorbet/tapioca/compilers/dry_type_namespaces.rb].each do |path|
+            lines = results.fetch(File.expand_path(path)).fetch(:lines)
+            missed = lines.each_index.select { |index| lines[index] == 0 }.map { |index| index + 1 }
+            abort "Uncovered lines in #{path}: #{missed.join(', ')}" unless missed.empty?
+            puts "#{path}: 100% line coverage"
+          end
+          exit status
+          RUBY
 

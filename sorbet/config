@@ -1,5 +1,14 @@
---dir
-.
+--dir=app
+--dir=bin
+--dir=config
+--dir=db
+--dir=lib
+--dir=script
+--dir=spec
+--dir=sorbet
+--file=Gemfile
+--file=Rakefile
+--file=config.ru
 --ignore=tmp/
 --ignore=vendor/
 --parser=prism

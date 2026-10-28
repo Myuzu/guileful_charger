@@ -339,16 +339,20 @@ binaries; the previous 32-bit ARM/x86 entries were removed during resolution.
 ```bash
 bundle exec srb tc                 # Static check; no Rails boot or database
 bin/tapioca gems --verify          # Check gem RBI versions against the lockfile
-RAILS_ENV=test bin/tapioca dsl --verify # Check Rails DSL interfaces; needs test DB
+CI=1 bin/tapioca dsl --verify       # Check Rails DSL interfaces; needs test DB
 ```
 
-With the development containers already running, use `make typecheck` and
+Use `make typecheck` and
 `make rbi-verify`. `make check` runs these alongside tests and linting. CI checks
 types and gem interfaces separately, and checks DSL interfaces after preparing
 the test database. Tapioca's configured DSL environment is `test`, which avoids
 connecting Hutch to RabbitMQ during generation.
-The test environment also enables boot-time eager loading under Tapioca so Rails
-framework interfaces are identical locally and in CI.
+Use `CI=1` for DSL commands so Rails eagerly loads the same framework controllers
+locally and in CI. Tapioca's `dsl.environment` controls the Rails environment;
+setting `RAILS_ENV` on a DSL command does not override that configuration.
+The Make targets start the containers, and `rbi-verify` prepares the test database
+before verification, including under parallel Make execution. CI runs specs even
+if the separate interface verification step fails, provided database setup passed.
 
 After updating dependencies or changing a model/DSL, regenerate and commit the
 relevant interfaces:
@@ -356,7 +360,7 @@ relevant interfaces:
 ```bash
 bin/tapioca gems
 RAILS_ENV=test bin/rails db:prepare
-RAILS_ENV=test bin/tapioca dsl
+CI=1 bin/tapioca dsl
 bundle exec srb tc
 ```
 
@@ -368,9 +372,15 @@ can be refreshed explicitly with `bin/tapioca annotations`.
 
 Existing files without a sigil remain `typed: false`: Sorbet checks syntax and
 constant resolution, but does not check their method bodies. `Rebilling::Decision`
-starts at `typed: true` with boolean predicate signatures. Promote files gradually
+starts at `typed: true` with a typed return from the factory used by billing. Promote files gradually
 and add `sig` declarations with tests; a passing baseline does not mean the entire
 application is statically typed.
+
+Method signature violations raise in development/test. Production logs the method
+and violation kind without argument or return values; an annotation mismatch alone
+does not abort billing. This policy does not suppress dry-rb validation errors or
+explicit Sorbet assertions. The production image excludes development/test gems
+and the RBI tree; only `sorbet-runtime` ships for application signatures.
 
 Compatibility findings (verified October 28, 2026):
 
@@ -382,8 +392,10 @@ Compatibility findings (verified October 28, 2026):
   The project uses Ruby 4.0.9.
 - **dry-types 1.9.1:** runtime coercions and constraints remain in dry-rb.
   `Dry.Types` generates a module dynamically, which [Sorbet cannot use as a static ancestor](https://sorbet.org/docs/error-reference#4002).
-  Only `config/initializers/dry.rb` uses `typed: ignore`; its used constants are
-  modeled in `sorbet/rbi/shims/dry_types.rbi`. `Rebilling::Types` includes the named
+  Only `config/initializers/dry.rb` uses `typed: ignore`; the tested local
+  `DryTypeNamespaces` compiler generates both namespaces from the runtime catalog,
+  including inherited constants, without duplicated hand-kept shim lists.
+  `Rebilling::Types` includes the named
   global module. These validator objects are explicitly untyped and must not be
   used as Sorbet class types; use `::Integer`, `::String`, `T.nilable`, etc. in signatures.
 - **dry-monads 1.11.0:** the public `Dry::Monads::Result::Mixin` makes ancestors
@@ -450,7 +462,7 @@ The first verification run can fail for stale committed RBIs; the App's follow-u
 commit runs CI again against the refreshed interfaces.
 
 For manual recovery, check out the dependency PR, run `bin/tapioca gems --all` and
-`RAILS_ENV=test bin/tapioca dsl` with a prepared test database, then commit the
+`CI=1 bin/tapioca dsl` with a prepared test database, then commit the
 generated interfaces and rerun the normal checks. Never execute downloaded artifact
 content as Ruby or apply its paths outside the two generated directories.
 

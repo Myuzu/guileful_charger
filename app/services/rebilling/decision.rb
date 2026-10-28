@@ -6,6 +6,10 @@ module Rebilling
   Decision = Data.define(:status, :reason, :plan, :diagnostics, :trace, :notification_intent) do
     extend T::Sig
 
+    sig do
+      params(outcome: T.untyped, plan: T.untyped, diagnostics: T.untyped,
+        trace: T.untyped, notification_intent: T.untyped).returns(Decision)
+    end
     def self.from_outcome(outcome, plan: nil, diagnostics: {}, trace: [], notification_intent: :none)
       new(status:              outcome.status,
           reason:              outcome.reason,
@@ -15,12 +19,10 @@ module Rebilling
           notification_intent: notification_intent)
     end
 
-    sig { returns(T::Boolean) }
     def scheduled?
       status == :scheduled
     end
 
-    sig { returns(T::Boolean) }
     def exhausted?
       status == :exhausted
     end

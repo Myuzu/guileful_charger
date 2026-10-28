@@ -34,12 +34,12 @@ lint: docker-compose-up-test ## Run RuboCop inside the Docker container. Usage: 
 security-check: docker-compose-up-test ## Run Brakeman inside the Docker container. Usage: make security-check BRAKEMAN_ARGS="--no-pager"
 	docker-compose -f $(DOCKER_COMPOSE_FILE) exec $(RAILS_APP_SERVICE) bin/brakeman $(BRAKEMAN_ARGS)
 
-typecheck: ## Run Sorbet inside an existing Rails container (no database needed)
+typecheck: docker-compose-up-test ## Run Sorbet inside the Rails container (no database needed)
 	docker-compose -f $(DOCKER_COMPOSE_FILE) exec -T $(RAILS_APP_SERVICE) bundle exec srb tc
 
-rbi-verify: ## Verify committed gem and DSL interfaces (requires a prepared test database)
+rbi-verify: db-test-prepare ## Verify committed gem and DSL interfaces after preparing the test database
 	docker-compose -f $(DOCKER_COMPOSE_FILE) exec -T $(RAILS_APP_SERVICE) bin/tapioca gems --verify
-	docker-compose -f $(DOCKER_COMPOSE_FILE) exec -T -e RAILS_ENV=test $(RAILS_APP_SERVICE) bin/tapioca dsl --verify
+	docker-compose -f $(DOCKER_COMPOSE_FILE) exec -T -e CI=1 $(RAILS_APP_SERVICE) bin/tapioca dsl --verify
 
 test-all: docker-build-test docker-compose-up-test db-test-prepare test ## Build, setup, and run all tests
 	@echo "All tests completed successfully."
