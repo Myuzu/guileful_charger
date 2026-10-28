@@ -24,12 +24,18 @@ module DependabotRbi
     def call(method, path, body = nil)
       args = [ "gh", "api", "--method", method, path ]
       args.concat([ "--input", "-" ]) if body
-      stdout, _stderr, status = Open3.capture3(*args, stdin_data: body ? JSON.generate(body) : "")
-      result = stdout.empty? ? {} : JSON.parse(stdout)
+      stdout, stderr, status = Open3.capture3(*args, stdin_data: body ? JSON.generate(body) : "")
+      failure = "GitHub request failed: #{method} #{path}: #{stderr.strip[0, 2000]}"
+      result = begin
+        stdout.empty? ? {} : JSON.parse(stdout)
+      rescue JSON::ParserError
+        DependabotRbi.check(status.success?, failure)
+        raise Error, "GitHub returned invalid JSON: #{method} #{path}"
+      end
       if result.is_a?(Hash) && Array(result["errors"]).any? { |error| error["type"] == "STALE_DATA" }
         raise StaleHead, "PR head advanced during publication"
       end
-      DependabotRbi.check(status.success?, "GitHub request failed: #{method} #{path}")
+      DependabotRbi.check(status.success?, failure)
       DependabotRbi.check(!result.is_a?(Hash) || !result.key?("errors"), "GitHub rejected the request; the branch may have advanced")
       result
     end
@@ -73,7 +79,7 @@ module DependabotRbi
     paths = %w[sorbet/rbi/gems sorbet/rbi/dsl]
     changed = git("diff", "--name-only", "-z", "HEAD", "--", *paths).split("\0")
     added = git("ls-files", "--others", "--exclude-standard", "-z", "--", *paths).split("\0")
-    files = (changed + added).uniq.sort.map do |path|
+    files = (changed + added).uniq.sort.grep(/\.rbi\z/).map do |path|
       check(rbi_path?(path), "Unexpected generated path")
       check(!File.symlink?(path) && (!File.exist?(path) || File.file?(path)), "Generated RBIs must be regular files")
       { "path" => path, "content" => File.exist?(path) ? File.read(path, encoding: "UTF-8") : nil }
@@ -87,13 +93,23 @@ module DependabotRbi
   end
 
   def self.validate_pr(pr, repository:, sha:)
-    check(pr["state"] == "open" && pr.dig("user", "login") == "dependabot[bot]", "Expected an open Dependabot PR")
+    check(pr.dig("user", "login") == "dependabot[bot]", "Expected a Dependabot PR")
+    raise StaleHead, "PR is closed or merged; nothing to publish" if pr["state"] == "closed"
+
+    check(pr["state"] == "open", "Expected an open Dependabot PR")
     check(pr.dig("head", "repo", "full_name") == repository && pr.dig("base", "repo", "full_name") == repository,
       "Fork PRs are not eligible")
     branch = pr.dig("head", "ref")
     check(branch.is_a?(String) && branch.start_with?("dependabot/bundler/") &&
       %r{\A[A-Za-z0-9_./-]+\z}.match?(branch) && !branch.include?(".."), "Expected a Bundler Dependabot branch")
     raise StaleHead, "PR head changed; wait for regeneration on the new commit" unless pr.dig("head", "sha") == sha
+  end
+
+  def self.gem_arguments(previous_lock, current_lock)
+    # Reserve full regeneration of same-version interfaces for changes to the
+    # generator or its reflection tools, rather than routine checker patch bumps.
+    pattern = /^    (?:tapioca|rbi|rubydex|spoom) \(.+\)$/
+    previous_lock.lines.grep(pattern) == current_lock.lines.grep(pattern) ? [] : [ "--all" ]
   end
 
   def self.prepare(event:, artifact:, output:, repository:, api: Github.new)
@@ -157,6 +173,10 @@ module DependabotRbi
     check(%r{\A[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+\z}.match?(repository) &&
       !%w[. ..].include?(repository.split("/").last), "Invalid repository")
     case args.fetch(0)
+    when "gem-arguments"
+      base = args.fetch(1)
+      check(/\A[0-9a-f]{40}\z/.match?(base), "Invalid base SHA")
+      puts gem_arguments(git("show", "#{base}:Gemfile.lock"), File.read("Gemfile.lock"))
     when "collect"
       collect(repository: repository, number: env.fetch("PR_NUMBER"), output: args.fetch(1))
     when "prepare"
@@ -165,7 +185,7 @@ module DependabotRbi
     when "publish"
       puts publish(plan: read_json(args.fetch(1)), repository: repository)
     else
-      raise Error, "Expected collect, prepare, or publish"
+      raise Error, "Expected gem-arguments, collect, prepare, or publish"
     end
     0
   rescue StaleHead => error

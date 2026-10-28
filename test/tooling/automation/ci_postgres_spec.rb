@@ -24,7 +24,7 @@ RSpec.describe "CI PostgreSQL bootstrap" do # rubocop:disable RSpec/DescribeClas
 
   def bootstrap(extra = {})
     env = { "PATH" => "#{directory}:/usr/bin:/bin", "CALLS" => File.join(directory, "calls") }.merge(extra)
-    Open3.capture3(env, "/bin/bash", File.expand_path("../../script/ci_postgres.sh", __dir__))
+    Open3.capture3(env, "/bin/bash", File.expand_path("../../../script/ci_postgres.sh", __dir__))
   end
 
   def calls

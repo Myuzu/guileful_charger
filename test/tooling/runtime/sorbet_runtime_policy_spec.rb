@@ -12,6 +12,10 @@ module SorbetPolicySpec
       "sensitive billing value"
     end
   end
+
+  class Properties < T::Struct
+    prop :count, Integer
+  end
 end
 
 RSpec.describe SorbetRuntimePolicy do
@@ -69,11 +73,43 @@ RSpec.describe SorbetRuntimePolicy do
     expect { klass.new.call }.to raise_error(NameError, /MissingRuntimeSigType/)
   end
 
-  it "accepts a missing signature from generated property methods" do
+  it "reports real generated property failures by property name and caller, without values" do
     allow(Rails.logger).to receive(:error)
     described_class.configure(production: true, logger: Rails.logger)
-    T::Configuration.call_validation_error_handler(nil, kind: "Property", value: "private")
+    properties = SorbetPolicySpec::Properties.new(count: 1)
+    properties.count = "private"
 
-    expect(Rails.logger).to have_received(:error).with("Sorbet Property: unknown method")
+    expect(Rails.logger).to have_received(:error).with(/Sorbet Parameter: property#count at .*sorbet_runtime_policy_spec.rb:\d+/)
+    expect(properties.count).to eq("private")
+  end
+
+  it "returns the original billing value even when the logger fails" do
+    allow(Rails.logger).to receive(:error).and_raise(IOError, "logger unavailable")
+    described_class.configure(production: true, logger: Rails.logger)
+
+    expect(SorbetPolicySpec::InvalidReturn.new.call).to eq("sensitive billing value")
+  end
+
+  it "reports an actual mismatch on a BasicObject singleton without raising" do
+    allow(Rails.logger).to receive(:error)
+    described_class.configure(production: true, logger: Rails.logger)
+    proxy = BasicObject.new
+    singleton = class << proxy; self; end
+    # Sorbet's singleton-method hook requires this Kernel API on proxy objects.
+    singleton.define_method(:singleton_class) { singleton }
+    singleton.extend(T::Sig)
+    singleton.class_eval do
+      sig { returns(Integer) }
+      def call = "private proxy value"
+    end
+
+    expect(proxy.call).to eq("private proxy value")
+    expect(Rails.logger).to have_received(:error).with(/Sorbet Return value: BasicObject.call/)
+  end
+
+  it "keeps the initializer-required policy outside Zeitwerk reloading" do
+    path = Rails.root.join("lib/sorbet_runtime_policy.rb")
+
+    expect(Rails.autoloaders.main.cpath_expected_at(path)).to be_nil
   end
 end

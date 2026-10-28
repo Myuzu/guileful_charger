@@ -36,10 +36,33 @@ RSpec.describe SorbetRuntimePolicy::Reporter do
     anonymous.define_singleton_method(:call) { nil }
     reporter.report(kind: "Return value", method: anonymous.instance_method(:call))
     reporter.report(kind: "Return value", method: anonymous.method(:call), location: Object.new)
-    reporter.report(kind: "Property")
+    reporter.report(kind: "Parameter")
 
     expect(logger).to have_received(:error).with(/\(anonymous\)#call/)
     expect(logger).to have_received(:error).with("Sorbet Return value: (anonymous).call")
-    expect(logger).to have_received(:error).with("Sorbet Property: unknown method")
+    expect(logger).to have_received(:error).with("Sorbet Parameter: unknown method")
+  end
+
+  it "uses core reflection for hostile module names and BasicObject singleton owners" do
+    owner = Module.new { def call = nil }
+    stub_const("HostileOwner", owner)
+    def owner.name = raise("private module name")
+    def owner.to_s = raise("private module rendering")
+    reporter = described_class.new(logger, -> { 0 })
+    reporter.report(kind: "Return value", method: owner.instance_method(:call))
+    proxy = BasicObject.new
+    singleton = class << proxy; self; end
+    singleton.define_method(:call) { nil }
+    reporter.report(kind: "Return value", method: singleton.instance_method(:call))
+
+    expect(logger).to have_received(:error).with(/Sorbet Return value: HostileOwner#call/)
+    expect(logger).to have_received(:error).with(/Sorbet Return value: BasicObject.call/)
+  end
+
+  it "suppresses reflection failures as well as logger failures" do
+    reporter = described_class.new(logger, -> { raise "clock unavailable" })
+
+    expect { reporter.report(kind: "Parameter") }.not_to raise_error
+    expect(logger).not_to have_received(:error)
   end
 end

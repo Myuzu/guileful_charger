@@ -365,7 +365,7 @@ bundle exec srb tc
 ```
 
 Generated files in `sorbet/rbi/gems`, `annotations`, and `dsl` should not be edited
-by hand. `sorbet/rbi/shims` contains reviewed manual interfaces. Gem verification
+by hand. There are currently no manual shims. Gem verification
 checks presence and version metadata; after upgrading Tapioca itself, use
 `bin/tapioca gems --all` to regenerate every gem interface. Community annotations
 can be refreshed explicitly with `bin/tapioca annotations`.
@@ -384,6 +384,10 @@ or exception messages. Reports are limited to once per method/kind per minute,
 with bounded tracking memory. Ruby exceptions inside lazy signature blocks
 (such as an undefined constant), dry-rb validation errors, and explicit Sorbet
 assertions still raise. Types named in signatures must exist at runtime.
+The reporting boundary suppresses reflection and logger failures. Property errors
+include the property name and external caller; Sorbet's nil-signature callback
+does not supply an owning class. The initializer-required policy is excluded from
+Zeitwerk reloading; restart the process after changing it.
 The production image excludes development/test gems
 and the RBI tree; only `sorbet-runtime` ships for application signatures.
 
@@ -399,7 +403,8 @@ Compatibility findings (verified October 28, 2026):
   `Dry.Types` generates a module dynamically, which [Sorbet cannot use as a static ancestor](https://sorbet.org/docs/error-reference#4002).
   Only `config/initializers/dry.rb` uses `typed: ignore`; the tested local
   `DryTypeNamespaces` compiler generates both namespaces from the runtime catalog,
-  including inherited constants, without duplicated hand-kept shim lists.
+  including inherited constants and dry-types builder methods, without duplicated
+  hand-kept shim lists.
   `Rebilling::Types` includes the named
   global module. These validator objects are explicitly untyped and must not be
   used as Sorbet class types; use `::Integer`, `::String`, `T.nilable`, etc. in signatures.
@@ -430,18 +435,23 @@ updates remain individual PRs. Docker image updates are not configured here.
 
 Bundler PRs opened or updated by Dependabot trigger `Dependabot RBI generation`.
 It checks out the exact PR head without persisted credentials, prepares a disposable
-test database, regenerates gem and Rails DSL interfaces, and runs Sorbet and
-RSpec. Both workflows use `script/ci_postgres.sh` for matching database/pg_cron
-configuration. Full gem generation accounts for Tapioca/Sorbet upgrades and
-cross-gem reflection changes. This job has no publishing credentials.
+test database, and regenerates gem and Rails DSL interfaces. Ordinary updates use
+incremental `bin/tapioca gems`; changes to Tapioca, RBI, Rubydex, or Spoom trigger
+`--all` to rebuild interfaces affected by reflection tooling. Sorbet patch bumps
+use incremental generation. Both workflows use `script/ci_postgres.sh` for matching
+database/pg_cron configuration. Generation has no publishing credentials, and does
+not wait for application specs or a separate typecheck. The App's resulting commit
+must pass normal CI before merge.
 
 `Publish Dependabot RBIs` runs from the default branch after successful generation.
 It downloads the JSON artifact into a temporary directory, validates the originating
 run and current PR, and permits only regular RBI content under `sorbet/rbi/gems`
-and `sorbet/rbi/dsl`. Forks, source/workflow changes, shim/annotation changes,
-traversal paths, oversized content, and incomplete PR file listings are rejected.
-Superseded PR heads skip successfully, including races during publication. A dedicated
-GitHub App commits the interfaces with an atomic expected-head check. The App's
+and `sorbet/rbi/dsl`. Non-RBI generator metadata such as `.gitattributes` is excluded
+from collected artifacts. The publisher rejects `sorbet/rbi/shims/**` and annotation
+paths, forks, source/workflow changes, traversal paths, oversized content, and
+incomplete PR file listings. Closed/merged PRs and superseded heads skip successfully,
+including races during publication. A dedicated GitHub App commits the interfaces
+with an atomic expected-head check. The App's
 commit triggers normal CI; it does not trigger another generation run because
 generation requires the Dependabot actor. No dependency update is automatically
 merged, and the existing interface checks remain enabled.
@@ -485,7 +495,8 @@ without Rails or a database with:
 bundle exec ruby bin/test_tooling automation
 ```
 
-CI runs the Rails suite without coverage instrumentation. Focused runtime policy
+CI runs the Rails suite without coverage instrumentation. Focused tooling specs
+live under `test/tooling/` and do not also run in `bin/rspec`. Runtime policy
 and Tapioca compiler coverage run in separate Ruby processes with
 `bundle exec ruby bin/test_tooling runtime` and `bundle exec ruby bin/test_tooling compiler`.
 The compiler specs live outside `spec/` because `tapioca/internal` globally patches

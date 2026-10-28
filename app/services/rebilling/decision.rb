@@ -3,7 +3,9 @@
 module Rebilling
   # notification_intent is reserved for the Tier 2 notification ladder. The
   # rules-only Tier 1 strategy intentionally emits :none for every decision.
-  Decision = Data.define(:status, :reason, :plan, :diagnostics, :trace, :notification_intent) do
+  Decision = Data.define(:status, :reason, :plan, :diagnostics, :trace, :notification_intent)
+
+  class Decision
     extend T::Sig
 
     sig do

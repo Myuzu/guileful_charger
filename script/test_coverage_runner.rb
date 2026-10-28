@@ -6,11 +6,11 @@ require "rspec/core"
 module TestCoverageRunner
   PROFILES = {
     "automation" => {
-      specs: %w[spec/automation],
-      files: %w[script/dependabot_rbi.rb script/test_coverage_runner.rb]
+      specs: %w[test/tooling/automation],
+      files: %w[script/dependabot_rbi.rb script/test_coverage_runner.rb bin/test_tooling]
     },
     "runtime" => {
-      specs: %w[spec/lib/sorbet_runtime_policy_spec.rb spec/lib/sorbet_runtime_policy],
+      specs: %w[test/tooling/runtime],
       files: %w[config/initializers/sorbet.rb lib/sorbet_runtime_policy.rb]
     },
     "compiler" => {
@@ -23,8 +23,8 @@ module TestCoverageRunner
     profile = PROFILES.fetch(args.fetch(0))
     status = runner.run(profile.fetch(:specs))
     results = coverage.result
-    complete = profile.fetch(:files).all? do |path|
-      lines = results.dig(File.expand_path(path), :lines)
+    complete = profile.fetch(:files).map do |path|
+      lines = results.dig(File.realpath(path), :lines)
       if lines.nil? || lines.compact.empty?
         output.puts "No executable coverage for #{path}"
         false
@@ -33,7 +33,7 @@ module TestCoverageRunner
         output.puts missed.empty? ? "#{path}: 100% line coverage" : "Uncovered lines in #{path}: #{missed.join(', ')}"
         missed.empty?
       end
-    end
+    end.all?
     complete ? status : 1
   rescue IndexError => error
     output.puts "Select a coverage profile: #{PROFILES.keys.join(', ')} (#{error.message})"

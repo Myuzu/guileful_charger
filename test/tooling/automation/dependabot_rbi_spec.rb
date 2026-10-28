@@ -2,7 +2,7 @@
 require "spec_helper"
 require "fileutils"
 require "tmpdir"
-require_relative "../../script/dependabot_rbi"
+require_relative "../../../script/dependabot_rbi"
 
 RSpec.describe DependabotRbi do
   let(:directory) { Dir.mktmpdir("dependabot-rbi") }
@@ -56,6 +56,51 @@ RSpec.describe DependabotRbi do
     File.write(artifact, JSON.generate(payload))
     expect(prepare).to be(false)
     expect(JSON.parse(File.read(plan_path)).fetch("files")).to eq([])
+  end
+
+  it "skips closed or merged Dependabot PRs before preparing or publishing" do
+    pr["state"] = "closed"
+    [ false, true ].each do |merged|
+      pr["merged"] = merged
+      expect { prepare }.to raise_error(described_class::StaleHead, /closed or merged/)
+      expect { described_class.publish(plan: plan, repository: repository, api: api) }
+        .to raise_error(described_class::StaleHead, /closed or merged/)
+    end
+    expect(File).not_to exist(plan_path)
+    expect(api).not_to have_received(:call).with("POST", "graphql", anything)
+  end
+
+  it "rejects unknown PR states" do
+    pr["state"] = "unexpected"
+
+    expect { prepare }.to raise_error(described_class::Error, /open Dependabot/)
+  end
+
+  it "selects full reflection only when the generator toolchain changes" do
+    before = "    tapioca (0.20.0)\n    rbi (0.3.7)\n    sorbet-runtime (0.6.1)\n    dry-types (1.9.1)\n"
+    ordinary = before.sub("0.6.1", "0.6.2").sub("1.9.1", "1.9.2")
+
+    expect(described_class.gem_arguments(before, ordinary)).to eq([])
+    expect(described_class.gem_arguments(before, before.sub("0.20.0", "0.21.0"))).to eq([ "--all" ])
+    expect(described_class.gem_arguments(before, before.sub("0.3.7", "0.3.8"))).to eq([ "--all" ])
+  end
+
+  it "routes generation argument selection through the validated base lockfile" do
+    allow(described_class).to receive(:git).with("show", "#{sha}:Gemfile.lock").and_return("    tapioca (old)\n")
+    env = { "GITHUB_REPOSITORY" => repository }
+
+    expect { expect(described_class.run([ "gem-arguments", sha ], env)).to eq(0) }.to output("--all\n").to_stdout
+    expect { expect(described_class.run([ "gem-arguments", "--bad" ], env)).to eq(1) }.to output(/Invalid base SHA/).to_stderr
+  end
+
+  it "collects RBI files while ignoring generated metadata and other non-RBI files" do
+    allow(described_class).to receive(:git).with("diff", anything, any_args).and_return("sorbet/rbi/gems/.gitattributes\0")
+    allow(described_class).to receive(:git).with("ls-files", anything, any_args).and_return("sorbet/rbi/dsl/.gitattributes\0sorbet/rbi/dsl/README.md\0")
+    allow(described_class).to receive(:git).with("rev-parse", "HEAD").and_return(sha)
+
+    described_class.collect(repository: repository, number: 7, output: artifact)
+
+    expect(JSON.parse(File.read(artifact)).fetch("files")).to eq([])
   end
 
   it "rejects unsuccessful, unrelated, or foreign generation runs" do
@@ -258,7 +303,7 @@ RSpec.describe DependabotRbi do
   end
 
   it "rejects unexpected generated paths, symlinks, oversized bundles, and failed git commands" do
-    allow(described_class).to receive(:git).and_return("bad.rb\0")
+    allow(described_class).to receive(:git).and_return("sorbet/rbi/gems/../bad.rbi\0")
     expect { described_class.collect(repository: repository, number: 7, output: artifact) }.to raise_error(described_class::Error, /path/)
     Dir.chdir(directory) do
       FileUtils.mkdir_p("sorbet/rbi/gems")
@@ -286,7 +331,7 @@ RSpec.describe DependabotRbi do
 
   it "reports CLI validation and JSON errors without publishing" do
     env = { "GITHUB_REPOSITORY" => repository }
-    expect { expect(described_class.run([ "unknown" ], env)).to eq(1) }.to output(/Expected collect/).to_stderr
+    expect { expect(described_class.run([ "unknown" ], env)).to eq(1) }.to output(/Expected gem-arguments/).to_stderr
     expect { expect(described_class.run([ "collect" ], env)).to eq(1) }.to output(/PR_NUMBER/).to_stderr
     expect { expect(described_class.run([], env.merge("GITHUB_REPOSITORY" => "../bad"))).to eq(1) }.to output(/Invalid repository/).to_stderr
     File.write(artifact, "bad json")

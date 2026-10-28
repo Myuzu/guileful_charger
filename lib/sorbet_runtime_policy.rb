@@ -4,6 +4,8 @@ module SorbetRuntimePolicy
   class Reporter
     INTERVAL = 60
     MAX_KEYS = 1000
+    MODULE_NAME = Module.instance_method(:name)
+    OBJECT_CLASS = Kernel.instance_method(:class)
 
     def initialize(logger, clock)
       @logger = logger
@@ -12,8 +14,15 @@ module SorbetRuntimePolicy
       @lock = Mutex.new
     end
 
-    def report(kind:, method: nil, location: nil)
-      label = method_label(method)
+    def report(kind:, method: nil, location: nil, name: nil)
+      if !method && name
+        # T::Props supplies a property name but no owner/signature. Its caller
+        # can point into a versioned runtime gem; retain the first external frame.
+        location = caller_locations.find do |frame|
+          frame.path != __FILE__ && !frame.path.match?(%r{/sorbet-runtime(?:-[^/]+)?/lib/})
+        end || location
+      end
+      label = method ? method_label(method) : (name ? "property##{name}" : "unknown method")
       source = source_label(location || method&.source_location)
       key = [ label, kind, method.nil? ? source : nil ]
       now = @clock.call
@@ -28,20 +37,23 @@ module SorbetRuntimePolicy
       return unless emit
 
       @logger.error("Sorbet #{kind}: #{label}#{source ? " at #{source}" : ''}")
+    rescue StandardError
+      # Reporting must not turn a type violation into a billing failure. Avoid a
+      # fallback logger here: it could fail recursively or expose error values.
+      nil
     end
 
     private
 
     def method_label(method)
-      return "unknown method" unless method
-
       owner = method.owner
       if owner.singleton_class?
         attached = owner.attached_object
-        name = attached.is_a?(Module) ? attached.name : attached.class.name
+        klass = Module === attached ? attached : OBJECT_CLASS.bind_call(attached)
+        name = MODULE_NAME.bind_call(klass)
         "#{name || '(anonymous)'}.#{method.name}"
       else
-        "#{owner.name || '(anonymous)'}##{method.name}"
+        "#{MODULE_NAME.bind_call(owner) || '(anonymous)'}##{method.name}"
       end
     end
 
@@ -60,13 +72,13 @@ module SorbetRuntimePolicy
 
     reporter = Reporter.new(logger, clock)
     T::Configuration.call_validation_error_handler = lambda do |signature, options|
-      reporter.report(kind: options[:kind], method: signature&.method, location: options[:location])
+      reporter.report(kind: options[:kind], method: signature&.method, location: options[:location], name: options[:name])
     end
-    T::Configuration.sig_builder_error_handler = lambda do |error, location|
-      reporter.report(kind: "sig builder (#{error.class.name})", location: location)
+    T::Configuration.sig_builder_error_handler = lambda do |_error, location|
+      reporter.report(kind: "sig builder", location: location)
     end
-    T::Configuration.sig_validation_error_handler = lambda do |error, options|
-      reporter.report(kind: "sig validation (#{error.class.name})", method: options[:method])
+    T::Configuration.sig_validation_error_handler = lambda do |_error, options|
+      reporter.report(kind: "sig validation", method: options[:method])
     end
   end
 end

@@ -6,6 +6,8 @@
 
 
 module Rebilling::Types
+  extend ::Dry::Types::BuilderMethods
+
   Any = T.let(T.unsafe(nil), T.untyped)
   Array = T.let(T.unsafe(nil), T.untyped)
   Bool = T.let(T.unsafe(nil), T.untyped)
