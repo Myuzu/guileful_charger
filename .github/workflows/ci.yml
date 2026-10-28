@@ -42,7 +42,16 @@ jobs:
 
     services:
       rabbitmq:
-        image: rabbitmq:4.3.0-management
+        image: rabbitmq:4.4.0-management
+        env:
+          RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: >-
+            -rabbitmq_management_agent disable_metrics_collector true
+            -rabbitmq_management disable_stats true enable_queue_totals true
+        options: >-
+          --health-cmd "gosu rabbitmq rabbitmq-diagnostics -q check_running"
+          --health-interval 5s
+          --health-timeout 10s
+          --health-retries 12
         ports:
           - 5672:5672
           - 15672:15672
@@ -68,6 +77,14 @@ jobs:
               -c shared_preload_libraries=pg_cron \
               -c cron.database_name=guileful_charger_development
           until pg_isready -h localhost -U postgres; do sleep 1; done
+
+      - name: Enable RabbitMQ plugins and check deprecated features
+        env:
+          RABBITMQ_CONTAINER: ${{ job.services.rabbitmq.id }}
+        run: |
+          docker exec --user rabbitmq "$RABBITMQ_CONTAINER" rabbitmq-plugins enable rabbitmq_prometheus rabbitmq_consistent_hash_exchange
+          docker exec --user rabbitmq "$RABBITMQ_CONTAINER" rabbitmq-diagnostics -q check_alarms
+          docker exec --user rabbitmq "$RABBITMQ_CONTAINER" rabbitmq-diagnostics -q check_if_any_deprecated_features_are_used
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
