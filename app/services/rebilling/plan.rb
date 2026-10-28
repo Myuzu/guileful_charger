@@ -1,3 +1,5 @@
+# typed: false
+
 module Rebilling
   Plan = Data.define(:step_key,
                      :payment_method_id,

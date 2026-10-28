@@ -97,6 +97,7 @@ group :development, :test do
   gem "rubocop-rake", require: false
   gem "rubocop-rspec", require: false
   gem "rubocop-rspec_rails", require: false
+  gem "rubocop-sorbet", "~> 0.17.2", require: false
 
   # rspec-rails
   gem "rspec-rails"

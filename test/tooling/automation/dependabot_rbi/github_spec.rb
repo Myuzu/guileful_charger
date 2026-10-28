@@ -1,3 +1,5 @@
+# typed: false
+
 # rubocop:disable RSpec/ExampleLength, RSpec/MultipleExpectations
 require "spec_helper"
 require_relative "../../../../script/dependabot_rbi"

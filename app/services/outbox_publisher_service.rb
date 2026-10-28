@@ -1,3 +1,5 @@
+# typed: false
+
 class OutboxPublisherService < ApplicationService
   DEFAULT_BATCH_SIZE = 100
   DEFAULT_LOCK_TIMEOUT = 15.minutes

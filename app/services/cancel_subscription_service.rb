@@ -1,3 +1,5 @@
+# typed: false
+
 class CancelSubscriptionService < ApplicationService
   param :subscription
   option :reason, optional: true

@@ -1,3 +1,5 @@
+# typed: false
+
 # rubocop:disable RSpec/ExampleLength, RSpec/MultipleExpectations, RSpec/MultipleMemoizedHelpers
 require "spec_helper"
 require "fileutils"

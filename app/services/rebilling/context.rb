@@ -1,3 +1,5 @@
+# typed: false
+
 module Rebilling
   class Context
     extend Dry::Initializer

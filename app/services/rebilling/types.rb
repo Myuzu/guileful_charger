@@ -1,3 +1,5 @@
+# typed: false
+
 module Rebilling
   module Types
     include ::Types

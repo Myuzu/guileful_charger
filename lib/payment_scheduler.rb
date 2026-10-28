@@ -1,3 +1,5 @@
+# typed: false
+
 # Naive PaymentScheduler implementation
 #
 # Value object for payment scheduler configuration

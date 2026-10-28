@@ -1,3 +1,5 @@
+# typed: false
+
 module Rebilling
   class FailureClassifier
     RETRYABLE_REASONS = %i[insufficient_funds].freeze

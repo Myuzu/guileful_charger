@@ -1,3 +1,5 @@
+# typed: false
+
 require_relative "boot"
 
 require "rails"
@@ -16,6 +18,8 @@ require "action_cable/engine"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
+# Rails has resolved CLI environment options by now; enable checks before gems load.
+ENV["SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS"] ||= "1" if Rails.env.local?
 Bundler.require(*Rails.groups)
 
 module GuilefulCharger
@@ -26,7 +30,7 @@ module GuilefulCharger
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
-    config.autoload_lib(ignore: %w[assets tasks sorbet_runtime_policy.rb])
+    config.autoload_lib(ignore: %w[assets tasks])
 
     # Configuration for the application, engines, and railties goes here.
     #

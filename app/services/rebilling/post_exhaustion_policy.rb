@@ -1,3 +1,5 @@
+# typed: false
+
 module Rebilling
   class PostExhaustionPolicy
     DEFAULT_ACTION = :pause_subscription

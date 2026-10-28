@@ -370,26 +370,33 @@ checks presence and version metadata; after upgrading Tapioca itself, use
 `bin/tapioca gems --all` to regenerate every gem interface. Community annotations
 can be refreshed explicitly with `bin/tapioca annotations`.
 
-Existing files without a sigil remain `typed: false`: Sorbet checks syntax and
+Existing files use an explicit `typed: false` sigil: Sorbet checks syntax and
 constant resolution, but does not check their method bodies. `Rebilling::Decision`
 starts at `typed: true` with a typed return from the factory used by billing. Promote files gradually
 and add `sig` declarations with tests; a passing baseline does not mean the entire
 application is statically typed.
 
-Method signature violations raise in development/test. Production reports call
-mismatches, signature builder errors, and signature validation errors through
-[Sorbet's supported handlers](https://sorbet.org/docs/tconfiguration). Logs include
-the method, violation kind, and source location, without argument/return values
-or exception messages. Reports are limited to once per method/kind per minute,
-with bounded tracking memory. Ruby exceptions inside lazy signature blocks
-(such as an undefined constant), dry-rb validation errors, and explicit Sorbet
-assertions still raise. Types named in signatures must exist at runtime.
-The reporting boundary suppresses reflection and logger failures. Property errors
-include the property name and external caller; Sorbet's nil-signature callback
-does not supply an owning class. The initializer-required policy is excluded from
-Zeitwerk reloading; restart the process after changing it.
+Boot sets `SORBET_RUNTIME_DEFAULT_CHECKED_LEVEL=tests` before bundled gems load.
+Development and test enable `SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS=1` before
+`Bundler.require`, once Rails has resolved the environment (including CLI options).
+Default method signatures raise on mismatches there; production neither checks
+nor reports those call mismatches. This follows Sorbet's [test-only checking
+configuration](https://sorbet.org/docs/runtime#changing-the-runtime-behavior).
+It also affects gem signatures without an explicit checked level; explicit
+`.checked(:always)` and operator-provided environment settings remain effective.
+There are no custom error handlers. Inline assertions and property validation
+retain Sorbet's normal behavior.
+
+Signature blocks still execute on first call at every checking level. CI eagerly
+loads the application and calls `T::Utils.run_all_sig_blocks` to catch invalid
+annotations, including constants that exist only in RBIs, before deploy. This
+does not prove every call satisfies its signature; production loses that signal.
 The production image excludes development/test gems
 and the RBI tree; only `sorbet-runtime` ships for application signatures.
+
+`rubocop-sorbet` 0.17.2 checks Sorbet style and valid sigils. `Sorbet/TrueSigil`
+currently applies to the adopted `Rebilling::Decision` file; expand its include
+list when another file has a passing typed baseline and tests.
 
 Compatibility findings (verified October 28, 2026):
 
@@ -429,9 +436,12 @@ when expanding static coverage of these DSLs.
 
 ### Dependabot and generated interfaces
 
-Dependabot checks gems and GitHub Actions daily. Minor/patch updates to `dry-*`
-are grouped together, as are the Sorbet/Tapioca toolchain dependencies. Major
-updates remain individual PRs. Docker image updates are not configured here.
+Dependabot checks gems and GitHub Actions weekly with a seven-day release cooldown.
+[Security updates bypass the cooldown](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#cooldown).
+Bundler minor/patch updates match the Sorbet toolchain group, then dry-rb, then a
+catch-all group. Major gem updates remain individual PRs. GitHub Actions updates
+share one group; all action references are pinned to commit SHAs with version
+comments, which Dependabot maintains. Docker image updates are not configured here.
 
 Bundler PRs opened or updated by Dependabot trigger `Dependabot RBI generation`.
 It checks out the exact PR head without persisted credentials, prepares a disposable
@@ -440,7 +450,8 @@ incremental `bin/tapioca gems`; changes to Tapioca, RBI, Rubydex, or Spoom trigg
 `--all` to rebuild interfaces affected by reflection tooling. Sorbet patch bumps
 use incremental generation. Both workflows use `script/ci_postgres.sh` for matching
 database/pg_cron configuration. Generation has no publishing credentials, and does
-not wait for application specs or a separate typecheck. The App's resulting commit
+not wait for application specs. Generation runs `srb tc` as its validation gate.
+The App's resulting commit
 must pass normal CI before merge.
 
 `Publish Dependabot RBIs` runs from the default branch after successful generation.
@@ -495,14 +506,14 @@ without Rails or a database with:
 bundle exec ruby bin/test_tooling automation
 ```
 
-CI runs the Rails suite without coverage instrumentation. Focused tooling specs
-live under `test/tooling/` and do not also run in `bin/rspec`. Runtime policy
-and Tapioca compiler coverage run in separate Ruby processes with
-`bundle exec ruby bin/test_tooling runtime` and `bundle exec ruby bin/test_tooling compiler`.
+CI runs the Rails suite, including eager signature validation, without coverage
+instrumentation. Focused tooling specs live under `test/tooling/` and do not also
+run in `bin/rspec`. Automation/boot and Tapioca compiler coverage run in separate
+Ruby processes with `bin/test_tooling automation` and `bin/test_tooling compiler`.
 The compiler specs live outside `spec/` because `tapioca/internal` globally patches
 Ruby reflection, signatures, and autoloading. They must not load into the Rails
 suite. Each tooling profile requires 100% line coverage of its implementation.
-`make test-tooling` runs all three profiles in containers after preparing the test
+`make test-tooling` runs both profiles in containers after preparing the test
 database; `make check` and `make test-all` include them.
 
 ## Deployment and Infrastructure Notes

@@ -1,3 +1,5 @@
+# typed: false
+
 class BillingService < ApplicationService
   param :payment_attempt
 

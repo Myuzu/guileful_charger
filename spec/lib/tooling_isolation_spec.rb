@@ -1,3 +1,5 @@
+# typed: false
+
 require "spec_helper"
 
 RSpec.describe "Tooling process isolation" do # rubocop:disable RSpec/DescribeClass

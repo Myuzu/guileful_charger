@@ -1,3 +1,5 @@
+# typed: false
+
 module Rebilling
   class DecisionOutcome
     extend Dry::Initializer

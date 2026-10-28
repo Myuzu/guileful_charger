@@ -29,7 +29,7 @@ jobs:
 
     steps:
       - name: Checkout the exact dependency update
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
@@ -42,7 +42,7 @@ jobs:
         run: bash script/ci_postgres.sh
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1
         with:
           ruby-version: .ruby-version
           bundler-cache: true
@@ -56,6 +56,7 @@ jobs:
           mapfile -t gem_args < tmp/gem-arguments
           bin/tapioca gems "${gem_args[@]}"
           CI=1 bin/tapioca dsl
+          bundle exec srb tc
 
       - name: Collect only generated interfaces
         env:

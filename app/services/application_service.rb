@@ -1,3 +1,5 @@
+# typed: false
+
 require "dry-validation"
 
 class ApplicationService

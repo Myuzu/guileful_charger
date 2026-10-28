@@ -1,3 +1,5 @@
+# typed: false
+
 # rubocop:disable RSpec/ExampleLength, RSpec/MultipleExpectations
 require "spec_helper"
 require_relative "../../../script/test_coverage_runner"

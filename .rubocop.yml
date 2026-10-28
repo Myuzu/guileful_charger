@@ -7,6 +7,7 @@ plugins:
   - rubocop-rspec_rails
   - rubocop-factory_bot
   - rubocop-rake
+  - rubocop-sorbet
 
 # Overwrite or add rules to create your own house style
 #
@@ -24,3 +25,24 @@ Layout/HashAlignment:
 
 RSpecRails/InferredSpecType:
   Enabled: false
+
+Sorbet/TrueSigil:
+  Enabled: true
+  Include:
+    - "app/services/rebilling/decision.rb"
+
+Sorbet/FalseSigil:
+  Exclude:
+    # Dry.Types creates the ancestor dynamically; Sorbet cannot resolve it.
+    - "config/initializers/dry.rb"
+
+Sorbet/ConstantsFromStrings:
+  Exclude:
+    # Reflection is the purpose of this runtime catalog compiler.
+    - "sorbet/tapioca/compilers/dry_type_namespaces.rb"
+
+Sorbet/BlockMethodDefinition:
+  Exclude:
+    # RSpec helper methods and fixture classes are defined in example groups.
+    - "spec/**/*"
+    - "test/tooling/**/*"

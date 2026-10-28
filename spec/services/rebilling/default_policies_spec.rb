@@ -1,3 +1,5 @@
+# typed: false
+
 # rubocop:disable RSpec/DescribeClass
 require "rails_helper"
 

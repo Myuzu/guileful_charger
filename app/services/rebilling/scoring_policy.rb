@@ -1,3 +1,5 @@
+# typed: false
+
 module Rebilling
   class ScoringPolicy
     def score(_context, candidate_steps)

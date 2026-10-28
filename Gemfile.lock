@@ -433,6 +433,10 @@ GEM
       lint_roller (~> 1.1)
       rubocop (~> 1.72, >= 1.72.1)
       rubocop-rspec (~> 3.5)
+    rubocop-sorbet (0.17.2)
+      rbi (~> 0.4, >= 0.4.3)
+      rbs (>= 4.1.1)
+      spoom (~> 1.8)
     ruby-lsp (0.26.11)
       language_server-protocol (~> 3.17.0)
       prism (>= 1.2, < 2.0)
@@ -557,6 +561,7 @@ DEPENDENCIES
   rubocop-rake
   rubocop-rspec
   rubocop-rspec_rails
+  rubocop-sorbet (~> 0.17.2)
   ruby-lsp
   shoulda-matchers (~> 8.0)
   solid_cable

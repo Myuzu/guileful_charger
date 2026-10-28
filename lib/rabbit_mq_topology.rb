@@ -1,3 +1,5 @@
+# typed: false
+
 class RabbitMqTopology
   MAIN_EXCHANGE = "billing.events".freeze
   DEAD_LETTER_EXCHANGE = "billing.events.dlx".freeze

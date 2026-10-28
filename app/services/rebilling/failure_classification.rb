@@ -1,3 +1,5 @@
+# typed: false
+
 module Rebilling
   FailureClassification = Data.define(:category,
                                       :network_recommendation,

@@ -30,7 +30,6 @@ test: db-test-prepare ## Run RSpec tests inside the Docker container. Usage: mak
 
 test-tooling: db-test-prepare ## Check tooling coverage in isolated Ruby processes
 	docker-compose -f $(DOCKER_COMPOSE_FILE) exec -T $(RAILS_APP_SERVICE) bundle exec ruby bin/test_tooling automation
-	docker-compose -f $(DOCKER_COMPOSE_FILE) exec -T $(RAILS_APP_SERVICE) bundle exec ruby bin/test_tooling runtime
 	docker-compose -f $(DOCKER_COMPOSE_FILE) exec -T -e CI=1 $(RAILS_APP_SERVICE) bundle exec ruby bin/test_tooling compiler
 
 lint: docker-compose-up-test ## Run RuboCop inside the Docker container. Usage: make lint RUBOCOP_ARGS="app/services"

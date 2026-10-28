@@ -1,3 +1,5 @@
+# typed: false
+
 module Rebilling
   class PaymentMethodSnapshot
     extend Dry::Initializer

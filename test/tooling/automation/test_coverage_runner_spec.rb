@@ -1,3 +1,5 @@
+# typed: false
+
 # rubocop:disable RSpec/ExampleLength, RSpec/MultipleExpectations, RSpec/MultipleMemoizedHelpers
 require "spec_helper"
 require "stringio"
@@ -58,7 +60,7 @@ RSpec.describe TestCoverageRunner do
   it "rejects missing and unknown profiles without running specs" do
     expect(run_profile("unknown")).to eq(1)
     expect(described_class.run([], coverage: coverage, runner: runner, output: output)).to eq(1)
-    expect(output.string).to include("Select a coverage profile: automation, runtime, compiler")
+    expect(output.string).to include("Select a coverage profile: automation, compiler")
     expect(runner).not_to have_received(:run)
   end
 end

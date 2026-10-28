@@ -1,3 +1,5 @@
+# typed: false
+
 class BillingProcessorConsumer
   PaymentProcessingRetryableError = Class.new(StandardError)
 

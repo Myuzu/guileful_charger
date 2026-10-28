@@ -1,3 +1,5 @@
+# typed: false
+
 # routing keys to consume
 # * billing.payment.partial.success
 # * billing.payment.failed
