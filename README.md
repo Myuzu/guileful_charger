@@ -18,6 +18,7 @@ rebilling decisions.
 | Guide | What it covers |
 | --- | --- |
 | [Development](docs/development.md) | Setup, checks, individual specs, and environment cleanup |
+| [Rebilling](docs/rebilling.md) | Current planner, algorithm design, integration contract, and roadmap |
 | [Type checking](docs/type-checking.md) | Sorbet adoption, dry-rb boundaries, and RBI regeneration |
 | [Dependency automation](docs/dependency-automation.md) | Dependabot, the two-stage RBI publisher, and App setup |
 | [Operations](docs/operations.md) | Outbox retention, RabbitMQ topology, monitoring, and upgrades |
@@ -217,6 +218,11 @@ handling; a redelivery is **not** a newly scheduled payment retry. See
 standalone rules-based planner. It computes a decision from snapshots and returns
 an optional immutable `Plan`; the billing consumer does not execute those plans.
 
+The [rebilling guide](docs/rebilling.md) covers its objects, decision order,
+default steps, and a runnable snapshot example. The original algorithm plan and
+gap analysis are integrated as [design](docs/rebilling/algorithm-plan.md) and
+[roadmap/research](docs/rebilling/roadmap.md) references, with current status called out.
+
 ```mermaid
 flowchart TD
     Context["Context snapshots"] --> Strategy["DunningStrategy#next_plan"]
@@ -289,6 +295,7 @@ For manual regeneration and runtime-check policy, use the
 | [`db/migrate/`](db/migrate) | Tables, enums, outbox partitions, and extension maintenance |
 | [`spec/`](spec) / [`test/tooling/`](test/tooling) | Rails behavior / isolated automation and compiler coverage |
 | [`sorbet/`](sorbet) | Static-check configuration, generated RBIs, and custom Tapioca compiler |
+| [`docs/`](docs) | Development/operations guides, rebilling design, and roadmap |
 | [`.devcontainer/`](.devcontainer) / [`.github/`](.github) | Local services / CI and dependency automation |
 
 Diagrams use [GitHub's native Mermaid support](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-diagrams).
