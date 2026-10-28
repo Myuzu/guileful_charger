@@ -47,19 +47,25 @@ services:
       POSTGRES_PASSWORD: postgres
 
   rabbitmq:
-    image: rabbitmq:4.3.0-management
+    image: rabbitmq:4.4.0-management
     restart: unless-stopped
+    stop_grace_period: 60s
     configs:
       - source: plugins
         target: /etc/rabbitmq/enabled_plugins
+      - source: rabbitmq-config
+        target: /etc/rabbitmq/conf.d/20-project.conf
     container_name: rabbitmq
     ports:
       - 5672:5672
       - 15672:15672
+      - 15692:15692
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
 configs:
+  rabbitmq-config:
+    file: ./rabbitmq/rabbitmq.conf
   plugins:
     content: "[rabbitmq_management, rabbitmq_prometheus, rabbitmq_consistent_hash_exchange]."
 
