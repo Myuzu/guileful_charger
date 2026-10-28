@@ -219,7 +219,7 @@ an optional immutable `Plan`; the billing consumer does not execute those plans.
 
 ```mermaid
 flowchart TD
-    Context["Context snapshots"] --> Strategy["DunningStrategy.next_plan"]
+    Context["Context snapshots"] --> Strategy["DunningStrategy#next_plan"]
     Steps["RetryStep rules"] --> Strategy
     Policies["FailureClassifier + PaymentMethodPolicy"] --> Strategy
     Strategy --> Decision["Decision"]
