@@ -1,3 +1,5 @@
+# typed: false
+
 class PauseSubscriptionService < ApplicationService
   param :subscription
   option :reason, optional: true

@@ -1,3 +1,5 @@
+# typed: false
+
 class ProcessPaymentService < ApplicationService
   SystemErrorResponse = Struct.new(:status, :transaction_id, :message, keyword_init: true) do
     def to_h

@@ -1,3 +1,5 @@
+# typed: false
+
 class RebillingStrategy
   # MaxRetries: Maximum number of retry attempts
   # RetryIntervals: Array of intervals between retries

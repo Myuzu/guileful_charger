@@ -1,9 +1,11 @@
+# typed: false
+
 require "dry-validation"
 
 class ApplicationService
   extend Dry::Initializer
-  extend Dry::Monads[:result]
-  include Dry::Monads[:result]
+  extend Dry::Monads::Result::Mixin
+  include Dry::Monads::Result::Mixin
 
   def self.call(*args, **kwargs, &block)
     input_result = validate_input(kwargs)

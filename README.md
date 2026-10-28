@@ -327,6 +327,247 @@ bin/rubocop
 bin/brakeman
 ```
 
+### Sorbet and dry-rb
+
+Sorbet 0.6 and Tapioca 0.20 provide gradual static checking. `sorbet-runtime`
+loads with the application; the checker and interface generator are development
+and test dependencies. This follows [Sorbet's adoption guide](https://sorbet.org/docs/adopting):
+use Tapioca rather than the legacy `srb init`, and commit generated RBIs.
+The lockfile targets ARM64 and x86-64 on macOS/Linux, matching the native tooling
+binaries; the previous 32-bit ARM/x86 entries were removed during resolution.
+
+```bash
+bundle exec srb tc                 # Static check; no Rails boot or database
+bin/tapioca gems --verify          # Check gem RBI versions against the lockfile
+CI=1 bin/tapioca dsl --verify       # Check Rails DSL interfaces; needs test DB
+```
+
+Use `make typecheck` and
+`make rbi-verify`. `make check` runs these alongside tests and linting. CI checks
+types and gem interfaces separately, and checks DSL interfaces after preparing
+the test database. Tapioca's configured DSL environment is `test`, which avoids
+connecting Hutch to RabbitMQ during generation.
+Use `CI=1` for DSL commands so Rails eagerly loads the same framework controllers
+locally and in CI. Tapioca's `dsl.environment` controls the Rails environment;
+setting `RAILS_ENV` on a DSL command does not override that configuration.
+The Make targets start the containers, and `rbi-verify` prepares the test database
+before verification, including under parallel Make execution. CI runs specs even
+if the separate interface verification step fails, provided database setup passed.
+
+After updating dependencies or changing a model/DSL, regenerate and commit the
+relevant interfaces:
+
+```bash
+bin/tapioca gems
+RAILS_ENV=test bin/rails db:prepare
+CI=1 bin/tapioca dsl
+bundle exec srb tc
+```
+
+Generated files in `sorbet/rbi/gems`, `annotations`, and `dsl` should not be edited
+by hand. There are currently no manual shims. Gem verification
+checks presence and version metadata; after upgrading Tapioca itself, use
+`bin/tapioca gems --all` to regenerate every gem interface. Community annotations
+can be refreshed explicitly with `bin/tapioca annotations`.
+
+Existing files use an explicit `typed: false` sigil: Sorbet checks syntax and
+constant resolution, but does not check their method bodies. `Rebilling::Decision`
+starts at `typed: true` with a typed return from the factory used by billing. Promote files gradually
+and add `sig` declarations with tests; a passing baseline does not mean the entire
+application is statically typed.
+
+Before `Bundler.require`, fresh Rails processes set
+`T::Configuration.default_checked_level = :tests`. Development and test also call
+`enable_checking_for_sigs_marked_checked_tests`, once Rails has resolved the
+environment (including CLI options). These API calls do not create environment
+variables, so a local process spawning a production runner does not enable checks
+in that child. Tools such as Tapioca that already loaded Sorbet retain their own policy.
+Default method signatures raise on mismatches there; production neither checks
+nor reports those call mismatches. This follows Sorbet's [test-only checking
+configuration](https://sorbet.org/docs/runtime#changing-the-runtime-behavior).
+It also affects gem signatures without an explicit checked level; explicit
+`.checked(:always)` and `SORBET_RUNTIME_DEFAULT_CHECKED_LEVEL=always` still enable
+checks independently of the test-checking flag. The app treats an empty
+test-checking flag or values `0`, `false`, `off`, and `no` as disabled
+(case-insensitive, ignoring surrounding whitespace). Use `1` to enable it explicitly.
+When unset, it defaults on locally and off in production. Sorbet itself tests only
+the variable's presence, so supplied false-like values are temporarily removed
+while Sorbet loads, then restored. Explicit operator settings remain inherited.
+There are no custom error handlers. Inline assertions and property validation
+retain Sorbet's normal behavior.
+
+Signature blocks still execute on first call at every checking level. CI eagerly
+loads the application and calls `T::Utils.run_all_sig_blocks` to catch invalid
+annotations, including constants that exist only in RBIs, before deploy. This
+does not prove every call satisfies its signature; production loses that signal.
+The production image excludes development/test gems
+and the RBI tree; only `sorbet-runtime` ships for application signatures.
+
+`rubocop-sorbet` 0.17.2 checks Sorbet style and valid sigils. `Sorbet/TrueSigil`
+currently applies to the adopted `Rebilling::Decision` file; expand its include
+list when another file has a passing typed baseline and tests.
+
+Compatibility findings (verified October 28, 2026):
+
+- All ten dry-rb dependencies were checked against stable RubyGems releases.
+  `dry-configurable` was updated from 1.3.0 to 1.4.0; `dry-core` 1.2.0,
+  `dry-inflector` 1.3.1, and `dry-logic` 1.6.0 were already current, along with
+  the application dependencies below. `dry-configurable` 1.4 requires Ruby 3.3+
+  and adds `Config#to_data`; see its [release notes](https://github.com/dry-rb/dry-configurable/releases/tag/v1.4.0).
+  The project uses Ruby 4.0.9.
+- **dry-types 1.9.1:** runtime coercions and constraints remain in dry-rb.
+  `Dry.Types` generates a module dynamically, which [Sorbet cannot use as a static ancestor](https://sorbet.org/docs/error-reference#4002).
+  Only `lib/dry_type_catalog.rb` uses `typed: ignore`; the tested local
+  `DryTypeNamespaces` compiler generates the shared catalog and both namespaces,
+  including inherited constants and dry-types builder methods, without duplicated
+  hand-kept shim lists.
+  `Types` and `Rebilling::Types` include the explicit `DryTypeCatalog` primitives,
+  with fresh, directly owned nested modules for each includer. Normal reopening
+  (`module Types; module Strict; Money = Types::String; end; end`) preserves
+  existing validators such as `Types::Strict::Integer`. Extending `Types::Strict` or
+  `Types::Params` therefore does not mutate Rebilling's nested namespaces.
+  Rebilling loads without Rails; application extensions added to global `Types`
+  do not flow into it. The explicitly required catalog is excluded from Zeitwerk
+  reloading, so restart after editing it. Validator objects are untyped and must not be
+  used as Sorbet class types; use `::Integer`, `::String`, `T.nilable`, etc. in signatures.
+- **dry-monads 1.11.0:** the public `Dry::Monads::Result::Mixin` makes ancestors
+  visible to Sorbet. Reflected gem RBIs expose the API, but do not infer generic
+  success/failure payloads or narrowing from `success?`. Add explicit signatures
+  and typed boundary objects as each service is adopted.
+- **dry-initializer 3.2.0 and dry-struct 1.8.1:** Tapioca 0.20 has no bundled DSL
+  compilers for their generated constructors/readers. Those APIs remain untyped
+  until covered by a reviewed RBI or a tested local compiler. Arbitrary coercion
+  constructors must not be assumed to return their underlying nominal type.
+- **dry-validation 1.11.1:** runtime contracts continue to validate inputs. Sorbet
+  does not infer a typed record from a successful schema result; translate validated
+  data into a typed object or add an explicit signature at the service boundary.
+
+We do not install [dry-monads-sorbet](https://github.com/bellroy/dry-monads-sorbet)
+(archived in 2023) or [tapioca-compilers-dry_struct](https://github.com/YukiJikumaru/tapioca-compilers-dry_struct)
+(last repository update in 2022). The [upstream compiler discussion](https://github.com/Shopify/tapioca/issues/1210)
+describes the adapter approach, but neither adapter has been validated here against
+Ruby 4, current dry-rb, and Tapioca 0.20. Local, tested interfaces are the next step
+when expanding static coverage of these DSLs.
+
+### Dependabot and generated interfaces
+
+Dependabot checks gems and GitHub Actions weekly with a seven-day release cooldown.
+[Security updates bypass the cooldown](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#cooldown).
+Bundler minor/patch updates match the Sorbet toolchain group, then dry-rb, then a
+catch-all group. Major gem updates remain individual PRs. GitHub Actions updates
+share one group; all action references are pinned to commit SHAs with version
+comments, which Dependabot maintains. Docker image updates are not configured here.
+
+Bundler PRs opened or updated by Dependabot trigger `Dependabot RBI generation`.
+It checks out the exact PR head without persisted credentials, prepares a disposable
+test database, and regenerates gem and Rails DSL interfaces. Ordinary updates use
+incremental `bin/tapioca gems`; changes to Tapioca, RBI, Rubydex, Spoom, or the
+Sorbet gems trigger
+`--all` to rebuild interfaces affected by reflection tooling. The lockfile is compared
+against the PR's merge-base with the base branch, so newer changes on main do not
+alter that decision. Both workflows use `script/ci_postgres.sh`, which reads the
+development Compose database/pg_cron configuration with a CI port/restart override
+and an isolated CI project. Generation has no publishing credentials, and does
+not wait for application specs. Generation runs `srb tc` as its validation gate.
+The App's resulting commit
+must pass normal CI before merge.
+
+`Publish Dependabot RBIs` runs from the default branch after successful generation.
+It downloads the JSON artifact into a temporary directory, validates the originating
+run and current PR, and permits only regular RBI content under `sorbet/rbi/gems`
+and `sorbet/rbi/dsl`. Non-RBI generator metadata such as `.gitattributes` is excluded
+from collected artifacts. The publisher rejects `sorbet/rbi/shims/**` and annotation
+paths, forks, source/workflow changes, traversal paths, oversized content, and
+incomplete PR file listings. Closed/merged PRs and superseded heads skip successfully.
+A missing branch during publication is rechecked against PR state before deciding
+to skip. A dedicated GitHub App commits the interfaces
+with an atomic expected-head check. The App's
+commit triggers normal CI with explicit read-only contents permissions and no
+persisted checkout credentials; it does not trigger another generation run because
+generation requires the Dependabot actor. No dependency update is automatically
+merged, and the existing interface checks remain enabled.
+
+GitHub's commit mutation atomically checks the branch head, not whether the PR is
+still open. The publisher rechecks PR state after a successful mutation and reports
+an in-flight close as a skip, including the created commit URL. If a merge retains
+the branch during that narrow window, an RBI commit may remain on the closed branch;
+it does not change the already-merged default branch. The publisher does not rewrite
+branch history to undo it.
+
+Missing run PR associations are checked against current PR state before the
+association requirement: closed or advanced heads skip; an unassociated current
+head is still rejected. A recorded regression uses the empty run association and
+closed state from [run 40694907972](https://github.com/Myuzu/guileful_charger/actions/runs/40694907972)
+and [PR #276](https://github.com/Myuzu/guileful_charger/pull/276), replayed with a
+generation-origin header. Artifact uploads overwrite the same head's previous
+artifact so re-running generation succeeds.
+
+Generated commits include `[dependabot skip]`, which [allows Dependabot to rebase
+over those commits](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/manage-your-dependency-security/manage-dependabot-prs#allowing-dependabot-to-rebase-and-force-push-over-extra-commits).
+After a rebase, interfaces are regenerated for the new dependency head. This
+marker does not skip GitHub Actions CI.
+
+One-time App setup:
+
+1. [Register the dedicated private RBI App](https://github.com/settings/apps/new?name=guileful-charger-rbi-myuzu&description=Publish%20generated%20Dependabot%20RBI%20interfaces&url=https%3A%2F%2Fgithub.com%2FMyuzu%2Fguileful_charger&public=false&webhook_active=false&contents=write&pull_requests=read).
+   Keep webhooks disabled. Permissions are repository **Contents: read/write** and
+   **Pull requests: read**; metadata read is automatic.
+2. Install the App on **only** `Myuzu/guileful_charger`, then generate and download
+   its private key from the App settings. No OAuth callback or webhook server is needed.
+3. Store its client ID as an Actions repository variable and its key as an Actions
+   repository secret (not Dependabot secrets):
+
+   ```bash
+   gh variable set RBI_APP_CLIENT_ID --repo Myuzu/guileful_charger --body '<App client ID>'
+   gh secret set RBI_APP_PRIVATE_KEY --repo Myuzu/guileful_charger < /path/to/private-key.pem
+   ```
+
+Until those values are configured, generation still produces a downloadable artifact,
+but publication fails with a setup message when changes are needed. The publisher
+workflow becomes active after it is merged into the default branch. Once configured,
+ask Dependabot to rebase an existing Bundler PR to exercise the complete flow.
+The first verification run can fail for stale committed RBIs; the App's follow-up
+commit runs CI again against the refreshed interfaces.
+
+For manual recovery, check out the dependency PR, run `bin/tapioca gems --all` and
+`CI=1 bin/tapioca dsl` with a prepared test database, then commit the
+generated interfaces and rerun the normal checks. Never execute downloaded artifact
+content as Ruby or apply its paths outside the two generated directories.
+
+The publisher uses only Ruby standard libraries and `gh`. Run its regression tests
+without Rails or a database with:
+
+```bash
+bundle exec ruby bin/test_tooling automation
+```
+
+The shared PostgreSQL bootstrap replaces only its dedicated
+`guileful-charger-ci-postgres` container on retry. On failure it prints the last
+200 log lines before removing that container and its anonymous volumes.
+
+CI runs the Rails suite, including eager signature validation, without coverage
+instrumentation. Focused tooling specs live under `test/tooling/` and do not also
+run in `bin/rspec`. Automation/boot and Tapioca compiler coverage run in separate
+Ruby processes with `bin/test_tooling automation` and `bin/test_tooling compiler`.
+Both profiles run without a database. Compiler dependencies load before coverage;
+this profile loads the standalone catalogs and Tapioca, without booting Rails.
+It has a separate CI job. An existing outer coverage session is preserved with
+`Coverage.peek_result`; the runner stops only sessions started by its launcher.
+Profile paths resolve from the project root, and missing files report a coverage
+failure instead of a backtrace. In-process boot tests stub Bootsnap setup; fresh
+child processes exercise the real startup path.
+Launcher cases use child processes plus one measured in-process load, avoiding
+Ruby's per-file coverage reset on repeated `load`. CI randomizes automation order;
+reproduce a run with `bin/test_tooling automation --seed 42`.
+The compiler's static probe uses `--no-config`, rendered namespace interfaces, and
+only the builder-method module from the installed dry-types gem RBI. It neither
+scans application code nor depends on unrelated repository type errors.
+The compiler specs live outside `spec/` because `tapioca/internal` globally patches
+Ruby reflection, signatures, and autoloading. They must not load into the Rails
+suite. Each tooling profile requires 100% line coverage of its implementation.
+`make test-tooling` runs both profiles in containers; `make check` and
+`make test-all` include them.
+
 ## Deployment and Infrastructure Notes
 
 - `.devcontainer/compose.yaml` starts Rails, PostgreSQL 18.6, and RabbitMQ 4.4.0 for development/test use. The PostgreSQL image extends `postgres:18.6` with the PostgreSQL 18 packages for `pg_partman` and `pg_cron` (verified with versions 5.5.0 and 1.6.8). PostgreSQL 18+ mounts data at `/var/lib/postgresql` rather than `/var/lib/postgresql/data`. `pg_cron` is preloaded with `cron.database_name=guileful_charger_development`; Rails migrations create the extension and schedule outbox maintenance jobs.

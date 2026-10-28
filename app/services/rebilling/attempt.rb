@@ -1,3 +1,5 @@
+# typed: false
+
 module Rebilling
   class Attempt
     extend Dry::Initializer

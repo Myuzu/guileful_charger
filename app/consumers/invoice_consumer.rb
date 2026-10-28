@@ -1,3 +1,5 @@
+# typed: false
+
 class InvoiceConsumer
   include ActiveConsumer
 

@@ -42,6 +42,9 @@ gem "aasm", "~> 6.0.0"
 
 gem "csv"
 
+# Runtime support for Sorbet signatures and gradual typing.
+gem "sorbet-runtime", "~> 0.6"
+
 # dry-rb gems
 gem "dry-struct"
 gem "dry-types"
@@ -70,6 +73,10 @@ group :development do
 end
 
 group :development, :test do
+  # Static type checking and RBI generation for gems and Rails DSLs.
+  gem "sorbet", "~> 0.6", require: false
+  gem "tapioca", "~> 0.20.0", require: false
+
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
 
@@ -90,6 +97,7 @@ group :development, :test do
   gem "rubocop-rake", require: false
   gem "rubocop-rspec", require: false
   gem "rubocop-rspec_rails", require: false
+  gem "rubocop-sorbet", "~> 0.17.2", require: false
 
   # rspec-rails
   gem "rspec-rails"

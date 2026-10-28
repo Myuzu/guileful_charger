@@ -1,3 +1,5 @@
+# typed: false
+
 class ResumeSubscriptionService < ApplicationService
   param :subscription
   option :reason, optional: true

@@ -1,3 +1,5 @@
+# typed: false
+
 require "rails_helper"
 require Rails.root.join("db/migrate/20261028140000_update_postgresql_extensions")
 

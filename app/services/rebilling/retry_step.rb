@@ -1,3 +1,5 @@
+# typed: false
+
 require "zlib"
 
 module Rebilling

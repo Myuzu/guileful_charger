@@ -1,0 +1,17 @@
+{
+  "source_run": "https://github.com/Myuzu/guileful_charger/actions/runs/40694907972",
+  "source_pr": "https://github.com/Myuzu/guileful_charger/pull/276",
+  "repository": "Myuzu/guileful_charger",
+  "head_sha": "74ae8d8eab0ec6cdb20918948eaf82db4d258457",
+  "pull_requests": [],
+  "pr": {
+    "number": 276,
+    "state": "closed",
+    "user": {"login": "dependabot[bot]"},
+    "head": {
+      "sha": "74ae8d8eab0ec6cdb20918948eaf82db4d258457",
+      "ref": "dependabot/bundler/pg-1.7.0",
+      "repo": {"full_name": "Myuzu/guileful_charger"}
+    }
+  }
+}

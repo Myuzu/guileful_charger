@@ -34,6 +34,19 @@
 /.github
 
 # Ignore development files
+/sorbet
+/spec
+/script/dependabot_rbi.rb
+/script/test_coverage_runner.rb
+/script/ci_postgres.sh
+/bin/test_tooling
+/test/tooling
+/.claude
+/.entire
+/.rtk
+/.serena
+/.codex
+/.agents
 /.devcontainer
 !/.devcontainer/
 !/.devcontainer/postgres/

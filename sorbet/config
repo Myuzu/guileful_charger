@@ -1,0 +1,13 @@
+--dir=app
+--dir=config
+--dir=db
+--dir=lib
+--dir=script
+--dir=spec
+--dir=sorbet
+--dir=test/tooling
+--file=bin/test_tooling
+--file=Gemfile
+--file=Rakefile
+--file=config.ru
+--parser=prism

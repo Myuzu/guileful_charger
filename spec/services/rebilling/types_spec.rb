@@ -1,7 +1,20 @@
+# typed: false
+
 # rubocop:disable RSpec/ExampleLength, RSpec/MultipleExpectations
 require "rails_helper"
 
 RSpec.describe Rebilling::Types do
+  it "shares the global dry-types validators and preserves coercion and constraints" do
+    aggregate_failures do
+      expect(described_class::Coercible::Integer).to equal(::Types::Coercible::Integer)
+      expect(described_class::Coercible::Integer["42"]).to eq(42)
+      expect(described_class::Bool[true]).to be(true)
+      expect { described_class::Bool["true"] }.to raise_error(Dry::Types::ConstraintError)
+      expect((described_class::Nil | described_class::Coercible::Symbol)["scheduled"]).to eq(:scheduled)
+      expect((described_class::Nil | described_class::Coercible::Symbol)[nil]).to be_nil
+    end
+  end
+
   it "coerces and validates percentages" do
     aggregate_failures do
       expect(described_class::Percentage["12.5"]).to eq(12.5)

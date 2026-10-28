@@ -1,3 +1,5 @@
+# typed: false
+
 module RebillingHelpers
   DEFAULT_INVOICE_TOTAL_CENTS = 1200
   DEFAULT_AMOUNT_ATTEMPTED_CENTS = 300

@@ -1,0 +1,6 @@
+gem:
+  # Gem reflection can lazy-load APIs while compiling; keep its order stable.
+  workers: 1
+dsl:
+  environment: test
+  workers: 2

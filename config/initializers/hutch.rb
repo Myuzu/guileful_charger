@@ -1,3 +1,5 @@
+# typed: false
+
 require Rails.root.join("lib/rabbit_mq_topology")
 
 Hutch::Config.load_from_file("config/hutch.yaml")

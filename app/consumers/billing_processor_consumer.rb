@@ -1,8 +1,10 @@
+# typed: false
+
 class BillingProcessorConsumer
   PaymentProcessingRetryableError = Class.new(StandardError)
 
   include ActiveConsumer
-  include Dry::Monads[:result]
+  include Dry::Monads::Result::Mixin
 
   consume "billing.attempt.*"
 

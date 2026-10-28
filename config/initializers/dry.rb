@@ -1,3 +1,7 @@
+# typed: false
+
+require_relative "../../lib/dry_type_catalog"
+
 module Types
-  include Dry.Types
+  include ::DryTypeCatalog
 end

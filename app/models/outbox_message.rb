@@ -1,3 +1,5 @@
+# typed: false
+
 class OutboxMessage < ApplicationRecord
   self.primary_key = :id
 

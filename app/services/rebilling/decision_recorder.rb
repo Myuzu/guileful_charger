@@ -1,3 +1,5 @@
+# typed: false
+
 module Rebilling
   class DecisionRecorder
     def record(_context, _decision)

@@ -1,3 +1,5 @@
+# typed: false
+
 # rubocop:disable RSpec/MultipleExpectations
 require 'rails_helper'
 require 'payment_gateway_api_mock'

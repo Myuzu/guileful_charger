@@ -1,3 +1,5 @@
+# typed: false
+
 # rubocop:disable RSpec/DescribeClass, RSpec/ExampleLength, RSpec/MultipleExpectations
 require "rails_helper"
 

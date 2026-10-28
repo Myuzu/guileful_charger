@@ -5,40 +5,49 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
-  scan_ruby:
+  checks:
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
-
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: scan_ruby
+            command: bin/brakeman --no-pager
+          - name: lint
+            command: bin/rubocop -f github
+          - name: automation
+            command: bundle exec ruby bin/test_tooling automation --order rand
+          - name: compiler
+            command: bin/test_tooling compiler
+          - name: typecheck
+            command: |
+              bundle exec srb tc
+              bin/tapioca gems --verify
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1
         with:
           ruby-version: .ruby-version
           bundler-cache: true
 
-      - name: Scan for common Rails security vulnerabilities using static analysis
-        run: bin/brakeman --no-pager
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: .ruby-version
-          bundler-cache: true
-
-      - name: Lint code for consistent style
-        run: bin/rubocop -f github
+      - name: Run ${{ matrix.name }}
+        run: ${{ matrix.command }}
 
   test:
     runs-on: ubuntu-latest
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432
 
     services:
       rabbitmq:
@@ -61,22 +70,12 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y curl libjemalloc2 libvips postgresql-client libpq-dev
 
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Build and start PostgreSQL with pg_partman and pg_cron
-        run: |
-          docker build -f .devcontainer/postgres/Dockerfile -t guileful-postgres .
-          docker run -d \
-            --name postgres \
-            -e POSTGRES_USER=postgres \
-            -e POSTGRES_PASSWORD=postgres \
-            -e POSTGRES_DB=guileful_charger_development \
-            -p 5432:5432 \
-            guileful-postgres \
-            postgres \
-              -c shared_preload_libraries=pg_cron \
-              -c cron.database_name=guileful_charger_development
-          until pg_isready -h localhost -U postgres; do sleep 1; done
+        run: bash script/ci_postgres.sh
 
       - name: Enable RabbitMQ plugins and check deprecated features
         env:
@@ -87,14 +86,19 @@ jobs:
           docker exec --user rabbitmq "$RABBITMQ_CONTAINER" rabbitmq-diagnostics -q check_if_any_deprecated_features_are_used
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1
         with:
           ruby-version: .ruby-version
           bundler-cache: true
 
+      - name: Prepare test database
+        id: test_database
+        run: bin/rails db:create db:migrate
+
+      - name: Verify Rails interfaces
+        run: CI=1 bin/tapioca dsl --verify
+
       - name: Run tests
-        env:
-          RAILS_ENV: test
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432
-        run: bin/rails db:create db:migrate spec
+        if: ${{ !cancelled() && steps.test_database.outcome == 'success' }}
+        run: bin/rspec
 

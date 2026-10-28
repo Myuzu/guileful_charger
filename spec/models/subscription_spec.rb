@@ -1,3 +1,5 @@
+# typed: false
+
 # rubocop:disable RSpec/ExampleLength, RSpec/MultipleExpectations
 # == Schema Information
 #

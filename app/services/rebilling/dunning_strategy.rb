@@ -1,3 +1,5 @@
+# typed: false
+
 module Rebilling
   class DunningStrategy
     extend Dry::Initializer
