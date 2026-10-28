@@ -34,11 +34,11 @@ module DependabotRbi
         raise Error, "GitHub returned invalid JSON: #{method} #{path}"
       end
       errors = result.is_a?(Hash) && result.key?("errors") ? result["errors"] : []
-      DependabotRbi.check(errors.is_a?(Array) && errors.all? { |error| error.is_a?(Hash) }, "Invalid GitHub errors response")
-      if errors.any? { |error| error["type"] == "STALE_DATA" }
+      if errors.is_a?(Array) && errors.any? { |error| error.is_a?(Hash) && error["type"] == "STALE_DATA" }
         raise StaleHead, "PR head advanced during publication"
       end
       DependabotRbi.check(status.success?, failure)
+      DependabotRbi.check(errors.is_a?(Array) && errors.all? { |error| error.is_a?(Hash) }, "Invalid GitHub errors response")
       DependabotRbi.check(!result.is_a?(Hash) || !result.key?("errors"), "GitHub rejected the request; the branch may have advanced")
       result
     end
@@ -187,7 +187,8 @@ module DependabotRbi
       when "gem-arguments"
         base = args.fetch(1)
         check(SHA_PATTERN.match?(base), "Invalid base SHA")
-        puts gem_arguments(git("show", "#{base}:Gemfile.lock"), File.read("Gemfile.lock"))
+        merge_base = git("merge-base", base, "HEAD").strip
+        puts gem_arguments(git("show", "#{merge_base}:Gemfile.lock"), File.read("Gemfile.lock"))
       when "collect"
         collect(repository: repository, number: env.fetch("PR_NUMBER"), output: args.fetch(1))
       when "prepare"

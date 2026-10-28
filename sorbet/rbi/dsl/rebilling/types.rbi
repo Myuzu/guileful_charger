@@ -10,6 +10,7 @@ module Rebilling::Types
 
   Any = T.let(T.unsafe(nil), T.untyped)
   Array = T.let(T.unsafe(nil), T.untyped)
+  Basis = T.let(T.unsafe(nil), T.untyped)
   Bool = T.let(T.unsafe(nil), T.untyped)
   Class = T.let(T.unsafe(nil), T.untyped)
 
@@ -26,6 +27,8 @@ module Rebilling::Types
   Date = T.let(T.unsafe(nil), T.untyped)
   DateTime = T.let(T.unsafe(nil), T.untyped)
   Decimal = T.let(T.unsafe(nil), T.untyped)
+  DecisionReason = T.let(T.unsafe(nil), T.untyped)
+  DecisionStatus = T.let(T.unsafe(nil), T.untyped)
   False = T.let(T.unsafe(nil), T.untyped)
   Float = T.let(T.unsafe(nil), T.untyped)
   Hash = T.let(T.unsafe(nil), T.untyped)
@@ -42,6 +45,7 @@ module Rebilling::Types
     Time = T.let(T.unsafe(nil), T.untyped)
   end
 
+  JitterRange = T.let(T.unsafe(nil), T.untyped)
   Nil = T.let(T.unsafe(nil), T.untyped)
 
   module Nominal
@@ -63,6 +67,8 @@ module Rebilling::Types
     Time = T.let(T.unsafe(nil), T.untyped)
     True = T.let(T.unsafe(nil), T.untyped)
   end
+
+  NonNegativeInteger = T.let(T.unsafe(nil), T.untyped)
 
   module Optional
     Array = T.let(T.unsafe(nil), T.untyped)
@@ -138,7 +144,10 @@ module Rebilling::Types
     True = T.let(T.unsafe(nil), T.untyped)
   end
 
+  PaymentMethodOrder = T.let(T.unsafe(nil), T.untyped)
+  Percentage = T.let(T.unsafe(nil), T.untyped)
   Range = T.let(T.unsafe(nil), T.untyped)
+  Seconds = T.let(T.unsafe(nil), T.untyped)
 
   module Strict
     Any = T.let(T.unsafe(nil), T.untyped)
@@ -163,5 +172,6 @@ module Rebilling::Types
   String = T.let(T.unsafe(nil), T.untyped)
   Symbol = T.let(T.unsafe(nil), T.untyped)
   Time = T.let(T.unsafe(nil), T.untyped)
+  Transition = T.let(T.unsafe(nil), T.untyped)
   True = T.let(T.unsafe(nil), T.untyped)
 end

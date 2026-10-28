@@ -6,6 +6,18 @@ require "open3"
 require_relative "../../../lib/dry_type_catalog"
 
 RSpec.describe DryTypeCatalog do
+  it "creates independent nested namespaces for every includer" do
+    first = Module.new { include ::DryTypeCatalog }
+    second = Module.new { include ::DryTypeCatalog }
+
+    expect(first::Strict).not_to equal(second::Strict)
+    expect(first::Coercible).not_to equal(second::Coercible)
+    expect(first::Params).not_to equal(second::Params)
+    first::Strict.const_set(:Money, first::String)
+    expect(second::Strict.const_defined?(:Money)).to be(false)
+    expect(described_class::Strict.const_defined?(:Money)).to be(false)
+  end
+
   it "loads Rebilling types without Rails and isolates them from global application extensions" do
     script = <<~RUBY
       require ARGV.fetch(0)
@@ -16,7 +28,9 @@ RSpec.describe DryTypeCatalog do
         include ::DryTypeCatalog
         ApplicationOnly = DryTypeCatalog::String
       end
+      Types::Strict.const_set(:Money, DryTypeCatalog::String)
       abort "Application extension leaked" if Rebilling::Types.const_defined?(:ApplicationOnly)
+      abort "Nested extension leaked" if Rebilling::Types::Strict.const_defined?(:Money)
       puts "standalone and isolated"
     RUBY
     path = File.expand_path("../../../app/services/rebilling/types.rb", __dir__)

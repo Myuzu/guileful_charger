@@ -24,7 +24,8 @@ RSpec.describe Tapioca::Dsl::Compilers::DryTypeNamespaces do
       expect(rendered).to include("Integer = T.let(T.unsafe(nil), T.untyped)")
       expect(rendered).to include("extend ::Dry::Types::BuilderMethods")
       expect(rendered).to include("module Coercible", "module Nominal", "module Optional")
-      expect(rendered).not_to include("VALID_BASES", "Basis =")
+      expect(rendered).not_to include("VALID_BASES")
+      expect(rendered).to include("Basis =") if namespace == ::Rebilling::Types
     end
   end
 
@@ -53,10 +54,25 @@ RSpec.describe Tapioca::Dsl::Compilers::DryTypeNamespaces do
   end
 
   it "exposes builder methods on both namespaces to the static checker" do
+    stub_const("Types::Email", ::Types::String)
+    admin = Module.new { include ::Types }
+    stub_const("AdminTypes", admin)
     Dir.mktmpdir("dry-types-probe") do |directory|
       probe = File.join(directory, "builders.rb")
-      File.write(probe, "# typed: true\nTypes.Instance(::String)\nRebilling::Types.Instance(::String)\nTypes.Array(Types::String)\n")
-      output, status = Open3.capture2e(RbConfig.ruby, Gem.bin_path("sorbet", "srb"), "tc", "--file", probe)
+      File.write(probe, "# typed: true\nTypes.Instance(::String)\nRebilling::Types.Instance(::String)\nTypes.Array(Types::String)\nAdminTypes::Email\n")
+      interface = RBI::File.new(strictness: "true")
+      [ ::DryTypeCatalog, ::Types, ::Rebilling::Types, admin ].each do |namespace|
+        described_class.new(pipeline, interface.root, namespace).decorate
+      end
+      namespace_rbi = File.join(directory, "namespaces.rbi")
+      File.write(namespace_rbi, interface.string)
+      version = Gem.loaded_specs.fetch("dry-types").version
+      gem_rbi = File.expand_path("../../../../../sorbet/rbi/gems/dry-types@#{version}.rbi", __dir__)
+      builder = RBI::Parser.parse_file(gem_rbi).nodes.find { |node| node.is_a?(RBI::Module) && node.name == "Dry::Types::BuilderMethods" }
+      builder_rbi = File.join(directory, "builders.rbi")
+      File.write(builder_rbi, "# typed: true\nmodule Dry; module Types; end; end\nmodule Rebilling; end\n#{builder.string}")
+      File.write(File.join(directory, "unrelated.rb"), "# typed: true\nUnknownUnrelatedConstant.call\n")
+      output, status = Open3.capture2e(RbConfig.ruby, Gem.bin_path("sorbet", "srb"), "tc", "--no-config", probe, namespace_rbi, builder_rbi, chdir: directory)
 
       expect(status).to be_success, output
     end

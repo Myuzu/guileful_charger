@@ -19,7 +19,13 @@ require "action_cable/engine"
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
 # Rails has resolved CLI environment options by now; enable checks before gems load.
-ENV["SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS"] ||= "1" if Rails.env.local?
+checking_setting = ENV["SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS"]
+checking_enabled = checking_setting.nil? ? Rails.env.local? : ![ "", "0", "false", "off", "no" ].include?(checking_setting.strip.downcase)
+if checking_enabled
+  ENV["SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS"] ||= "1"
+else
+  ENV.delete("SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS")
+end
 Bundler.require(*Rails.groups)
 
 module GuilefulCharger

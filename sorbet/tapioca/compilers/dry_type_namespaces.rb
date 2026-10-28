@@ -18,7 +18,7 @@ module Tapioca
         def decorate
           root.create_path(constant) do |scope|
             scope.create_extend("::Dry::Types::BuilderMethods")
-            emit_constants(scope, ::DryTypeCatalog)
+            emit_constants(scope, constant)
           end
         end
 

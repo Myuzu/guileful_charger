@@ -77,6 +77,32 @@ RSpec.describe "Sorbet boot configuration" do # rubocop:disable RSpec/DescribeCl
     expect(output.strip).to eq("disabled")
   end
 
+  it "normalizes explicit false-like values instead of enabling production checks by presence" do
+    script = <<~RUBY
+      require ARGV.fetch(0)
+      class FlagProbe
+        extend T::Sig
+        sig { returns(Integer) }
+        def self.call = "unchecked"
+      end
+      begin
+        puts FlagProbe.call
+      rescue TypeError
+        puts "checked"
+      end
+    RUBY
+    { "0" => "unchecked", "false" => "unchecked", "" => "unchecked", " OFF " => "unchecked", "1" => "checked" }.each do |setting, expected|
+      env = keys.to_h { |key| [ key, nil ] }.merge("RAILS_ENV" => "production", "SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS" => setting)
+      output, status = Open3.capture2e(env, RbConfig.ruby, "-e", script, application)
+      expect(status).to be_success, output
+      expect(output.strip).to eq(expected)
+    end
+    env = keys.to_h { |key| [ key, nil ] }.merge("RAILS_ENV" => "development", "SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS" => "0")
+    output, status = Open3.capture2e(env, RbConfig.ruby, "-e", script, application)
+    expect(status).to be_success, output
+    expect(output.strip).to eq("unchecked")
+  end
+
   it "detects invalid lazy signatures before their first call even when production checks are off" do
     script = <<~RUBY
       require ARGV.fetch(0)

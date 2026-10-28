@@ -383,7 +383,12 @@ Default method signatures raise on mismatches there; production neither checks
 nor reports those call mismatches. This follows Sorbet's [test-only checking
 configuration](https://sorbet.org/docs/runtime#changing-the-runtime-behavior).
 It also affects gem signatures without an explicit checked level; explicit
-`.checked(:always)` and operator-provided environment settings remain effective.
+`.checked(:always)` and `SORBET_RUNTIME_DEFAULT_CHECKED_LEVEL=always` still enable
+checks independently of the test-checking flag. Before `Bundler.require`, the app
+removes an empty test-checking flag or values `0`, `false`, `off`, and `no`
+(case-insensitive, ignoring surrounding whitespace). Use `1` to enable it explicitly.
+When unset, it defaults on locally and off in production. Sorbet itself tests only
+the variable's presence, so false-like values must be normalized before it loads.
 There are no custom error handlers. Inline assertions and property validation
 retain Sorbet's normal behavior.
 
@@ -412,7 +417,9 @@ Compatibility findings (verified October 28, 2026):
   `DryTypeNamespaces` compiler generates the shared catalog and both namespaces,
   including inherited constants and dry-types builder methods, without duplicated
   hand-kept shim lists.
-  `Types` and `Rebilling::Types` include the explicit `DryTypeCatalog` primitives.
+  `Types` and `Rebilling::Types` include the explicit `DryTypeCatalog` primitives,
+  with fresh nested modules for each includer. Extending `Types::Strict` or
+  `Types::Params` therefore does not mutate Rebilling's nested namespaces.
   Rebilling loads without Rails; application extensions added to global `Types`
   do not flow into it. The explicitly required catalog is excluded from Zeitwerk
   reloading, so restart after editing it. Validator objects are untyped and must not be
@@ -449,7 +456,9 @@ Bundler PRs opened or updated by Dependabot trigger `Dependabot RBI generation`.
 It checks out the exact PR head without persisted credentials, prepares a disposable
 test database, and regenerates gem and Rails DSL interfaces. Ordinary updates use
 incremental `bin/tapioca gems`; changes to Tapioca, RBI, Rubydex, or Spoom trigger
-`--all` to rebuild interfaces affected by reflection tooling. Sorbet patch bumps
+`--all` to rebuild interfaces affected by reflection tooling. The lockfile is compared
+against the PR's merge-base with the base branch, so newer changes on main do not
+alter that decision. Sorbet patch bumps
 use incremental generation. Both workflows use `script/ci_postgres.sh` for matching
 database/pg_cron configuration. Generation has no publishing credentials, and does
 not wait for application specs. Generation runs `srb tc` as its validation gate.
@@ -517,7 +526,8 @@ bundle exec ruby bin/test_tooling automation
 ```
 
 The shared PostgreSQL bootstrap replaces only its dedicated
-`guileful-charger-ci-postgres` container on retry and removes it on failure.
+`guileful-charger-ci-postgres` container on retry. On failure it prints the last
+200 log lines before removing that container and its anonymous volumes.
 
 CI runs the Rails suite, including eager signature validation, without coverage
 instrumentation. Focused tooling specs live under `test/tooling/` and do not also
@@ -530,6 +540,12 @@ It has a separate CI job. An existing outer coverage session is preserved with
 Profile paths resolve from the project root, and missing files report a coverage
 failure instead of a backtrace. In-process boot tests stub Bootsnap setup; fresh
 child processes exercise the real startup path.
+Launcher cases use child processes plus one measured in-process load, avoiding
+Ruby's per-file coverage reset on repeated `load`. CI randomizes automation order;
+reproduce a run with `bin/test_tooling automation --seed 42`.
+The compiler's static probe uses `--no-config`, rendered namespace interfaces, and
+only the builder-method module from the installed dry-types gem RBI. It neither
+scans application code nor depends on unrelated repository type errors.
 The compiler specs live outside `spec/` because `tapioca/internal` globally patches
 Ruby reflection, signatures, and autoloading. They must not load into the Rails
 suite. Each tooling profile requires 100% line coverage of its implementation.

@@ -54,4 +54,12 @@ RSpec.describe DependabotRbi::Github do
         .to raise_error(DependabotRbi::Error, "Invalid GitHub errors response")
     end
   end
+
+  it "retains HTTP diagnostics before validating an unsuccessful response's error shape" do
+    failure = instance_double(Process::Status, success?: false)
+    allow(Open3).to receive(:capture3).and_return([ '{"errors":["invalid field"]}', "gh: Validation failed (HTTP 422)", failure ])
+
+    expect { described_class.new.call("POST", "graphql", {}) }
+      .to raise_error(DependabotRbi::Error, /Validation failed \(HTTP 422\)/)
+  end
 end

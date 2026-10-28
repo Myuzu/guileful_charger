@@ -118,4 +118,20 @@ RSpec.describe TestCoverageRunner do
     expect(output.string).to include("Select a coverage profile: automation, compiler")
     expect(runner).not_to have_received(:run)
   end
+
+  it "forwards RSpec options without interpreting errors from inside a run as profile errors" do
+    expect(described_class.run([ "automation", "--seed", "42" ], coverage: coverage, runner: runner, output: output)).to eq(0)
+    expect(runner).to have_received(:run).with([ "test/tooling/automation", "--seed", "42" ])
+    allow(runner).to receive(:run).and_raise(KeyError, "missing inside specs")
+
+    expect { run_profile }.to raise_error(KeyError, "missing inside specs")
+    expect(output.string).not_to include("Select a coverage profile")
+  end
+
+  it "does not relabel coverage lookup errors as invalid profiles" do
+    allow(coverage).to receive(:peek_result).and_raise(KeyError, "coverage failure")
+
+    expect { run_profile }.to raise_error(KeyError, "coverage failure")
+    expect(output.string).not_to include("Select a coverage profile")
+  end
 end

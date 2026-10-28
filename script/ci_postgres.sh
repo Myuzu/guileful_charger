@@ -2,11 +2,16 @@
 set -euo pipefail
 
 container=guileful-charger-ci-postgres
-trap 'if (( $? != 0 )); then docker rm -f "$container" >/dev/null 2>&1 || true; fi' EXIT
-docker rm -f "$container" >/dev/null 2>&1 || true
+trap '
+  if (( $? != 0 )); then
+    docker logs --tail 200 "$container" >&2 || true
+    docker rm -f -v "$container" >/dev/null 2>&1 || true
+  fi
+' EXIT
+docker rm -f -v "$container" >/dev/null 2>&1 || true
 
 docker build -f .devcontainer/postgres/Dockerfile -t guileful-postgres .
-docker run -d --rm \
+docker run -d \
   --name "$container" \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=postgres \

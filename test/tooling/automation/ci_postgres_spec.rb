@@ -10,7 +10,7 @@ RSpec.describe "CI PostgreSQL bootstrap" do # rubocop:disable RSpec/DescribeClas
   let(:directory) { Dir.mktmpdir("ci-postgres") }
 
   around do |example|
-    executable("docker", 'printf "%s\n" "$*" >> "$CALLS"; exit "${DOCKER_STATUS:-0}"')
+    executable("docker", 'printf "%s\n" "$*" >> "$CALLS"; if [[ "$1" == logs ]]; then echo "PostgreSQL startup diagnostic"; fi; exit "${DOCKER_STATUS:-0}"')
     executable("pg_isready", 'printf "probe\n" >> "$CALLS"; exit "${READY_STATUS:-0}"')
     executable("sleep", ":")
     example.run
@@ -43,18 +43,20 @@ RSpec.describe "CI PostgreSQL bootstrap" do # rubocop:disable RSpec/DescribeClas
   end
 
   it "fails after bounded readiness attempts" do
-    _stdout, _stderr, status = bootstrap("READY_STATUS" => "1")
+    _stdout, stderr, status = bootstrap("READY_STATUS" => "1")
 
     expect(status).not_to be_success
     expect(calls.scan("probe").size).to eq(60)
-    expect(calls.scan("rm -f guileful-charger-ci-postgres").size).to eq(2)
+    expect(calls.scan("rm -f -v guileful-charger-ci-postgres").size).to eq(2)
+    expect(stderr).to include("PostgreSQL startup diagnostic")
+    expect(calls.index("logs --tail 200")).to be < calls.rindex("rm -f -v")
   end
 
   it "replaces only its dedicated CI container when run repeatedly" do
     2.times { expect(bootstrap.last).to be_success }
 
-    expect(calls.scan("rm -f guileful-charger-ci-postgres").size).to eq(2)
-    expect(calls.scan("run -d --rm --name guileful-charger-ci-postgres").size).to eq(2)
+    expect(calls.scan("rm -f -v guileful-charger-ci-postgres").size).to eq(2)
+    expect(calls.scan("run -d --name guileful-charger-ci-postgres").size).to eq(2)
     expect(calls).not_to include("rm -f postgres")
   end
 

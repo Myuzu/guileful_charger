@@ -126,11 +126,37 @@ RSpec.describe DependabotRbi do
   end
 
   it "routes generation argument selection through the validated base lockfile" do
-    allow(described_class).to receive(:git).with("show", "#{sha}:Gemfile.lock").and_return("    tapioca (old)\n")
+    fork = "b" * 40
+    allow(described_class).to receive(:git).with("merge-base", sha, "HEAD").and_return("#{fork}\n")
+    allow(described_class).to receive(:git).with("show", "#{fork}:Gemfile.lock").and_return("    tapioca (old)\n")
     env = { "GITHUB_REPOSITORY" => repository }
 
     expect { expect(described_class.run([ "gem-arguments", sha ], env)).to eq(0) }.to output("--all\n").to_stdout
     expect { expect(described_class.run([ "gem-arguments", "--bad" ], env)).to eq(1) }.to output(/Invalid base SHA/).to_stderr
+  end
+
+  it "compares against the fork point when main advances independently of a dependency PR" do
+    fixture = File.join(directory, "divergent")
+    FileUtils.mkdir_p(fixture)
+    Dir.chdir(fixture) do
+      described_class.git("init", "-q", "-b", "main")
+      commit_lock("    tapioca (0.20.0)\n")
+      described_class.git("branch", "dependency")
+      base_tip = commit_lock("    tapioca (0.21.0)\n")
+      described_class.git("checkout", "-q", "dependency")
+      commit_lock("    tapioca (0.20.0)\n    dry-types (1.9.2)\n")
+      env = { "GITHUB_REPOSITORY" => repository }
+      expect { expect(described_class.run([ "gem-arguments", base_tip ], env)).to eq(0) }.not_to output.to_stdout
+      commit_lock("    tapioca (0.21.0)\n    dry-types (1.9.2)\n")
+      expect { expect(described_class.run([ "gem-arguments", base_tip ], env)).to eq(0) }.to output("--all\n").to_stdout
+    end
+  end
+
+  def commit_lock(content)
+    File.write("Gemfile.lock", content)
+    described_class.git("add", "Gemfile.lock")
+    described_class.git("-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false", "-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture")
+    described_class.git("rev-parse", "HEAD").strip
   end
 
   it "collects RBI files while ignoring generated metadata and other non-RBI files" do

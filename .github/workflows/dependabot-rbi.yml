@@ -49,10 +49,10 @@ jobs:
 
       - name: Generate candidate interfaces
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_TIP_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           bin/rails db:create db:migrate
-          ruby script/dependabot_rbi.rb gem-arguments "$BASE_SHA" > tmp/gem-arguments
+          ruby script/dependabot_rbi.rb gem-arguments "$BASE_TIP_SHA" > tmp/gem-arguments
           mapfile -t gem_args < tmp/gem-arguments
           bin/tapioca gems "${gem_args[@]}"
           CI=1 bin/tapioca dsl

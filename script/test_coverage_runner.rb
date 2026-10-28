@@ -17,8 +17,13 @@ module TestCoverageRunner
   }.freeze
 
   def self.run(args, owns_coverage: false, coverage: Coverage, runner: RSpec::Core::Runner, output: $stdout)
-    profile = PROFILES.fetch(args.fetch(0))
-    status = Dir.chdir(ROOT) { runner.run(profile.fetch(:specs)) }
+    profile = begin
+      PROFILES.fetch(args.fetch(0))
+    rescue IndexError => error
+      output.puts "Select a coverage profile: #{PROFILES.keys.join(', ')} (#{error.message})"
+      return 1
+    end
+    status = Dir.chdir(ROOT) { runner.run(profile.fetch(:specs) + args.drop(1)) }
     results = owns_coverage ? coverage.result : coverage.peek_result
     complete = profile.fetch(:files).map do |path|
       lines = begin
@@ -38,8 +43,5 @@ module TestCoverageRunner
       end
     end.all?
     complete ? status : 1
-  rescue IndexError => error
-    output.puts "Select a coverage profile: #{PROFILES.keys.join(', ')} (#{error.message})"
-    1
   end
 end

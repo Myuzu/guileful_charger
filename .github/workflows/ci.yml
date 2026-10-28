@@ -50,7 +50,7 @@ jobs:
           bundler-cache: true
 
       - name: Test publisher with complete line coverage
-        run: bundle exec ruby bin/test_tooling automation
+        run: bundle exec ruby bin/test_tooling automation --order rand
 
   compiler:
     runs-on: ubuntu-latest
