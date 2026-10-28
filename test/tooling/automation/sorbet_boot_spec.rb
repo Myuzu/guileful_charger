@@ -24,10 +24,10 @@ RSpec.describe "Sorbet boot configuration" do # rubocop:disable RSpec/DescribeCl
     previous.each { |key, value| ENV[key] = value }
   end
 
-  it "sets the default level before gems load and defers environment selection to Rails" do
+  it "defers runtime policy to Rails without synthesizing environment settings" do
     load boot
 
-    expect(ENV.fetch("SORBET_RUNTIME_DEFAULT_CHECKED_LEVEL")).to eq("tests")
+    expect(ENV).not_to have_key("SORBET_RUNTIME_DEFAULT_CHECKED_LEVEL")
     expect(ENV).not_to have_key("SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS")
   end
 
@@ -42,7 +42,9 @@ RSpec.describe "Sorbet boot configuration" do # rubocop:disable RSpec/DescribeCl
 
   it "checks mismatches in fresh development/test processes and allows them in production" do
     script = <<~RUBY
+      settings = ENV.to_h.select { |key, _| key.start_with?("SORBET_RUNTIME_") }
       require ARGV.fetch(0)
+      abort "Environment changed" unless ENV.to_h.select { |key, _| key.start_with?("SORBET_RUNTIME_") } == settings
       require "sorbet-runtime"
       class InvalidReturn
         extend T::Sig
@@ -63,6 +65,72 @@ RSpec.describe "Sorbet boot configuration" do # rubocop:disable RSpec/DescribeCl
     end
   end
 
+  it "does not pass generated checking settings from local processes to production children" do
+    script = <<~RUBY
+      require ARGV.fetch(0)
+      require "open3"
+      probe = <<~CHILD
+        require ARGV.fetch(0)
+        class ChildProbe
+          extend T::Sig
+          sig { returns(Integer) }
+          def self.call = "unchecked"
+        end
+        puts ChildProbe.call
+      CHILD
+      output, status = Open3.capture2e({ "RAILS_ENV" => "production" }, RbConfig.ruby, "-e", probe, ARGV.fetch(0))
+      abort output unless status.success?
+      puts output
+    RUBY
+    %w[development test].each do |environment|
+      env = keys.to_h { |key| [ key, nil ] }.merge("RAILS_ENV" => environment)
+      output, status = Open3.capture2e(env, RbConfig.ruby, "-e", script, application)
+      expect(status).to be_success, output
+      expect(output.strip).to eq("unchecked")
+    end
+  end
+
+  it "preserves a runtime policy selected by a preloaded tool" do
+    script = <<~RUBY
+      require "sorbet-runtime"
+      T::Configuration.default_checked_level = :always
+      class ToolProbe
+        extend T::Sig
+        sig { returns(String) }
+        def self.call = "preloaded"
+      end
+      ToolProbe.call
+      require ARGV.fetch(0)
+      puts ToolProbe.call
+    RUBY
+    env = keys.to_h { |key| [ key, nil ] }.merge("RAILS_ENV" => "production")
+    output, status = Open3.capture2e(env, RbConfig.ruby, "-e", script, application)
+
+    expect(status).to be_success, output
+    expect(output.strip).to eq("preloaded")
+  end
+
+  it "honors an explicit default checked level in a fresh production process" do
+    script = <<~RUBY
+      require ARGV.fetch(0)
+      class AlwaysProbe
+        extend T::Sig
+        sig { returns(Integer) }
+        def self.call = "wrong"
+      end
+      begin
+        AlwaysProbe.call
+      rescue TypeError
+        puts "checked"
+      end
+    RUBY
+    env = keys.to_h { |key| [ key, nil ] }.merge("RAILS_ENV" => "production", "SORBET_RUNTIME_DEFAULT_CHECKED_LEVEL" => "always")
+    output, status = Open3.capture2e(env, RbConfig.ruby, "-e", script, application)
+
+    expect(status).to be_success, output
+    expect(output.strip).to eq("checked")
+  end
+
   it "waits for production selected after boot, as with rails server -e production" do
     script = <<~RUBY
       require ARGV.fetch(0)
@@ -79,7 +147,9 @@ RSpec.describe "Sorbet boot configuration" do # rubocop:disable RSpec/DescribeCl
 
   it "normalizes explicit false-like values instead of enabling production checks by presence" do
     script = <<~RUBY
+      original = ENV["SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS"]
       require ARGV.fetch(0)
+      abort "Operator input changed" unless ENV["SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS"] == original
       class FlagProbe
         extend T::Sig
         sig { returns(Integer) }

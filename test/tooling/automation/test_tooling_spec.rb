@@ -19,6 +19,10 @@ RSpec.describe "Tooling entrypoint" do # rubocop:disable RSpec/DescribeClass
         abort "wrong coverage owner" unless owns_coverage == !outer
         abort "coverage not running" unless Coverage.running?
         abort "Bundler missing" unless Gem.loaded_specs.key?("bundler")
+        unless outer
+          measured = Coverage.peek_result.keys
+          abort "Dependency boot instrumented" if measured.any? { |path| path.match?(%r{/gems/(?:rspec-|json-|open3-)}) }
+        end
         puts args.join(" ")
         7
       end

@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "base64"
 require "json"
 require "open3"
 
@@ -9,6 +8,14 @@ require "open3"
 module DependabotRbi
   class Error < StandardError; end
   class StaleHead < Error; end
+  class RequestError < Error
+    attr_reader :codes
+
+    def initialize(message, codes: [])
+      super(message)
+      @codes = codes
+    end
+  end
 
   MAX_FILES = 1000
   MAX_BYTES = 64 * 1024 * 1024
@@ -33,13 +40,14 @@ module DependabotRbi
         DependabotRbi.check(status.success?, failure)
         raise Error, "GitHub returned invalid JSON: #{method} #{path}"
       end
-      errors = result.is_a?(Hash) && result.key?("errors") ? result["errors"] : []
-      if errors.is_a?(Array) && errors.any? { |error| error.is_a?(Hash) && error["type"] == "STALE_DATA" }
-        raise StaleHead, "PR head advanced during publication"
+      if !status.success? || (result.is_a?(Hash) && result.key?("errors"))
+        errors = result.is_a?(Hash) ? result["errors"] : nil
+        codes = errors.is_a?(Array) ? errors.filter_map { |error| error["type"] if error.is_a?(Hash) }.grep(String) : []
+        raise StaleHead, "PR head advanced during publication" if codes.include?("STALE_DATA")
+
+        message = status.success? ? "GitHub rejected the request" : failure
+        raise RequestError.new(message, codes: codes)
       end
-      DependabotRbi.check(status.success?, failure)
-      DependabotRbi.check(errors.is_a?(Array) && errors.all? { |error| error.is_a?(Hash) }, "Invalid GitHub errors response")
-      DependabotRbi.check(!result.is_a?(Hash) || !result.key?("errors"), "GitHub rejected the request; the branch may have advanced")
       result
     end
   end
@@ -112,8 +120,8 @@ module DependabotRbi
 
   def self.gem_arguments(previous_lock, current_lock)
     # Reserve full regeneration of same-version interfaces for changes to the
-    # generator or its reflection tools, rather than routine checker patch bumps.
-    pattern = /^    (?:tapioca|rbi|rubydex|spoom) \(.+\)$/
+    # generator, runtime signatures, or reflection tools.
+    pattern = /^    (?:tapioca|rbi|rubydex|spoom|sorbet|sorbet-runtime|sorbet-static) \(.+\)$/
     previous_lock.lines.grep(pattern) == current_lock.lines.grep(pattern) ? [] : [ "--all" ]
   end
 
@@ -167,7 +175,7 @@ module DependabotRbi
     validate_pr(pr, repository: repository, sha: plan.fetch("head_sha"))
     check(pr.dig("head", "ref") == plan["head_ref"], "Publication branch mismatch")
     additions = files.reject { |file| file["content"].nil? }.map do |file|
-      { path: file["path"], contents: Base64.strict_encode64(file["content"]) }
+      { path: file["path"], contents: [ file["content"] ].pack("m0") }
     end
     deletions = files.select { |file| file["content"].nil? }.map { |file| { path: file["path"] } }
     input = { branch:          { repositoryNameWithOwner: repository, branchName: plan.fetch("head_ref") },
@@ -175,7 +183,18 @@ module DependabotRbi
               message:        { headline: "chore: refresh Dependabot RBI files [dependabot skip]" },
               fileChanges:    { additions: additions, deletions: deletions } }
     result = api.call("POST", "graphql", { query: COMMIT_QUERY, variables: { input: input } })
-    result.fetch("data").fetch("createCommitOnBranch").fetch("commit").fetch("url")
+    url = result.fetch("data").fetch("createCommitOnBranch").fetch("commit").fetch("url")
+    current = api.call("GET", "repos/#{repository}/pulls/#{number}")
+    if current["state"] == "closed"
+      raise StaleHead, "PR closed while publication was in flight; commit #{url} was created and may remain on the closed branch"
+    end
+    url
+  rescue RequestError => error
+    raise unless error.codes.include?("NOT_FOUND")
+
+    current = api.call("GET", "repos/#{repository}/pulls/#{number}")
+    validate_pr(current, repository: repository, sha: plan.fetch("head_sha"))
+    raise error
   end
 
   def self.run(args, env = ENV)

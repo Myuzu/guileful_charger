@@ -11,6 +11,12 @@ module DryTypeCatalog
     super
     # Fresh nested modules prevent extensions such as Types::Strict::Money from
     # changing sibling namespaces. Validator objects themselves are immutable.
-    namespace.include(Dry.Types)
+    fresh = Dry.Types
+    namespace.include(fresh)
+    fresh.constants.each do |name|
+      value = fresh.const_get(name)
+      # Own nested constants make normal `module Strict` reopening safe.
+      namespace.const_set(name, value) if value.is_a?(::Module) && !value.is_a?(::Class)
+    end
   end
 end

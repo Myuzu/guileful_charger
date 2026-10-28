@@ -7,18 +7,20 @@ require_relative "../../../lib/dry_type_catalog"
 
 RSpec.describe DryTypeCatalog do
   it "creates independent nested namespaces for every includer" do
-    stub_const("Money", Class.new)
     first = Module.new { include ::DryTypeCatalog }
     second = Module.new { include ::DryTypeCatalog }
+    shared = Module.new { include first }
 
     expect(first::Strict).not_to equal(second::Strict)
     expect(first::Coercible).not_to equal(second::Coercible)
     expect(first::Params).not_to equal(second::Params)
-    first::Strict.const_set(:Money, first::String)
-    expect(first::Strict::Money).to equal(first::String)
-    expect(second::Strict.const_defined?(:Money)).to be(true)
-    expect(second::Strict.const_defined?(:Money, false)).to be(false)
-    expect(described_class::Strict.const_defined?(:Money, false)).to be(false)
+    first.const_set(:ApplicationOnlyProbe, first::String)
+    first::Strict.const_set(:MoneyProbe, first::String)
+    expect(shared::ApplicationOnlyProbe).to equal(first::String)
+    expect(shared::Strict::MoneyProbe).to equal(first::String)
+    expect { second::ApplicationOnlyProbe }.to raise_error(NameError)
+    expect { second::Strict::MoneyProbe }.to raise_error(NameError)
+    expect { described_class::Strict::MoneyProbe }.to raise_error(NameError)
   end
 
   it "loads Rebilling types without Rails and isolates them from global application extensions" do
@@ -30,10 +32,14 @@ RSpec.describe DryTypeCatalog do
       module Types
         include ::DryTypeCatalog
         ApplicationOnly = DryTypeCatalog::String
+        module Strict
+          Money = DryTypeCatalog::String
+        end
       end
-      Types::Strict.const_set(:Money, DryTypeCatalog::String)
-      abort "Application extension leaked" if Rebilling::Types.const_defined?(:ApplicationOnly, false)
-      abort "Nested extension leaked" if Rebilling::Types::Strict.const_defined?(:Money, false)
+      abort "Reopening hid primitives" unless Types::Strict::Integer[42] == 42
+      abort "Extension missing" unless Types::Strict::Money["amount"] == "amount"
+      abort "Application extension leaked" if Rebilling::Types.const_defined?(:ApplicationOnly)
+      abort "Nested extension leaked" if Rebilling::Types::Strict.const_defined?(:Money)
       puts "standalone and isolated"
     RUBY
     path = File.expand_path("../../../app/services/rebilling/types.rb", __dir__)

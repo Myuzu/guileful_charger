@@ -5,13 +5,34 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
-  scan_ruby:
+  checks:
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
-
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: scan_ruby
+            command: bin/brakeman --no-pager
+          - name: lint
+            command: bin/rubocop -f github
+          - name: automation
+            command: bundle exec ruby bin/test_tooling automation --order rand
+          - name: compiler
+            command: bin/test_tooling compiler
+          - name: typecheck
+            command: |
+              bundle exec srb tc
+              bin/tapioca gems --verify
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1
@@ -19,70 +40,8 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
 
-      - name: Scan for common Rails security vulnerabilities using static analysis
-        run: bin/brakeman --no-pager
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1
-        with:
-          ruby-version: .ruby-version
-          bundler-cache: true
-
-      - name: Lint code for consistent style
-        run: bin/rubocop -f github
-
-  automation:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1
-        with:
-          ruby-version: .ruby-version
-          bundler-cache: true
-
-      - name: Test publisher with complete line coverage
-        run: bundle exec ruby bin/test_tooling automation --order rand
-
-  compiler:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1
-        with:
-          ruby-version: .ruby-version
-          bundler-cache: true
-
-      - name: Test standalone compiler with complete line coverage
-        run: bin/test_tooling compiler
-
-  typecheck:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1
-        with:
-          ruby-version: .ruby-version
-          bundler-cache: true
-
-      - name: Check types and gem interfaces
-        run: |
-          bundle exec srb tc
-          bin/tapioca gems --verify
+      - name: Run ${{ matrix.name }}
+        run: ${{ matrix.command }}
 
   test:
     runs-on: ubuntu-latest
@@ -112,6 +71,8 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Build and start PostgreSQL with pg_partman and pg_cron
         run: bash script/ci_postgres.sh

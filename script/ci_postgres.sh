@@ -1,26 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-container=guileful-charger-ci-postgres
+if docker compose version >/dev/null 2>&1; then
+  compose=(docker compose)
+else
+  compose=(docker-compose)
+fi
+# Share database, extension and image settings with development, using isolated
+# CI containers and volumes. Only port publishing and restart policy differ.
+compose+=(--project-name guileful-charger-ci -f .devcontainer/compose.yaml -f .github/ci/postgres.compose.yml)
 trap '
   if (( $? != 0 )); then
-    docker logs --tail 200 "$container" >&2 || true
-    docker rm -f -v "$container" >/dev/null 2>&1 || true
+    "${compose[@]}" logs --tail 200 postgres >&2 || true
+    "${compose[@]}" down --volumes --remove-orphans >/dev/null 2>&1 || true
   fi
 ' EXIT
-docker rm -f -v "$container" >/dev/null 2>&1 || true
+"${compose[@]}" down --volumes --remove-orphans
 
-docker build -f .devcontainer/postgres/Dockerfile -t guileful-postgres .
-docker run -d \
-  --name "$container" \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=guileful_charger_development \
-  -p 5432:5432 \
-  guileful-postgres \
-  postgres \
-    -c shared_preload_libraries=pg_cron \
-    -c cron.database_name=guileful_charger_development
+"${compose[@]}" up -d --build --no-deps postgres
 
 for attempt in {1..60}; do
   if pg_isready -h localhost -U postgres; then exit 0; fi

@@ -118,11 +118,12 @@ RSpec.describe DependabotRbi do
 
   it "selects full reflection only when the generator toolchain changes" do
     before = "    tapioca (0.20.0)\n    rbi (0.3.7)\n    sorbet-runtime (0.6.1)\n    dry-types (1.9.1)\n"
-    ordinary = before.sub("0.6.1", "0.6.2").sub("1.9.1", "1.9.2")
+    ordinary = before.sub("1.9.1", "1.9.2")
 
     expect(described_class.gem_arguments(before, ordinary)).to eq([])
     expect(described_class.gem_arguments(before, before.sub("0.20.0", "0.21.0"))).to eq([ "--all" ])
     expect(described_class.gem_arguments(before, before.sub("0.3.7", "0.3.8"))).to eq([ "--all" ])
+    expect(described_class.gem_arguments(before, before.sub("0.6.1", "0.6.2"))).to eq([ "--all" ])
   end
 
   it "routes generation argument selection through the validated base lockfile" do
@@ -281,9 +282,43 @@ RSpec.describe DependabotRbi do
       branch:          { repositoryNameWithOwner: repository, branchName: pr["head"]["ref"] },
       expectedHeadOid: sha,
       message:        { headline: "chore: refresh Dependabot RBI files [dependabot skip]" },
-      fileChanges:    { additions: [ { path: path, contents: Base64.strict_encode64(content) } ],
+      fileChanges:    { additions: [ { path: path, contents: "IyB0eXBlZDogdHJ1ZQptb2R1bGUgRXhhbXBsZTsgZW5kCg==" } ],
                         deletions: [ { path: "sorbet/rbi/gems/old@0.9.rbi" } ] }
     } }))
+  end
+
+  it "skips a branch-deletion race only after confirming that the PR closed or advanced" do
+    candidate = plan
+    failure = described_class::RequestError.new("Branch no longer exists", codes: [ "NOT_FOUND" ])
+    allow(api).to receive(:call).with("POST", "graphql", anything).and_raise(failure)
+    closed = pr.merge("state" => "closed", "merged" => true)
+    allow(api).to receive(:call).with("GET", "repos/#{repository}/pulls/7").and_return(pr, closed)
+    expect { described_class.publish(plan: candidate, repository: repository, api: api) }
+      .to raise_error(described_class::StaleHead, /closed or merged/)
+
+    advanced = pr.merge("head" => pr.fetch("head").merge("sha" => "b" * 40))
+    allow(api).to receive(:call).with("GET", "repos/#{repository}/pulls/7").and_return(pr, advanced)
+    expect { described_class.publish(plan: candidate, repository: repository, api: api) }
+      .to raise_error(described_class::StaleHead, /head changed/)
+  end
+
+  it "does not hide a missing-branch error for a current open PR or other request failures" do
+    [ [ "NOT_FOUND" ], [ "FORBIDDEN" ] ].each do |codes|
+      failure = described_class::RequestError.new("Request failed", codes: codes)
+      allow(api).to receive(:call).with("POST", "graphql", anything).and_raise(failure)
+      expect { described_class.publish(plan: plan, repository: repository, api: api) }.to raise_error(failure)
+    end
+  end
+
+  it "reports an in-flight close after a successful commit without rewriting branch history" do
+    candidate = plan
+    closed = pr.merge("state" => "closed", "merged" => true)
+    response = { "data" => { "createCommitOnBranch" => { "commit" => { "url" => "https://github.com/owner/project/commit/new" } } } }
+    allow(api).to receive(:call).with("POST", "graphql", anything).and_return(response)
+    allow(api).to receive(:call).with("GET", "repos/#{repository}/pulls/7").and_return(pr, closed)
+
+    expect { described_class.publish(plan: candidate, repository: repository, api: api) }
+      .to raise_error(described_class::StaleHead, %r{commit https://github.com/owner/project/commit/new was created.*closed branch})
   end
 
   it "refuses altered plans, empty publication, or a PR that has advanced" do

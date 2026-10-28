@@ -40,6 +40,7 @@ Sorbet/ConstantsFromStrings:
   Exclude:
     # Reflection is the purpose of this runtime catalog compiler.
     - "sorbet/tapioca/compilers/dry_type_namespaces.rb"
+    - "lib/dry_type_catalog.rb"
 
 Sorbet/BlockMethodDefinition:
   Exclude:

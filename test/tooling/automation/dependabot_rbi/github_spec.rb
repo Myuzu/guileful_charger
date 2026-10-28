@@ -19,7 +19,7 @@ RSpec.describe DependabotRbi::Github do
     failure = instance_double(Process::Status, success?: false)
     allow(Open3).to receive(:capture3).and_return([ "", "private detail", failure ], [ '{"errors":[{"type":"FORBIDDEN"}]}', "", success ])
     expect { described_class.new.call("GET", "repos/owner/project") }.to raise_error(DependabotRbi::Error, /request failed/)
-    expect { described_class.new.call("POST", "graphql", {}) }.to raise_error(DependabotRbi::Error, /branch may have advanced/)
+    expect { described_class.new.call("POST", "graphql", {}) }.to raise_error(DependabotRbi::RequestError, /rejected/)
   end
 
   it "recognizes concurrent head changes even when gh exits unsuccessfully" do
@@ -27,6 +27,14 @@ RSpec.describe DependabotRbi::Github do
     allow(Open3).to receive(:capture3).and_return([ '{"errors":[{"type":"STALE_DATA"}]}', "", failure ])
 
     expect { described_class.new.call("POST", "graphql", {}) }.to raise_error(DependabotRbi::StaleHead)
+  end
+
+  it "preserves structured error codes so the publisher can confirm branch-deletion races" do
+    success = instance_double(Process::Status, success?: true)
+    allow(Open3).to receive(:capture3).and_return([ '{"errors":[{"type":"NOT_FOUND"},null,{"type":42}]}', "", success ])
+
+    expect { described_class.new.call("POST", "graphql", {}) }
+      .to raise_error(DependabotRbi::RequestError) { |error| expect(error.codes).to eq([ "NOT_FOUND" ]) }
   end
 
   it "preserves failed HTTP and proxy diagnostics even when the body is not JSON" do
@@ -51,7 +59,7 @@ RSpec.describe DependabotRbi::Github do
       allow(Open3).to receive(:capture3).and_return([ JSON.generate("errors" => errors), "", success ])
 
       expect { described_class.new.call("POST", "graphql", {}) }
-        .to raise_error(DependabotRbi::Error, "Invalid GitHub errors response")
+        .to raise_error(DependabotRbi::RequestError, "GitHub rejected the request")
     end
   end
 

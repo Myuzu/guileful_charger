@@ -376,19 +376,23 @@ starts at `typed: true` with a typed return from the factory used by billing. Pr
 and add `sig` declarations with tests; a passing baseline does not mean the entire
 application is statically typed.
 
-Boot sets `SORBET_RUNTIME_DEFAULT_CHECKED_LEVEL=tests` before bundled gems load.
-Development and test enable `SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS=1` before
-`Bundler.require`, once Rails has resolved the environment (including CLI options).
+Before `Bundler.require`, fresh Rails processes set
+`T::Configuration.default_checked_level = :tests`. Development and test also call
+`enable_checking_for_sigs_marked_checked_tests`, once Rails has resolved the
+environment (including CLI options). These API calls do not create environment
+variables, so a local process spawning a production runner does not enable checks
+in that child. Tools such as Tapioca that already loaded Sorbet retain their own policy.
 Default method signatures raise on mismatches there; production neither checks
 nor reports those call mismatches. This follows Sorbet's [test-only checking
 configuration](https://sorbet.org/docs/runtime#changing-the-runtime-behavior).
 It also affects gem signatures without an explicit checked level; explicit
 `.checked(:always)` and `SORBET_RUNTIME_DEFAULT_CHECKED_LEVEL=always` still enable
-checks independently of the test-checking flag. Before `Bundler.require`, the app
-removes an empty test-checking flag or values `0`, `false`, `off`, and `no`
+checks independently of the test-checking flag. The app treats an empty
+test-checking flag or values `0`, `false`, `off`, and `no` as disabled
 (case-insensitive, ignoring surrounding whitespace). Use `1` to enable it explicitly.
 When unset, it defaults on locally and off in production. Sorbet itself tests only
-the variable's presence, so false-like values must be normalized before it loads.
+the variable's presence, so supplied false-like values are temporarily removed
+while Sorbet loads, then restored. Explicit operator settings remain inherited.
 There are no custom error handlers. Inline assertions and property validation
 retain Sorbet's normal behavior.
 
@@ -418,7 +422,9 @@ Compatibility findings (verified October 28, 2026):
   including inherited constants and dry-types builder methods, without duplicated
   hand-kept shim lists.
   `Types` and `Rebilling::Types` include the explicit `DryTypeCatalog` primitives,
-  with fresh nested modules for each includer. Extending `Types::Strict` or
+  with fresh, directly owned nested modules for each includer. Normal reopening
+  (`module Types; module Strict; Money = Types::String; end; end`) preserves
+  existing validators such as `Types::Strict::Integer`. Extending `Types::Strict` or
   `Types::Params` therefore does not mutate Rebilling's nested namespaces.
   Rebilling loads without Rails; application extensions added to global `Types`
   do not flow into it. The explicitly required catalog is excluded from Zeitwerk
@@ -455,12 +461,13 @@ comments, which Dependabot maintains. Docker image updates are not configured he
 Bundler PRs opened or updated by Dependabot trigger `Dependabot RBI generation`.
 It checks out the exact PR head without persisted credentials, prepares a disposable
 test database, and regenerates gem and Rails DSL interfaces. Ordinary updates use
-incremental `bin/tapioca gems`; changes to Tapioca, RBI, Rubydex, or Spoom trigger
+incremental `bin/tapioca gems`; changes to Tapioca, RBI, Rubydex, Spoom, or the
+Sorbet gems trigger
 `--all` to rebuild interfaces affected by reflection tooling. The lockfile is compared
 against the PR's merge-base with the base branch, so newer changes on main do not
-alter that decision. Sorbet patch bumps
-use incremental generation. Both workflows use `script/ci_postgres.sh` for matching
-database/pg_cron configuration. Generation has no publishing credentials, and does
+alter that decision. Both workflows use `script/ci_postgres.sh`, which reads the
+development Compose database/pg_cron configuration with a CI port/restart override
+and an isolated CI project. Generation has no publishing credentials, and does
 not wait for application specs. Generation runs `srb tc` as its validation gate.
 The App's resulting commit
 must pass normal CI before merge.
@@ -471,12 +478,21 @@ run and current PR, and permits only regular RBI content under `sorbet/rbi/gems`
 and `sorbet/rbi/dsl`. Non-RBI generator metadata such as `.gitattributes` is excluded
 from collected artifacts. The publisher rejects `sorbet/rbi/shims/**` and annotation
 paths, forks, source/workflow changes, traversal paths, oversized content, and
-incomplete PR file listings. Closed/merged PRs and superseded heads skip successfully,
-including races during publication. A dedicated GitHub App commits the interfaces
+incomplete PR file listings. Closed/merged PRs and superseded heads skip successfully.
+A missing branch during publication is rechecked against PR state before deciding
+to skip. A dedicated GitHub App commits the interfaces
 with an atomic expected-head check. The App's
-commit triggers normal CI; it does not trigger another generation run because
+commit triggers normal CI with explicit read-only contents permissions and no
+persisted checkout credentials; it does not trigger another generation run because
 generation requires the Dependabot actor. No dependency update is automatically
 merged, and the existing interface checks remain enabled.
+
+GitHub's commit mutation atomically checks the branch head, not whether the PR is
+still open. The publisher rechecks PR state after a successful mutation and reports
+an in-flight close as a skip, including the created commit URL. If a merge retains
+the branch during that narrow window, an RBI commit may remain on the closed branch;
+it does not change the already-merged default branch. The publisher does not rewrite
+branch history to undo it.
 
 Missing run PR associations are checked against current PR state before the
 association requirement: closed or advanced heads skip; an unassociated current

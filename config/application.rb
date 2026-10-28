@@ -18,13 +18,21 @@ require "action_cable/engine"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
-# Rails has resolved CLI environment options by now; enable checks before gems load.
-checking_setting = ENV["SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS"]
-checking_enabled = checking_setting.nil? ? Rails.env.local? : ![ "", "0", "false", "off", "no" ].include?(checking_setting.strip.downcase)
-if checking_enabled
-  ENV["SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS"] ||= "1"
-else
-  ENV.delete("SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS")
+# Configure fresh Rails processes before bundled gems evaluate signatures.
+# Tools such as Tapioca that already loaded Sorbet retain their own policy.
+unless defined?(T::Configuration)
+  checking_setting = ENV["SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS"]
+  checking_enabled = checking_setting.nil? ? Rails.env.local? : ![ "", "0", "false", "off", "no" ].include?(checking_setting.strip.downcase)
+  begin
+    # Sorbet interprets even "0" as enabled. Normalize only during its require,
+    # then restore operator input so no generated settings leak to subprocesses.
+    ENV.delete("SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS") unless checking_enabled
+    require "sorbet-runtime"
+  ensure
+    ENV["SORBET_RUNTIME_ENABLE_CHECKING_IN_TESTS"] = checking_setting
+  end
+  T::Configuration.default_checked_level = :tests unless ENV.key?("SORBET_RUNTIME_DEFAULT_CHECKED_LEVEL")
+  T::Configuration.enable_checking_for_sigs_marked_checked_tests if checking_enabled
 end
 Bundler.require(*Rails.groups)
 
