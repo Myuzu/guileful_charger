@@ -85,6 +85,7 @@ forwarding types rather than adding untyped annotations merely to satisfy strict
 | [`DecisionRecorder`](../app/services/rebilling/decision_recorder.rb) | **`strict`** | Both no-op hooks accept ignored values and return nil |
 | [`DecisionRecorderContract`](../app/services/rebilling/decision_recorder_contract.rb) | **`strict`** | Active planner hook: Context/Decision inputs with an ignored result |
 | [`ScoringPolicy`](../app/services/rebilling/scoring_policy.rb) | **`strict`** | Ignored context, RetryStep enumerable, Symbol-to-nil placeholder score map |
+| [`PostExhaustionPolicy`](../app/services/rebilling/post_exhaustion_policy.rb) | **`strict`** | Opaque ignored inputs, Symbol action (`:pause_subscription` today), no effects |
 
 The reviewed RBIs describe dynamic `Data.define` members and the dry-initializer
 readers these methods consume. Typed Data callers use keyword `.new`/`[]` and
@@ -128,8 +129,7 @@ forwarded values; the reviewed `.new` contract checks typed caller inputs. The
 constructor returns `T.attached_class`, preserving subclass inference. This follows
 [Sorbet's RBI guidance](https://sorbet.org/docs/rbi)
 for dynamic methods and [dry-initializer's coercion model](https://dry-rb.org/gems/dry-initializer/main/type-constraints/).
-The post-exhaustion placeholder remains `typed: false`. A green baseline does not
-mean the whole application is statically typed.
+A green baseline does not mean the whole application is statically typed.
 
 Promote files to strict with behavior tests and expand `Sorbet/StrictSigil` in
 [RuboCop configuration](../.rubocop.yml). The legacy `Sorbet/TrueSigil` include list
@@ -190,6 +190,12 @@ are accepted. Empty input yields an empty map; repeated step keys share one nil
 entry. Each call returns a fresh mutable
 map. The planner still does not consult this hook. Static checks reject passing
 this nil-valued map to a numeric-score consumer.
+
+PostExhaustionPolicy's `handle` hook accepts two opaque ignored inputs
+(`T.anything`) and returns a Symbol. Its current `:pause_subscription` result is a
+placeholder action value; the hook does not pause subscriptions, write records,
+or dispatch notifications. Nil invoices and arbitrary placeholder reasons remain
+accepted. These input types do not imply a billing integration.
 
 ### Money and integer minor units
 

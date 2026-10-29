@@ -16,7 +16,7 @@ RSpec.describe "Reviewed rebilling and Money interfaces" do
     implementations = %w[
       attempt context decision decision_recorder decision_recorder_contract dunning_strategy
       failure_classifier failure_classifier_contract payment_method_policy
-      payment_method_policy_contract payment_method_snapshot scoring_policy
+      payment_method_policy_contract payment_method_snapshot post_exhaustion_policy scoring_policy
     ].map { |name| File.join(root, "app/services/rebilling/#{name}.rb") }
     Dir.mktmpdir("rebilling-types") do |directory|
       dependencies = File.join(directory, "dependencies.rbi")
@@ -409,5 +409,28 @@ RSpec.describe "Reviewed rebilling and Money interfaces" do
 
     expect(status).not_to be_success
     expect(output).to include("Errors: 2", "argument `candidate_steps`", "argument `scores`")
+  end
+
+  it "types the exhaustion action while preserving opaque ignored inputs" do
+    output, status = typecheck(<<~RUBY)
+      policy = Rebilling::PostExhaustionPolicy.new
+      T.assert_type!(policy.handle(nil, :max_attempts_reached), Symbol)
+      T.assert_type!(policy.handle(BasicObject.new, BasicObject.new), Symbol)
+      T.assert_type!(policy.handle(42, nil), Symbol)
+    RUBY
+
+    expect(status).to be_success, output
+  end
+
+  it "rejects consuming the exhaustion action as a string" do
+    output, status = typecheck(<<~RUBY)
+      sig { params(action: String).void }
+      def string_action(action); end
+
+      string_action(Rebilling::PostExhaustionPolicy.new.handle(nil, :max_attempts_reached))
+    RUBY
+
+    expect(status).not_to be_success
+    expect(output).to include("Errors: 1", "argument `action`")
   end
 end
