@@ -52,8 +52,9 @@ gem/DSL RBI paths; annotations and shims require manual review.
 
 Use **`typed: strict`** for every new or newly adopted application Ruby file and
 handwritten RBI. `typed: true` is a legacy migration level, not the adoption target.
-Promotion of the remaining legacy classes is tracked in
-[#299](https://github.com/Myuzu/guileful_charger/issues/299).
+The original rebilling values have been promoted to strict in
+[#299](https://github.com/Myuzu/guileful_charger/issues/299); all adopted classes
+listed below now use strict.
 Generated interfaces retain their generator's sigils. Most existing Ruby files
 still use `typed: false`: Sorbet checks syntax and constants, but not method bodies.
 
@@ -70,14 +71,14 @@ forwarding types rather than adding untyped annotations merely to satisfy strict
 | --- | --- | --- |
 | [`FailureClassifier`](../app/services/rebilling/failure_classifier.rb) | **`strict`** | Attempt/reason inputs and classification output; implements the classifier contract |
 | [`FailureClassifierContract`](../app/services/rebilling/failure_classifier_contract.rb) | **`strict`** | Injectable classifier interface: Attempt to FailureClassification |
-| [`FailureClassification`](../app/services/rebilling/failure_classification.rb) | `true` (legacy) | Symbol category, optional network recommendation, boolean flags |
-| [`Plan`](../app/services/rebilling/plan.rb) | `true` (legacy) | Integer amounts/counters, symbol strategy keys, string idempotency key, Time/TimeWithZone timestamps |
-| [`Decision`](../app/services/rebilling/decision.rb) | `true` (legacy) | Outcome/optional Plan inputs, diagnostics/trace containers, boolean predicates |
+| [`FailureClassification`](../app/services/rebilling/failure_classification.rb) | **`strict`** | Symbol category, optional network recommendation, boolean flags |
+| [`Plan`](../app/services/rebilling/plan.rb) | **`strict`** | Integer amounts/counters, symbol strategy keys, string idempotency key, Time/TimeWithZone timestamps |
+| [`Decision`](../app/services/rebilling/decision.rb) | **`strict`** | Outcome/optional Plan inputs, inherited factory results, diagnostics/trace containers, boolean predicates |
 | [`DecisionOutcome`](../app/services/rebilling/decision_outcome.rb) | **`strict`** | Required string/symbol status and reason inputs, normalized symbol readers, inherited constructor return type |
-| [`RetryStep`](../app/services/rebilling/retry_step.rb) | `true` (legacy) | Normalized dry readers, integer amount calculations, deterministic jitter and timestamp windows |
-| [`Attempt`](../app/services/rebilling/attempt.rb) | `true` (legacy) | Integer amount/attempt readers, optional failure/step symbols, status predicates |
-| [`Context`](../app/services/rebilling/context.rb) | `true` (legacy) | Integer balances, Attempt/PaymentMethodSnapshot collections, history queries and observability snapshot |
-| [`PaymentMethodSnapshot`](../app/services/rebilling/payment_method_snapshot.rb) | `true` (legacy) | Boolean primary flag, symbol status/kind fields, eligibility predicates |
+| [`RetryStep`](../app/services/rebilling/retry_step.rb) | **`strict`** | Opaque constructor forwarding, normalized key, bounded integer jitter, amount calculations and retry windows |
+| [`Attempt`](../app/services/rebilling/attempt.rb) | **`strict`** | Integer amount/attempt readers, optional failure/step symbols, status predicates |
+| [`Context`](../app/services/rebilling/context.rb) | **`strict`** | Typed frozen collection fields, integer balances, history queries and observability snapshot |
+| [`PaymentMethodSnapshot`](../app/services/rebilling/payment_method_snapshot.rb) | **`strict`** | Boolean primary flag, symbol status/kind fields, eligibility predicates |
 | [`PaymentMethodPolicy`](../app/services/rebilling/payment_method_policy.rb) | **`strict`** | Constructor/defaults, boolean flags, typed candidate filtering/sorting, optional selected snapshot |
 | [`PaymentMethodPolicyContract`](../app/services/rebilling/payment_method_policy_contract.rb) | **`strict`** | Injectable method selection and per-step waterfall flag |
 | [`DunningStrategy`](../app/services/rebilling/dunning_strategy.rb) and its Builder | **`strict`** | Constructor/readers, factories and builder receiver, optional planner results, transitions, diagnostics and trace |
@@ -92,6 +93,12 @@ do not add Data member validation. Identifier fields remain `Object` because
 snapshot IDs are unconstrained, including nil and integers. Diagnostic/trace
 values also remain heterogeneous; their containers have symbol keys.
 
+Reviewed constructors, Data `[]`, and `Decision.from_outcome` preserve the concrete
+subclass with [`T.attached_class`](https://sorbet.org/docs/attached-class). Data
+`with` updates use [`T.self_type`](https://sorbet.org/docs/self-type) to preserve the
+receiver's type. Runtime and isolated static probes cover inherited construction
+and updates; the interfaces retain all existing keyword input checks.
+
 RetryStep's constructor accepts broad inputs for dry-types to coerce and validate;
 its output readers expose normalized Integer/Float, Symbol, and integer Range
 types. Typed snapshot constructors accept Integer or integer strings for monetary
@@ -103,6 +110,14 @@ Those are static caller contracts; existing dry coercions remain unchanged and
 dry-initializer does not gain runtime element or timestamp validation. Context
 freezes supplied arrays and metadata in place, without deep freezing. Metadata
 permits heterogeneous keys and values.
+
+Attempt, Context, PaymentMethodSnapshot, and RetryStep keep opaque `T.anything`
+initializer forwarding, with reviewed `.new` interfaces for typed callers. Their
+strict annotations preserve dry coercions and freezing. RetryStep's key field
+accounts for dry-initializer's transient nil/module sentinel; its public reader
+remains a normalized Symbol. Jitter normalization produces bounded integer ranges,
+so the bound accessors return integers directly without redundant nil assertions.
+
 DecisionOutcome's reviewed constructor contract requires both keyword options
 and accepts strings or symbols. dry-types still owns allowed status/reason values;
 the static types describe their shape rather than their enum membership. The
@@ -116,8 +131,9 @@ The remaining scoring and post-exhaustion placeholders stay `typed: false`. A gr
 baseline does not mean the whole application is statically typed.
 
 Promote files to strict with behavior tests and expand `Sorbet/StrictSigil` in
-[RuboCop configuration](../.rubocop.yml). Remove promoted files from the legacy
-`Sorbet/TrueSigil` list. `rubocop-sorbet` also checks valid sigils and signature style.
+[RuboCop configuration](../.rubocop.yml). The legacy `Sorbet/TrueSigil` include list
+has been removed after this promotion. `rubocop-sorbet` also checks valid sigils and
+signature style.
 
 ### Classifier injection
 

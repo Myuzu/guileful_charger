@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 
 require "zlib"
 
@@ -17,9 +17,11 @@ module Rebilling
     option :on_success, Types::Transition, default: proc { :repeat }
     option :on_failure, Types::Transition, default: proc { :next }
 
-    def initialize(...)
+    sig { params(args: T.anything, kwargs: T.anything, block: T.nilable(Proc)).void }
+    def initialize(*args, **kwargs, &block)
       super
-      @key = generated_key if @key.equal?(Dry::Initializer::UNDEFINED) || @key.nil? || @key.to_s.empty?
+      # dry-initializer can leave nil or its module sentinel before normalization.
+      @key = T.let(generated_key, T.nilable(T.any(Symbol, T::Module[T.anything]))) if @key.equal?(Dry::Initializer::UNDEFINED) || @key.nil? || @key.to_s.empty?
 
       freeze
     rescue Dry::Types::CoercionError, Dry::Types::ConstraintError => e
@@ -97,12 +99,12 @@ module Rebilling
 
     sig { returns(Integer) }
     def min_jitter_seconds
-      T.must(jitter_seconds_range.begin)
+      jitter_seconds_range.begin
     end
 
     sig { returns(Integer) }
     def max_jitter_seconds
-      T.must(jitter_seconds_range.end)
+      jitter_seconds_range.end
     end
   end
 end

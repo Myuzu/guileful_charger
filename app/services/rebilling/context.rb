@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 
 module Rebilling
   class Context
@@ -15,11 +15,12 @@ module Rebilling
     option :customer_timezone, optional: true
     option :metadata, Types::Hash, default: proc { {} }
 
-    def initialize(...)
+    sig { params(args: T.anything, kwargs: T.anything, block: T.nilable(Proc)).void }
+    def initialize(*args, **kwargs, &block)
       super
-      @attempts = attempts.freeze
-      @payment_methods = payment_methods.freeze
-      @metadata = metadata.freeze
+      @attempts = T.let(attempts.freeze, T::Array[Attempt])
+      @payment_methods = T.let(payment_methods.freeze, T::Array[PaymentMethodSnapshot])
+      @metadata = T.let(metadata.freeze, T::Hash[Object, Object])
 
       freeze
     end

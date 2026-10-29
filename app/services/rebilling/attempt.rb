@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 
 module Rebilling
   class Attempt
@@ -21,7 +21,8 @@ module Rebilling
     option :completed_at, optional: true
     option :failed_at, optional: true
 
-    def initialize(...)
+    sig { params(args: T.anything, kwargs: T.anything, block: T.nilable(Proc)).void }
+    def initialize(*args, **kwargs, &block)
       super
       freeze
     end

@@ -13,7 +13,7 @@ class Rebilling::FailureClassification
       retryable: T::Boolean,
       requires_credential_refresh: T::Boolean,
       customer_action_required: T::Boolean
-    ).returns(Rebilling::FailureClassification)
+    ).returns(T.attached_class)
   end
   def self.new(
     category:,
@@ -30,7 +30,7 @@ class Rebilling::FailureClassification
       retryable: T::Boolean,
       requires_credential_refresh: T::Boolean,
       customer_action_required: T::Boolean
-    ).returns(Rebilling::FailureClassification)
+    ).returns(T.attached_class)
   end
   def self.[](
     category:,
@@ -47,7 +47,7 @@ class Rebilling::FailureClassification
       retryable: T::Boolean,
       requires_credential_refresh: T::Boolean,
       customer_action_required: T::Boolean
-    ).returns(Rebilling::FailureClassification)
+    ).returns(T.self_type)
   end
   def with(
     category: T.unsafe(nil),
@@ -89,7 +89,7 @@ class Rebilling::Plan
       idempotency_key: String,
       strategy_version: Integer,
       source_attempt_id: Object
-    ).returns(Rebilling::Plan)
+    ).returns(T.attached_class)
   end
   def self.new(
     step_key:,
@@ -118,7 +118,7 @@ class Rebilling::Plan
       idempotency_key: String,
       strategy_version: Integer,
       source_attempt_id: Object
-    ).returns(Rebilling::Plan)
+    ).returns(T.attached_class)
   end
   def self.[](
     step_key:,
@@ -147,7 +147,7 @@ class Rebilling::Plan
       idempotency_key: String,
       strategy_version: Integer,
       source_attempt_id: Object
-    ).returns(Rebilling::Plan)
+    ).returns(T.self_type)
   end
   def with(
     step_key: T.unsafe(nil),
@@ -208,7 +208,7 @@ class Rebilling::Decision
       diagnostics: T::Hash[Symbol, Object],
       trace: T::Array[T::Hash[Symbol, Object]],
       notification_intent: Symbol
-    ).returns(Rebilling::Decision)
+    ).returns(T.attached_class)
   end
   def self.new(status:, reason:, plan:, diagnostics:, trace:, notification_intent:); end
 
@@ -220,7 +220,7 @@ class Rebilling::Decision
       diagnostics: T::Hash[Symbol, Object],
       trace: T::Array[T::Hash[Symbol, Object]],
       notification_intent: Symbol
-    ).returns(Rebilling::Decision)
+    ).returns(T.attached_class)
   end
   def self.[](status:, reason:, plan:, diagnostics:, trace:, notification_intent:); end
 
@@ -232,7 +232,7 @@ class Rebilling::Decision
       diagnostics: T::Hash[Symbol, Object],
       trace: T::Array[T::Hash[Symbol, Object]],
       notification_intent: Symbol
-    ).returns(Rebilling::Decision)
+    ).returns(T.self_type)
   end
   def with(
     status: T.unsafe(nil),
@@ -270,7 +270,7 @@ class Rebilling::RetryStep::AmountCalculation
       base_cents: Integer,
       calculated_amount_cents: Integer,
       capped_amount_cents: Integer
-    ).returns(Rebilling::RetryStep::AmountCalculation)
+    ).returns(T.attached_class)
   end
   def self.new(base_cents:, calculated_amount_cents:, capped_amount_cents:); end
 
@@ -279,7 +279,7 @@ class Rebilling::RetryStep::AmountCalculation
       base_cents: Integer,
       calculated_amount_cents: Integer,
       capped_amount_cents: Integer
-    ).returns(Rebilling::RetryStep::AmountCalculation)
+    ).returns(T.attached_class)
   end
   def self.[](base_cents:, calculated_amount_cents:, capped_amount_cents:); end
 
@@ -288,7 +288,7 @@ class Rebilling::RetryStep::AmountCalculation
       base_cents: Integer,
       calculated_amount_cents: Integer,
       capped_amount_cents: Integer
-    ).returns(Rebilling::RetryStep::AmountCalculation)
+    ).returns(T.self_type)
   end
   def with(
     base_cents: T.unsafe(nil),
