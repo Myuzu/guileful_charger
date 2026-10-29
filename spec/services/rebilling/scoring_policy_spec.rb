@@ -26,4 +26,10 @@ RSpec.describe Rebilling::ScoringPolicy do
 
     expect(policy.score(nil, [])).to eq({})
   end
+
+  it "preserves mapping for enumerable candidate input" do
+    step = Rebilling::RetryStep.new(percentage: 25, delay: 60)
+
+    expect(policy.score(nil, [ step ].each)).to eq(step.key => nil)
+  end
 end

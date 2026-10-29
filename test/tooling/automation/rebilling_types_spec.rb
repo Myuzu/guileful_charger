@@ -390,6 +390,7 @@ RSpec.describe "Reviewed rebilling and Money interfaces" do
       policy = Rebilling::ScoringPolicy.new
       step = Rebilling::RetryStep.new(percentage: "25", delay: "60")
       T.assert_type!(policy.score(:context, [step]), T::Hash[Symbol, NilClass])
+      T.assert_type!(policy.score(nil, [step].each), T::Hash[Symbol, NilClass])
       T.assert_type!(policy.score(BasicObject.new, []), T::Hash[Symbol, NilClass])
     RUBY
 

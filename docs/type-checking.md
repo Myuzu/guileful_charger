@@ -84,7 +84,7 @@ forwarding types rather than adding untyped annotations merely to satisfy strict
 | [`DunningStrategy`](../app/services/rebilling/dunning_strategy.rb) and its Builder | **`strict`** | Constructor/readers, factories and builder receiver, optional planner results, transitions, diagnostics and trace |
 | [`DecisionRecorder`](../app/services/rebilling/decision_recorder.rb) | **`strict`** | Both no-op hooks accept ignored values and return nil |
 | [`DecisionRecorderContract`](../app/services/rebilling/decision_recorder_contract.rb) | **`strict`** | Active planner hook: Context/Decision inputs with an ignored result |
-| [`ScoringPolicy`](../app/services/rebilling/scoring_policy.rb) | **`strict`** | Ignored context, RetryStep array, Symbol-to-nil placeholder score map |
+| [`ScoringPolicy`](../app/services/rebilling/scoring_policy.rb) | **`strict`** | Ignored context, RetryStep enumerable, Symbol-to-nil placeholder score map |
 
 The reviewed RBIs describe dynamic `Data.define` members and the dry-initializer
 readers these methods consume. Typed Data callers use keyword `.new`/`[]` and
@@ -185,8 +185,9 @@ usable. Scoring is an opaque reserved option and is never consulted; these
 contracts add no scoring, shadow execution, persistence, or gateway integration.
 
 ScoringPolicy's reserved `score` hook accepts an opaque ignored context and a
-RetryStep array, returning `T::Hash[Symbol, NilClass]`. Empty input yields an empty
-map; repeated step keys share one nil entry. Each call returns a fresh mutable
+RetryStep enumerable, returning `T::Hash[Symbol, NilClass]`. Arrays and enumerators
+are accepted. Empty input yields an empty map; repeated step keys share one nil
+entry. Each call returns a fresh mutable
 map. The planner still does not consult this hook. Static checks reject passing
 this nil-valued map to a numeric-score consumer.
 
