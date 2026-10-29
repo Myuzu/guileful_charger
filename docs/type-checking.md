@@ -84,6 +84,7 @@ forwarding types rather than adding untyped annotations merely to satisfy strict
 | [`DunningStrategy`](../app/services/rebilling/dunning_strategy.rb) and its Builder | **`strict`** | Constructor/readers, factories and builder receiver, optional planner results, transitions, diagnostics and trace |
 | [`DecisionRecorder`](../app/services/rebilling/decision_recorder.rb) | **`strict`** | Both no-op hooks accept ignored values and return nil |
 | [`DecisionRecorderContract`](../app/services/rebilling/decision_recorder_contract.rb) | **`strict`** | Active planner hook: Context/Decision inputs with an ignored result |
+| [`ScoringPolicy`](../app/services/rebilling/scoring_policy.rb) | **`strict`** | Ignored context, RetryStep array, Symbol-to-nil placeholder score map |
 
 The reviewed RBIs describe dynamic `Data.define` members and the dry-initializer
 readers these methods consume. Typed Data callers use keyword `.new`/`[]` and
@@ -127,8 +128,8 @@ forwarded values; the reviewed `.new` contract checks typed caller inputs. The
 constructor returns `T.attached_class`, preserving subclass inference. This follows
 [Sorbet's RBI guidance](https://sorbet.org/docs/rbi)
 for dynamic methods and [dry-initializer's coercion model](https://dry-rb.org/gems/dry-initializer/main/type-constraints/).
-The remaining scoring and post-exhaustion placeholders stay `typed: false`. A green
-baseline does not mean the whole application is statically typed.
+The post-exhaustion placeholder remains `typed: false`. A green baseline does not
+mean the whole application is statically typed.
 
 Promote files to strict with behavior tests and expand `Sorbet/StrictSigil` in
 [RuboCop configuration](../.rubocop.yml). The legacy `Sorbet/TrueSigil` include list
@@ -182,6 +183,12 @@ recorder's `record` and reserved `record_shadows` accept arbitrary ignored value
 and return nil. Existing runtime duck-typed collaborators and RSpec spies remain
 usable. Scoring is an opaque reserved option and is never consulted; these
 contracts add no scoring, shadow execution, persistence, or gateway integration.
+
+ScoringPolicy's reserved `score` hook accepts an opaque ignored context and a
+RetryStep array, returning `T::Hash[Symbol, NilClass]`. Empty input yields an empty
+map; repeated step keys share one nil entry. Each call returns a fresh mutable
+map. The planner still does not consult this hook. Static checks reject passing
+this nil-valued map to a numeric-score consumer.
 
 ### Money and integer minor units
 

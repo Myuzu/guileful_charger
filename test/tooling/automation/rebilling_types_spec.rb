@@ -16,7 +16,7 @@ RSpec.describe "Reviewed rebilling and Money interfaces" do
     implementations = %w[
       attempt context decision decision_recorder decision_recorder_contract dunning_strategy
       failure_classifier failure_classifier_contract payment_method_policy
-      payment_method_policy_contract payment_method_snapshot
+      payment_method_policy_contract payment_method_snapshot scoring_policy
     ].map { |name| File.join(root, "app/services/rebilling/#{name}.rb") }
     Dir.mktmpdir("rebilling-types") do |directory|
       dependencies = File.join(directory, "dependencies.rbi")
@@ -67,7 +67,6 @@ RSpec.describe "Reviewed rebilling and Money interfaces" do
           end
           def retry_window(now:, context:, attempt_number:); end
         end
-        class Rebilling::ScoringPolicy; end
         module ActiveSupport
           class TimeWithZone
             extend T::Sig
@@ -384,5 +383,30 @@ RSpec.describe "Reviewed rebilling and Money interfaces" do
     RUBY
 
     expect(status).to be_success, output
+  end
+
+  it "types placeholder scores as a symbol-to-nil map with an opaque context" do
+    output, status = typecheck(<<~RUBY)
+      policy = Rebilling::ScoringPolicy.new
+      step = Rebilling::RetryStep.new(percentage: "25", delay: "60")
+      T.assert_type!(policy.score(:context, [step]), T::Hash[Symbol, NilClass])
+      T.assert_type!(policy.score(BasicObject.new, []), T::Hash[Symbol, NilClass])
+    RUBY
+
+    expect(status).to be_success, output
+  end
+
+  it "rejects invalid scoring candidates and treating placeholder results as numeric" do
+    output, status = typecheck(<<~RUBY)
+      sig { params(scores: T::Hash[Symbol, Float]).void }
+      def numeric_scores(scores); end
+
+      policy = Rebilling::ScoringPolicy.new
+      policy.score(nil, ["not a RetryStep"])
+      numeric_scores(policy.score(nil, []))
+    RUBY
+
+    expect(status).not_to be_success
+    expect(output).to include("Errors: 2", "argument `candidate_steps`", "argument `scores`")
   end
 end
