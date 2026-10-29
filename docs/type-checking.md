@@ -79,6 +79,10 @@ forwarding types rather than adding untyped annotations merely to satisfy strict
 | [`Context`](../app/services/rebilling/context.rb) | `true` (legacy) | Integer balances, Attempt/PaymentMethodSnapshot collections, history queries and observability snapshot |
 | [`PaymentMethodSnapshot`](../app/services/rebilling/payment_method_snapshot.rb) | `true` (legacy) | Boolean primary flag, symbol status/kind fields, eligibility predicates |
 | [`PaymentMethodPolicy`](../app/services/rebilling/payment_method_policy.rb) | **`strict`** | Constructor/defaults, boolean flags, typed candidate filtering/sorting, optional selected snapshot |
+| [`PaymentMethodPolicyContract`](../app/services/rebilling/payment_method_policy_contract.rb) | **`strict`** | Injectable method selection and per-step waterfall flag |
+| [`DunningStrategy`](../app/services/rebilling/dunning_strategy.rb) and its Builder | **`strict`** | Constructor/readers, factories and builder receiver, optional planner results, transitions, diagnostics and trace |
+| [`DecisionRecorder`](../app/services/rebilling/decision_recorder.rb) | **`strict`** | Both no-op hooks accept ignored values and return nil |
+| [`DecisionRecorderContract`](../app/services/rebilling/decision_recorder_contract.rb) | **`strict`** | Active planner hook: Context/Decision inputs with an ignored result |
 
 The reviewed RBIs describe dynamic `Data.define` members and the dry-initializer
 readers these methods consume. Typed Data callers use keyword `.new`/`[]` and
@@ -108,8 +112,8 @@ forwarded values; the reviewed `.new` contract checks typed caller inputs. The
 constructor returns `T.attached_class`, preserving subclass inference. This follows
 [Sorbet's RBI guidance](https://sorbet.org/docs/rbi)
 for dynamic methods and [dry-initializer's coercion model](https://dry-rb.org/gems/dry-initializer/main/type-constraints/).
-The remaining planner bodies stay `typed: false`. A green baseline does not mean
-the whole application is statically typed.
+The remaining scoring and post-exhaustion placeholders stay `typed: false`. A green
+baseline does not mean the whole application is statically typed.
 
 Promote files to strict with behavior tests and expand `Sorbet/StrictSigil` in
 [RuboCop configuration](../.rubocop.yml). Remove promoted files from the legacy
@@ -128,6 +132,39 @@ Selection accepts Context/RetryStep snapshots and returns a nilable
 PaymentMethodSnapshot. Preferred IDs retain the snapshots' `Object` contract,
 including integer and nil identifiers. The policy preserves active/hard-decline
 filtering, per-step exclusions, primary/recent-success/ID ordering, and defaults.
+
+### Planner and builder DSL
+
+DunningStrategy's reviewed constructor accepts RetryStep arrays, integer/string
+version and attempt-limit options, symbol/string category arrays, and typed
+collaborators. Normalized readers expose integer counters and symbol categories.
+`next_plan` takes a Context, a Time/TimeWithZone clock value, and a boolean trace
+flag, and returns a Decision. Helpers model missing attempts, steps, and selected
+methods explicitly. Diagnostics and trace entries remain open symbol-keyed hashes;
+the types do not impose a closed observability schema.
+
+The Builder block has both a typed `self` and an optional caller-declared Builder
+argument, using [Sorbet's bound proc signatures](https://sorbet.org/docs/procs).
+`step` retains its Array-of-RetryStep return value. `.build` and `.default` retain
+subclass return types and dry-initializer's subclass option defaults.
+
+> [!NOTE]
+> `.build(**options)` and `step(percentage, **options)` forward opaque options to
+> dry-initializer. Their keyword names and values are validated at runtime, including
+> the missing-delay error. Narrow `T.unsafe` bridges cover those dynamic keyword
+> hashes and the core RBI's missing `instance_eval` block argument. The reviewed
+> `.new` interface checks constructor options statically; the DSL still checks the
+> builder receiver, available methods, and result types.
+
+Typed custom selectors include PaymentMethodPolicyContract and implement `select`
+and `exhaust_methods_per_step?`. The existing `select` name also shadows
+`Kernel#select`; its override needs `allow_incompatible: true` for that unrelated
+IO signature. Typed recorders include DecisionRecorderContract and implement
+`record(Context, Decision)`; the planner ignores the return value. The default
+recorder's `record` and reserved `record_shadows` accept arbitrary ignored values
+and return nil. Existing runtime duck-typed collaborators and RSpec spies remain
+usable. Scoring is an opaque reserved option and is never consulted; these
+contracts add no scoring, shadow execution, persistence, or gateway integration.
 
 ### Money and integer minor units
 

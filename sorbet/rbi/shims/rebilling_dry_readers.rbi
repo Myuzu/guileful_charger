@@ -280,3 +280,55 @@ class Rebilling::DecisionOutcome
   sig { returns(Symbol) }
   def reason; end
 end
+
+class Rebilling::DunningStrategy
+  extend T::Sig
+
+  sig do
+    params(
+      steps: T::Array[Rebilling::RetryStep],
+      version: T.any(Integer, String),
+      max_attempts: T.any(Integer, String),
+      retryable_failure_categories: T::Array[T.any(Symbol, String)],
+      payment_method_policy: Rebilling::PaymentMethodPolicyContract,
+      failure_classifier: Rebilling::FailureClassifierContract,
+      decision_recorder: Rebilling::DecisionRecorderContract,
+      scoring_policy: Object
+    ).returns(T.attached_class)
+  end
+  def self.new(
+    steps:,
+    version: T.unsafe(nil),
+    max_attempts: T.unsafe(nil),
+    retryable_failure_categories: T.unsafe(nil),
+    payment_method_policy: T.unsafe(nil),
+    failure_classifier: T.unsafe(nil),
+    decision_recorder: T.unsafe(nil),
+    scoring_policy: T.unsafe(nil)
+  ); end
+
+  sig { returns(T::Array[Rebilling::RetryStep]) }
+  def steps; end
+
+  sig { returns(Integer) }
+  def version; end
+
+  sig { returns(Integer) }
+  def max_attempts; end
+
+  sig { returns(T::Array[Symbol]) }
+  def retryable_failure_categories; end
+
+  sig { returns(Rebilling::PaymentMethodPolicyContract) }
+  def payment_method_policy; end
+
+  sig { returns(Rebilling::FailureClassifierContract) }
+  def failure_classifier; end
+
+  sig { returns(Rebilling::DecisionRecorderContract) }
+  def decision_recorder; end
+
+  # Reserved and never consulted by the current rules-only planner.
+  sig { returns(Object) }
+  def scoring_policy; end
+end

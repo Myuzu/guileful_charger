@@ -13,17 +13,24 @@ RSpec.describe "Reviewed rebilling and Money interfaces" do
     # Check that the typed Money overlay wins over Tapioca's untyped reflection.
     interfaces.concat(Dir[File.join(root, "sorbet/rbi/gems/money@*.rbi")])
     interfaces.concat(Dir[File.join(root, "sorbet/rbi/gems/dry-initializer@*.rbi")])
-    implementations = %w[attempt context decision failure_classifier failure_classifier_contract payment_method_policy payment_method_snapshot].map { |name| File.join(root, "app/services/rebilling/#{name}.rb") }
+    implementations = %w[
+      attempt context decision decision_recorder decision_recorder_contract dunning_strategy
+      failure_classifier failure_classifier_contract payment_method_policy
+      payment_method_policy_contract payment_method_snapshot
+    ].map { |name| File.join(root, "app/services/rebilling/#{name}.rb") }
     Dir.mktmpdir("rebilling-types") do |directory|
       dependencies = File.join(directory, "dependencies.rbi")
       File.write(dependencies, <<~RBI)
         # typed: strict
         module Rebilling; end
         module Rebilling::Types
+          extend T::Sig
+          sig { params(type: T::Module[T.anything]).returns(T.untyped) }
+          def self.Instance(type); end
           PaymentMethodOrder = T.let(T.unsafe(nil), Object)
           Bool = T.let(T.unsafe(nil), Object)
           NonNegativeInteger = T.let(T.unsafe(nil), Object)
-          Array = T.let(T.unsafe(nil), Object)
+          Array = T.let(T.unsafe(nil), T.untyped)
           Hash = T.let(T.unsafe(nil), Object)
           Nil = T.let(T.unsafe(nil), T.untyped)
           module Coercible
@@ -31,6 +38,36 @@ RSpec.describe "Reviewed rebilling and Money interfaces" do
             Symbol = T.let(T.unsafe(nil), T.untyped)
           end
         end
+        class Integer
+          extend T::Sig
+          sig { returns(Object) }
+          def day; end
+          sig { returns(Object) }
+          def minute; end
+          sig { returns(Object) }
+          def minutes; end
+        end
+        class Time
+          extend T::Sig
+          sig { returns(Time) }
+          def self.current; end
+        end
+        class Object
+          extend T::Sig
+          sig { returns(T::Boolean) }
+          def present?; end
+        end
+        class Rebilling::RetryStep
+          extend T::Sig
+          sig { params(context: Rebilling::Context).returns(Rebilling::RetryStep::AmountCalculation) }
+          def amount_calculation_for(context); end
+          sig do
+            params(now: T.any(Time, ActiveSupport::TimeWithZone), context: Rebilling::Context, attempt_number: Integer)
+              .returns(T::Hash[Symbol, T.any(Time, ActiveSupport::TimeWithZone)])
+          end
+          def retry_window(now:, context:, attempt_number:); end
+        end
+        class Rebilling::ScoringPolicy; end
         module ActiveSupport
           class TimeWithZone
             extend T::Sig
@@ -227,5 +264,86 @@ RSpec.describe "Reviewed rebilling and Money interfaces" do
 
     expect(status).not_to be_success
     expect(output).to include("Missing definition for abstract method", "argument `failure_classifier`")
+  end
+
+  it "types the strategy builder receiver, step results, readers, and decisions" do
+    output, status = typecheck(<<~RUBY)
+      class SpecializedStrategy < Rebilling::DunningStrategy; end
+      configured = Rebilling::DunningStrategy.build(version: "7") do |builder|
+        T.assert_type!(self, Rebilling::DunningStrategy::Builder)
+        T.assert_type!(builder, Rebilling::DunningStrategy::Builder)
+        T.assert_type!(step("12.5", delay: "60"), T::Array[Rebilling::RetryStep])
+      end
+      T.assert_type!(configured.version, Integer)
+      T.assert_type!(configured.steps, T::Array[Rebilling::RetryStep])
+      T.assert_type!(SpecializedStrategy.default, SpecializedStrategy)
+      sig { params(strategy: Rebilling::DunningStrategy, context: Rebilling::Context).void }
+      def plan(strategy, context)
+        T.assert_type!(strategy.next_plan(context, now: Time.now, trace: true), Rebilling::Decision)
+      end
+    RUBY
+
+    expect(status).to be_success, output
+  end
+
+  it "rejects invalid strategy steps, planning inputs, and builder calls" do
+    output, status = typecheck(<<~RUBY)
+      Rebilling::DunningStrategy.new(steps: ["not a step"])
+      Rebilling::DunningStrategy.default.next_plan("not a context", now: "tomorrow", trace: "yes")
+      Rebilling::DunningStrategy.build { unknown_builder_method }
+    RUBY
+
+    expect(status).not_to be_success
+    expect(output).to include("argument `steps`", "argument `context`", "argument `now`", "argument `trace`", "unknown_builder_method")
+  end
+
+  it "types recorder hooks without narrowing ignored inputs" do
+    output, status = typecheck(<<~RUBY)
+      recorder = Rebilling::DecisionRecorder.new
+      T.assert_type!(recorder.record(:context, :decision), NilClass)
+      T.assert_type!(recorder.record_shadows(:context, :primary, [:shadow]), NilClass)
+    RUBY
+
+    expect(status).to be_success, output
+  end
+
+  it "accepts typed planner collaborators and ignores the recorder result" do
+    output, status = typecheck(<<~RUBY)
+      class CustomSelector
+        extend T::Sig
+        include Rebilling::PaymentMethodPolicyContract
+        sig { override.returns(T::Boolean) }
+        def exhaust_methods_per_step?; false; end
+        sig do
+          override(allow_incompatible: true)
+            .params(context: Rebilling::Context, step: Rebilling::RetryStep, preferred_payment_method_id: Object)
+            .returns(T.nilable(Rebilling::PaymentMethodSnapshot))
+        end
+        def select(context, step, preferred_payment_method_id: nil); nil; end
+      end
+      class CustomRecorder
+        extend T::Sig
+        include Rebilling::DecisionRecorderContract
+        sig { override.params(context: Rebilling::Context, decision: Rebilling::Decision).returns(Symbol) }
+        def record(context, decision); :recorded; end
+      end
+      strategy = Rebilling::DunningStrategy.new(steps: [], payment_method_policy: CustomSelector.new,
+        failure_classifier: Rebilling::FailureClassifier.new, decision_recorder: CustomRecorder.new,
+        scoring_policy: Object.new)
+      T.assert_type!(strategy.payment_method_policy, Rebilling::PaymentMethodPolicyContract)
+      T.assert_type!(strategy.decision_recorder, Rebilling::DecisionRecorderContract)
+    RUBY
+
+    expect(status).to be_success, output
+  end
+
+  it "rejects planner collaborators without their required interfaces" do
+    output, status = typecheck(<<~RUBY)
+      Rebilling::DunningStrategy.new(steps: [], payment_method_policy: Object.new,
+        failure_classifier: Object.new, decision_recorder: Object.new)
+    RUBY
+
+    expect(status).not_to be_success
+    expect(output).to include("Errors: 3", "argument `payment_method_policy`", "argument `failure_classifier`", "argument `decision_recorder`")
   end
 end

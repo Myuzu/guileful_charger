@@ -20,6 +20,47 @@ RSpec.describe Rebilling::DunningStrategy do
   end
 
   describe "DSL and validation" do
+    it "coerces options and freezes the normalized strategy state" do
+      configured = described_class.build(version: "7", max_attempts: "4", retryable_failure_categories: [ "soft_decline" ]) do
+        step "12.5", delay: "60"
+      end
+
+      expect(configured.version).to eq(7)
+      expect(configured.max_attempts).to eq(4)
+      expect(configured.retryable_failure_categories).to eq([ :soft_decline ])
+      expect(configured.steps.first.percentage).to eq(12.5)
+      expect(configured).to be_frozen
+      expect(configured.steps).to be_frozen
+      expect(configured.retryable_failure_categories).to be_frozen
+    end
+
+    it "supports the builder as both block receiver and block argument" do
+      receiver = nil
+      argument = nil
+      configured = described_class.build do |builder|
+        receiver = self
+        argument = builder
+        builder.step 25, delay: 60
+      end
+
+      expect(receiver).to equal(argument)
+      expect(configured.steps.first.delay_seconds).to eq(60)
+    end
+
+    it "preserves subclass factories and subclass option defaults" do
+      specialized = Class.new(described_class) do
+        option :max_attempts, Rebilling::Types::Coercible::Integer, default: proc { 6 }
+      end
+
+      expect(specialized.build).to be_an_instance_of(specialized)
+      expect(specialized.default.max_attempts).to eq(6)
+      expect(specialized.build.steps).to eq([])
+    end
+
+    it "keeps step validation in dry-initializer when the DSL omits delay" do
+      expect { described_class.build { step 25 } }.to raise_error(KeyError, /delay/)
+    end
+
     it "builds strategies with the compact step DSL" do
       dsl_strategy = described_class.build(version: 7, max_attempts: 4) do
         step 25, delay: 5.minutes, on_success: :next
@@ -116,6 +157,15 @@ RSpec.describe Rebilling::DunningStrategy do
 
       expect(decision.status).to eq(:not_retryable)
       expect(decision.reason).to eq(:unknown_step_key)
+    end
+
+    it "preserves the non-retryable fallback for a blank step key" do
+      blank_step_attempt = build_attempt(attempt_number: 2, retry_step_key: :"", failure_category: :soft_decline)
+
+      decision = strategy.next_plan(build_context(attempts: [ blank_step_attempt ]), now: now, trace: true)
+
+      expect(decision.reason).to eq(:non_retryable_failure_reason)
+      expect(decision.trace.last).to include(branch: :terminal_decision, status: :not_retryable)
     end
   end
 
@@ -255,9 +305,44 @@ RSpec.describe Rebilling::DunningStrategy do
         expect(inactive_methods_decision.status).to eq(:no_eligible_payment_method)
       end
     end
+
+    it "returns no eligible payment method when a successful repeat has no remaining method" do
+      completed = build_attempt(attempt_number: 2, status: :completed, retry_step_key: step_75pct.key)
+
+      decision = strategy.next_plan(build_context(attempts: [ completed ], payment_methods: []), now: now)
+
+      expect(decision.status).to eq(:no_eligible_payment_method)
+    end
   end
 
   describe "#next_plan exhaustion paths" do
+    it "exhausts after success on a final step configured to advance" do
+      final_step = Rebilling::RetryStep.new(percentage: 25, delay: 60, on_success: :next)
+      final_strategy = described_class.new(steps: [ final_step ])
+      completed = build_attempt(attempt_number: 2, status: :completed, retry_step_key: final_step.key)
+
+      decision = final_strategy.next_plan(build_context(attempts: [ completed ]), now: now)
+
+      expect(decision.status).to eq(:exhausted)
+      expect(decision.reason).to eq(:no_next_step)
+    end
+
+    it "exhausts stop and final-next failures without a payment method waterfall" do
+      policy = Rebilling::PaymentMethodPolicy.new(exhaust_methods_per_step: false)
+      reasons = { stop: :step_chain_stopped, next: :no_next_step }
+
+      reasons.each do |transition, reason|
+        final_step = Rebilling::RetryStep.new(percentage: 25, delay: 60, on_failure: transition)
+        final_strategy = described_class.new(steps: [ final_step ], payment_method_policy: policy)
+        failed = build_attempt(attempt_number: 2, retry_step_key: final_step.key, failure_category: :soft_decline)
+
+        decision = final_strategy.next_plan(build_context(attempts: [ failed ]), now: now)
+
+        expect(decision.status).to eq(:exhausted)
+        expect(decision.reason).to eq(reason)
+      end
+    end
+
     it "returns exhausted when a step stops the chain after success" do
       stop_after_success = Rebilling::RetryStep.new(percentage: 25, delay: 1.minute, on_success: :stop)
       stop_strategy = described_class.new(steps: [ stop_after_success ])
@@ -293,6 +378,15 @@ RSpec.describe Rebilling::DunningStrategy do
   end
 
   describe "#next_plan non-retryable paths" do
+    it "does not retry a hard decline on a known retry step" do
+      failed = build_attempt(attempt_number: 2, retry_step_key: step_75pct.key, failure_category: :hard_decline)
+
+      decision = strategy.next_plan(build_context(attempts: [ failed ]), now: now)
+
+      expect(decision.status).to eq(:not_retryable)
+      expect(decision.reason).to eq(:non_retryable_failure_reason)
+    end
+
     it "returns not retryable for non-retryable failure categories" do
       hard_decline = build_attempt(attempt_number: 1, failure_category: :hard_decline)
 
@@ -362,6 +456,25 @@ RSpec.describe Rebilling::DunningStrategy do
   end
 
   describe "#next_plan trace and recording" do
+    it "preserves custom selector/recorder injection and does not consult scoring" do
+      selected_method = build_payment_method(42)
+      selector = instance_double(Rebilling::PaymentMethodPolicy, select: selected_method)
+      recorder = instance_spy(Rebilling::DecisionRecorder)
+      scoring = instance_double(Rebilling::ScoringPolicy)
+      custom = described_class.new(steps: [ step_75pct ], payment_method_policy: selector,
+        decision_recorder: recorder, scoring_policy: scoring)
+      initial = build_attempt(id: nil, attempt_number: 1, failure_category: :soft_decline)
+      context = build_context(invoice_id: 7, attempts: [ initial ], payment_methods: [ selected_method ])
+
+      decision = custom.next_plan(context, now: Time.utc(2026, 1, 1), trace: true)
+
+      expect(decision).to be_scheduled
+      expect(decision.plan.payment_method_id).to eq(42)
+      expect(decision.plan.source_attempt_id).to be_nil
+      expect(recorder).to have_received(:record).with(context, decision)
+      expect(custom.scoring_policy).to equal(scoring)
+    end
+
     it "records trace entries when requested" do
       initial_attempt = build_attempt(attempt_number: 1, failure_category: :soft_decline)
 

@@ -4,6 +4,7 @@ module Rebilling
   class PaymentMethodPolicy
     extend Dry::Initializer
     extend T::Sig
+    include PaymentMethodPolicyContract
 
     option :order, Types::PaymentMethodOrder, default: proc { :primary_then_recent_success }
     option :exhaust_methods_per_step, Types::Bool, default: proc { true }
@@ -22,13 +23,14 @@ module Rebilling
       freeze
     end
 
-    sig { returns(T::Boolean) }
+    sig { override.returns(T::Boolean) }
     def exhaust_methods_per_step?
       exhaust_methods_per_step
     end
 
     sig do
-      params(context: Context, step: RetryStep, preferred_payment_method_id: Object)
+      # The public selector also shadows Kernel#select, whose IO signature differs.
+      override(allow_incompatible: true).params(context: Context, step: RetryStep, preferred_payment_method_id: Object) # rubocop:disable Sorbet/AllowIncompatibleOverride
         .returns(T.nilable(PaymentMethodSnapshot))
     end
     def select(context, step, preferred_payment_method_id: nil)
