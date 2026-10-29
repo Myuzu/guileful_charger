@@ -60,6 +60,9 @@ but not their method bodies. The following rebilling core uses `typed: true`:
 | [`Plan`](../app/services/rebilling/plan.rb) | Integer amounts/counters, symbol strategy keys, string idempotency key, Time/TimeWithZone timestamps |
 | [`Decision`](../app/services/rebilling/decision.rb) | Outcome/optional Plan inputs, diagnostics/trace containers, boolean predicates |
 | [`RetryStep`](../app/services/rebilling/retry_step.rb) | Normalized dry readers, integer amount calculations, deterministic jitter and timestamp windows |
+| [`Attempt`](../app/services/rebilling/attempt.rb) | Integer amount/attempt readers, optional failure/step symbols, status predicates |
+| [`Context`](../app/services/rebilling/context.rb) | Integer balances, Attempt/PaymentMethodSnapshot collections, history queries and observability snapshot |
+| [`PaymentMethodSnapshot`](../app/services/rebilling/payment_method_snapshot.rb) | Boolean primary flag, symbol status/kind fields, eligibility predicates |
 
 The reviewed RBIs describe dynamic `Data.define` members and the dry-initializer
 readers these methods consume. Typed Data callers use keyword `.new`/`[]` and
@@ -71,9 +74,18 @@ values also remain heterogeneous; their containers have symbol keys.
 
 RetryStep's constructor accepts broad inputs for dry-types to coerce and validate;
 its output readers expose normalized Integer/Float, Symbol, and integer Range
-types. Context, Attempt, and DecisionOutcome have only the reader contracts needed
-by this boundary; their bodies and the rest of the planner remain `typed: false`.
-A green baseline does not mean the whole application is statically typed.
+types. Typed snapshot constructors accept Integer or integer strings for monetary
+and counter inputs, so a possible fractional Money value needs an explicit policy
+before crossing the boundary. Other coerced fields retain broad inputs.
+Uncoerced timestamps use nilable Time/TimeWithZone contracts, timezone is a
+nilable String, and Context collections contain the corresponding snapshots.
+Those are static caller contracts; existing dry coercions remain unchanged and
+dry-initializer does not gain runtime element or timestamp validation. Context
+freezes supplied arrays and metadata in place, without deep freezing. Metadata
+permits heterogeneous keys and values.
+DecisionOutcome still has only the two reader contracts needed here; its body and
+the rest of the planner remain `typed: false`. A green baseline does not mean the
+whole application is statically typed.
 
 Promote files gradually, add signatures with behavior tests, and expand the
 `Sorbet/TrueSigil` include list in [RuboCop configuration](../.rubocop.yml) as each

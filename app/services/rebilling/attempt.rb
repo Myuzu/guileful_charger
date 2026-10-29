@@ -1,8 +1,9 @@
-# typed: false
+# typed: true
 
 module Rebilling
   class Attempt
     extend Dry::Initializer
+    extend T::Sig
 
     TERMINAL_STATUSES = %i[completed failed].freeze
     IN_FLIGHT_STATUSES = %i[pending scheduled processing].freeze
@@ -25,22 +26,27 @@ module Rebilling
       freeze
     end
 
+    sig { returns(T::Boolean) }
     def completed?
       status == :completed
     end
 
+    sig { returns(T::Boolean) }
     def failed?
       status == :failed
     end
 
+    sig { returns(T::Boolean) }
     def terminal?
       TERMINAL_STATUSES.include?(status)
     end
 
+    sig { returns(T::Boolean) }
     def in_flight?
       IN_FLIGHT_STATUSES.include?(status)
     end
 
+    sig { returns(T::Boolean) }
     def initial?
       retry_step_key.nil?
     end
