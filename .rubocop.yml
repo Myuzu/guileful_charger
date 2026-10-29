@@ -44,6 +44,7 @@ Sorbet/StrictSigil:
     - "app/services/rebilling/payment_method_snapshot.rb"
     - "app/services/rebilling/plan.rb"
     - "app/services/rebilling/retry_step.rb"
+    - "app/services/rebilling/scoring_policy.rb"
 
 Sorbet/FalseSigil:
   Exclude:
