@@ -43,6 +43,7 @@ Sorbet/StrictSigil:
     - "app/services/rebilling/payment_method_policy_contract.rb"
     - "app/services/rebilling/payment_method_snapshot.rb"
     - "app/services/rebilling/plan.rb"
+    - "app/services/rebilling/post_exhaustion_policy.rb"
     - "app/services/rebilling/retry_step.rb"
     - "app/services/rebilling/scoring_policy.rb"
 
