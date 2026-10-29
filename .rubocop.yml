@@ -40,10 +40,14 @@ Sorbet/TrueSigil:
 Sorbet/StrictSigil:
   Enabled: true
   Include:
+    - "app/services/rebilling/decision_recorder.rb"
+    - "app/services/rebilling/decision_recorder_contract.rb"
+    - "app/services/rebilling/dunning_strategy.rb"
     - "app/services/rebilling/decision_outcome.rb"
     - "app/services/rebilling/failure_classifier.rb"
     - "app/services/rebilling/failure_classifier_contract.rb"
     - "app/services/rebilling/payment_method_policy.rb"
+    - "app/services/rebilling/payment_method_policy_contract.rb"
 
 Sorbet/FalseSigil:
   Exclude:

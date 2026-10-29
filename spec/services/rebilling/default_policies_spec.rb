@@ -12,6 +12,10 @@ RSpec.describe "Rebilling default policies" do
     expect(Rebilling::DecisionRecorder.new.record(:context, :decision)).to be_nil
   end
 
+  it "preserves the no-op shadow recorder with ignored placeholder inputs" do
+    expect(Rebilling::DecisionRecorder.new.record_shadows(:context, :primary, [ :shadow ])).to be_nil
+  end
+
   it "returns nil scores for every candidate step by default" do
     step = Rebilling::RetryStep.new(percentage: 25, delay: 1.minute)
 

@@ -1,8 +1,12 @@
-# typed: false
+# typed: strict
 
 module Rebilling
   class DunningStrategy
     extend Dry::Initializer
+    extend T::Sig
+
+    Timestamp = T.type_alias { T.any(Time, ActiveSupport::TimeWithZone) }
+    Trace = T.type_alias { T::Array[T::Hash[Symbol, Object]] }
 
     DEFAULT_MAX_ATTEMPTS = 12
     DEFAULT_RETRYABLE_FAILURE_CATEGORIES = %i[soft_decline].freeze
@@ -18,6 +22,7 @@ module Rebilling
     # and does not consult this policy yet.
     option :scoring_policy, default: proc { ScoringPolicy.new }
 
+    sig { returns(T.attached_class) }
     def self.default
       build do
         step 75, delay: 1.day
@@ -30,23 +35,31 @@ module Rebilling
       end
     end
 
+    sig do
+      params(options: T.anything, block: T.nilable(T.proc.bind(Builder).params(builder: Builder).void))
+        .returns(T.attached_class)
+    end
     def self.build(**options, &block)
       builder = Builder.new
-      builder.instance_eval(&block) if block
-      new(**options, steps: builder.steps)
+      # instance_eval supplies its receiver as an argument; the core RBI omits it.
+      builder.instance_eval(&T.unsafe(block)) if block
+      # dry-initializer owns dynamic option forwarding, including subclass options.
+      new(**T.unsafe(options), steps: builder.steps)
     end
 
-    def initialize(...)
+    sig { params(args: T.anything, kwargs: T.anything, block: T.nilable(Proc)).void }
+    def initialize(*args, **kwargs, &block)
       super
       steps.freeze
-      @retryable_failure_categories = retryable_failure_categories.map(&:to_sym).freeze
-      @step_by_key = build_step_index
+      @retryable_failure_categories = T.let(retryable_failure_categories.map(&:to_sym).freeze, T::Array[Symbol])
+      @step_by_key = T.let(build_step_index, T::Hash[Symbol, RetryStep])
 
       freeze
     end
 
+    sig { params(context: Context, now: Timestamp, trace: T::Boolean).returns(Decision) }
     def next_plan(context, now: Time.current, trace: false)
-      trace_entries = []
+      trace_entries = T.let([], Trace)
       decision = compute_decision(context, now: now, trace_entries: trace ? trace_entries : nil)
       decision_recorder.record(context, decision)
       decision
@@ -54,8 +67,10 @@ module Rebilling
 
     private
 
+    sig { returns(T::Hash[Symbol, RetryStep]) }
     attr_reader :step_by_key
 
+    sig { params(context: Context, now: Timestamp, trace_entries: T.nilable(Trace)).returns(Decision) }
     def compute_decision(context, now:, trace_entries:)
       return terminal_decision(build_outcome(:invoice_paid, :invoice_already_paid), context, trace_entries) if context.paid?
       return terminal_decision(build_outcome(:not_retryable, :invoice_not_retryable), context, trace_entries) unless context.retryable_invoice?
@@ -80,6 +95,7 @@ module Rebilling
       build_scheduled_decision(context, selected_step, selected_payment_method, last_attempt, now, trace_entries)
     end
 
+    sig { params(last_attempt: Attempt, trace_entries: T.nilable(Trace)).returns(T::Array[RetryStep]) }
     def candidate_steps_for(last_attempt, trace_entries)
       trace_entries&.push(branch: :candidate_steps, last_attempt_id: last_attempt.id, last_retry_step_key: last_attempt.retry_step_key)
 
@@ -89,7 +105,7 @@ module Rebilling
         return []
       end
 
-      current_step = step_by_key[last_attempt.retry_step_key]
+      current_step = step_for(last_attempt)
       return [] unless current_step
 
       if last_attempt.completed?
@@ -101,13 +117,18 @@ module Rebilling
       end
     end
 
+    sig { params(current_step: RetryStep).returns(T::Array[RetryStep]) }
     def failure_candidate_steps(current_step)
-      candidates = []
+      candidates = T.let([], T::Array[T.nilable(RetryStep)])
       candidates << current_step if payment_method_policy.exhaust_methods_per_step?
       candidates << resolve_transition(current_step, current_step.on_failure)
       candidates.compact.uniq(&:key)
     end
 
+    sig do
+      params(context: Context, candidate_steps: T::Array[RetryStep], last_attempt: Attempt, trace_entries: T.nilable(Trace))
+        .returns([ T.nilable(RetryStep), T.nilable(PaymentMethodSnapshot) ])
+    end
     def select_step_and_payment_method(context, candidate_steps, last_attempt, trace_entries)
       candidate_steps.each do |candidate_step|
         preferred_payment_method_id = preferred_payment_method_id_for(last_attempt, candidate_step)
@@ -126,6 +147,7 @@ module Rebilling
       [ nil, nil ]
     end
 
+    sig { params(last_attempt: Attempt, candidate_step: RetryStep).returns(Object) }
     def preferred_payment_method_id_for(last_attempt, candidate_step)
       return unless last_attempt.completed?
       return unless last_attempt.retry_step_key == candidate_step.key
@@ -133,6 +155,10 @@ module Rebilling
       last_attempt.payment_method_id
     end
 
+    sig do
+      params(context: Context, selected_step: RetryStep, selected_payment_method: PaymentMethodSnapshot,
+        last_attempt: Attempt, now: Timestamp, trace_entries: T.nilable(Trace)).returns(Decision)
+    end
     def build_scheduled_decision(context, selected_step, selected_payment_method, last_attempt, now, trace_entries)
       amount_calculation = selected_step.amount_calculation_for(context)
       attempt_number = last_attempt.attempt_number + 1
@@ -160,6 +186,7 @@ module Rebilling
                             trace:       trace_entries || [])
     end
 
+    sig { params(current_step: RetryStep, transition: Symbol).returns(T.nilable(RetryStep)) }
     def resolve_transition(current_step, transition)
       case transition
       when :repeat
@@ -171,11 +198,13 @@ module Rebilling
       end
     end
 
+    sig { params(current_step: RetryStep).returns(T.nilable(RetryStep)) }
     def next_step_after(current_step)
       current_index = steps.index(current_step)
       steps[current_index + 1] if current_index
     end
 
+    sig { params(attempt: Attempt).returns(T::Boolean) }
     def retryable_failure?(attempt)
       return false unless attempt.failed?
 
@@ -183,11 +212,12 @@ module Rebilling
       retryable_failure_categories.include?(classification.category) && classification.retryable
     end
 
+    sig { params(attempt: Attempt).returns(DecisionOutcome) }
     def empty_candidate_decision(attempt)
       return build_outcome(:not_retryable, :completed_initial_attempt_not_reconciled) if attempt.initial? && attempt.completed?
       return build_outcome(:not_retryable, :non_retryable_failure_reason) if attempt.initial?
 
-      current_step = step_by_key[attempt.retry_step_key]
+      current_step = step_for(attempt)
       return build_outcome(:exhausted, :step_chain_stopped) if attempt.completed? && current_step&.on_success == :stop
       return build_outcome(:exhausted, :no_next_step) if attempt.completed? && current_step&.on_success == :next
       return build_outcome(:exhausted, :step_chain_stopped) if attempt.failed? && current_step&.on_failure == :stop
@@ -198,20 +228,30 @@ module Rebilling
       build_outcome(:not_retryable, :non_retryable_failure_reason)
     end
 
+    sig { params(attempt: Attempt).returns(DecisionOutcome) }
     def no_method_decision(attempt)
       return build_outcome(:no_eligible_payment_method, :no_eligible_payment_method) if attempt.initial?
 
-      current_step = step_by_key[attempt.retry_step_key]
+      current_step = step_for(attempt)
       return build_outcome(:exhausted, :step_chain_stopped) if attempt.failed? && current_step&.on_failure == :stop
-      return build_outcome(:exhausted, :no_next_step) if attempt.failed? && current_step&.on_failure == :next && next_step_after(current_step).nil?
+      return build_outcome(:exhausted, :no_next_step) if attempt.failed? && current_step && current_step.on_failure == :next && next_step_after(current_step).nil?
 
       build_outcome(:no_eligible_payment_method, :no_eligible_payment_method)
     end
 
-    def unknown_retry_step?(attempt)
-      attempt.retry_step_key.present? && !step_by_key.key?(attempt.retry_step_key)
+    sig { params(attempt: Attempt).returns(T.nilable(RetryStep)) }
+    def step_for(attempt)
+      key = attempt.retry_step_key
+      step_by_key[key] if key
     end
 
+    sig { params(attempt: Attempt).returns(T::Boolean) }
+    def unknown_retry_step?(attempt)
+      key = attempt.retry_step_key
+      !key.nil? && key.present? && !step_by_key.key?(key)
+    end
+
+    sig { params(context: Context, last_attempt: Attempt, selected_step: RetryStep, selected_payment_method: PaymentMethodSnapshot).returns(String) }
     def idempotency_key(context, last_attempt, selected_step, selected_payment_method)
       [ "rebill",
        context.invoice_id,
@@ -221,6 +261,7 @@ module Rebilling
        selected_payment_method.id ].join(":")
     end
 
+    sig { params(last_attempt: Attempt).returns(Symbol) }
     def scheduled_reason(last_attempt)
       return :initial_attempt_failed if last_attempt.initial?
       return :last_step_succeeded if last_attempt.completed?
@@ -228,6 +269,10 @@ module Rebilling
       :last_step_failed
     end
 
+    sig do
+      params(decision_outcome: DecisionOutcome, context: Context, trace_entries: T.nilable(Trace), last_attempt: T.nilable(Attempt))
+        .returns(Decision)
+    end
     def terminal_decision(decision_outcome, context, trace_entries, last_attempt = nil)
       trace_entries&.push(branch: :terminal_decision, status: decision_outcome.status, reason: decision_outcome.reason)
 
@@ -236,10 +281,16 @@ module Rebilling
                             trace:       trace_entries || [])
     end
 
+    sig { params(status: Symbol, reason: Symbol).returns(DecisionOutcome) }
     def build_outcome(status, reason)
       DecisionOutcome.new(status: status, reason: reason)
     end
 
+    sig do
+      params(context: Context, last_attempt: T.nilable(Attempt), selected_step: T.nilable(RetryStep),
+        selected_payment_method: T.nilable(PaymentMethodSnapshot), amount_calculation: T.nilable(RetryStep::AmountCalculation))
+        .returns(T::Hash[Symbol, Object])
+    end
     def diagnostics(context, last_attempt = nil, selected_step = nil, selected_payment_method = nil, amount_calculation = nil)
       { invoice_id:                  context.invoice_id,
         invoice_total_cents:         context.invoice_total_cents,
@@ -261,8 +312,9 @@ module Rebilling
         capped_amount_cents:         amount_calculation&.capped_amount_cents }.compact
     end
 
+    sig { returns(T::Hash[Symbol, RetryStep]) }
     def build_step_index
-      steps.each_with_object({}) do |step, index|
+      steps.each_with_object(T.let({}, T::Hash[Symbol, RetryStep])) do |step, index|
         raise ArgumentError, "duplicate retry step key: #{step.key}" if index.key?(step.key)
 
         index[step.key] = step
@@ -270,14 +322,20 @@ module Rebilling
     end
 
     class Builder
+      extend T::Sig
+
+      sig { returns(T::Array[RetryStep]) }
       attr_reader :steps
 
+      sig { void }
       def initialize
-        @steps = []
+        @steps = T.let([], T::Array[RetryStep])
       end
 
+      sig { params(percentage: Object, options: T.anything).returns(T::Array[RetryStep]) }
       def step(percentage, **options)
-        steps << RetryStep.new(percentage: percentage, **options)
+        # Keep dry-initializer's coercions and missing-option errors at this DSL boundary.
+        steps << RetryStep.new(**T.unsafe({ percentage: percentage, **options }))
       end
     end
   end
