@@ -150,8 +150,9 @@ subclass return types and dry-initializer's subclass option defaults.
 
 > [!NOTE]
 > `.build(**options)` and `step(percentage, **options)` forward opaque options to
-> dry-initializer. Their keyword names and values are validated at runtime, including
-> the missing-delay error. Narrow `T.unsafe` bridges cover those dynamic keyword
+> dry-initializer. Recognized options retain coercion, constraint, and required-option
+> checks, including the missing-delay error; unknown keyword names are silently
+> ignored. Narrow `T.unsafe` bridges cover those dynamic keyword
 > hashes and the core RBI's missing `instance_eval` block argument. The reviewed
 > `.new` interface checks constructor options statically; the DSL still checks the
 > builder receiver, available methods, and result types.
