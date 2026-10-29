@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 
 # Money 7 returns BigDecimal when default_infinite_precision is enabled, even
 # for a whole minor-unit amount. Do not narrow these gem-wide methods to Integer.

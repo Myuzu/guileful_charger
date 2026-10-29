@@ -50,19 +50,33 @@ gem/DSL RBI paths; annotations and shims require manual review.
 
 ## Adoption boundary
 
-Most Ruby files use `typed: false`: Sorbet checks syntax and constant resolution,
-but not their method bodies. The following rebilling core uses `typed: true`:
+Use **`typed: strict`** for every new or newly adopted application Ruby file and
+handwritten RBI. `typed: true` is a legacy migration level, not the adoption target.
+Promotion of the eight legacy classes is tracked in
+[#299](https://github.com/Myuzu/guileful_charger/issues/299).
+Generated interfaces retain their generator's sigils. Most existing Ruby files
+still use `typed: false`: Sorbet checks syntax and constants, but not method bodies.
 
-| Class | Checked contract |
+| Level | Guarantee |
 | --- | --- |
-| [`FailureClassifier`](../app/services/rebilling/failure_classifier.rb) | Attempt/reason inputs and classification output; nil/string/symbol reasons |
-| [`FailureClassification`](../app/services/rebilling/failure_classification.rb) | Symbol category, optional network recommendation, boolean flags |
-| [`Plan`](../app/services/rebilling/plan.rb) | Integer amounts/counters, symbol strategy keys, string idempotency key, Time/TimeWithZone timestamps |
-| [`Decision`](../app/services/rebilling/decision.rb) | Outcome/optional Plan inputs, diagnostics/trace containers, boolean predicates |
-| [`RetryStep`](../app/services/rebilling/retry_step.rb) | Normalized dry readers, integer amount calculations, deterministic jitter and timestamp windows |
-| [`Attempt`](../app/services/rebilling/attempt.rb) | Integer amount/attempt readers, optional failure/step symbols, status predicates |
-| [`Context`](../app/services/rebilling/context.rb) | Integer balances, Attempt/PaymentMethodSnapshot collections, history queries and observability snapshot |
-| [`PaymentMethodSnapshot`](../app/services/rebilling/payment_method_snapshot.rb) | Boolean primary flag, symbol status/kind fields, eligibility predicates |
+| `true` | Checks method bodies while allowing missing signatures and implicit untyped values |
+| `strict` | Also requires method signatures and annotated fields/constants; explicit `T.untyped` is still permitted |
+
+These are [static checking levels](https://sorbet.org/docs/static). Neither changes
+the production runtime policy described below. Use accurate contracts and opaque
+forwarding types rather than adding untyped annotations merely to satisfy strict.
+
+| Class | Current level | Checked contract |
+| --- | --- | --- |
+| [`FailureClassifier`](../app/services/rebilling/failure_classifier.rb) | `true` (legacy) | Attempt/reason inputs and classification output; nil/string/symbol reasons |
+| [`FailureClassification`](../app/services/rebilling/failure_classification.rb) | `true` (legacy) | Symbol category, optional network recommendation, boolean flags |
+| [`Plan`](../app/services/rebilling/plan.rb) | `true` (legacy) | Integer amounts/counters, symbol strategy keys, string idempotency key, Time/TimeWithZone timestamps |
+| [`Decision`](../app/services/rebilling/decision.rb) | `true` (legacy) | Outcome/optional Plan inputs, diagnostics/trace containers, boolean predicates |
+| [`DecisionOutcome`](../app/services/rebilling/decision_outcome.rb) | **`strict`** | Required string/symbol status and reason inputs, normalized symbol readers, inherited constructor return type |
+| [`RetryStep`](../app/services/rebilling/retry_step.rb) | `true` (legacy) | Normalized dry readers, integer amount calculations, deterministic jitter and timestamp windows |
+| [`Attempt`](../app/services/rebilling/attempt.rb) | `true` (legacy) | Integer amount/attempt readers, optional failure/step symbols, status predicates |
+| [`Context`](../app/services/rebilling/context.rb) | `true` (legacy) | Integer balances, Attempt/PaymentMethodSnapshot collections, history queries and observability snapshot |
+| [`PaymentMethodSnapshot`](../app/services/rebilling/payment_method_snapshot.rb) | `true` (legacy) | Boolean primary flag, symbol status/kind fields, eligibility predicates |
 
 The reviewed RBIs describe dynamic `Data.define` members and the dry-initializer
 readers these methods consume. Typed Data callers use keyword `.new`/`[]` and
@@ -83,13 +97,21 @@ Those are static caller contracts; existing dry coercions remain unchanged and
 dry-initializer does not gain runtime element or timestamp validation. Context
 freezes supplied arrays and metadata in place, without deep freezing. Metadata
 permits heterogeneous keys and values.
-DecisionOutcome still has only the two reader contracts needed here; its body and
-the rest of the planner remain `typed: false`. A green baseline does not mean the
-whole application is statically typed.
+DecisionOutcome's reviewed constructor contract requires both keyword options
+and accepts strings or symbols. dry-types still owns allowed status/reason values;
+the static types describe their shape rather than their enum membership. The
+runtime constructor retains its forwarding, custom symbol coercion, required-option
+errors, and freezing. Its strict initializer signature uses `T.anything` for opaque
+forwarded values; the reviewed `.new` contract checks typed caller inputs. The
+constructor returns `T.attached_class`, preserving subclass inference. This follows
+[Sorbet's RBI guidance](https://sorbet.org/docs/rbi)
+for dynamic methods and [dry-initializer's coercion model](https://dry-rb.org/gems/dry-initializer/main/type-constraints/).
+The remaining planner bodies stay `typed: false`. A green baseline does not mean
+the whole application is statically typed.
 
-Promote files gradually, add signatures with behavior tests, and expand the
-`Sorbet/TrueSigil` include list in [RuboCop configuration](../.rubocop.yml) as each
-file is adopted. `rubocop-sorbet` also checks valid sigils and signature style.
+Promote files to strict with behavior tests and expand `Sorbet/StrictSigil` in
+[RuboCop configuration](../.rubocop.yml). Remove promoted files from the legacy
+`Sorbet/TrueSigil` list. `rubocop-sorbet` also checks valid sigils and signature style.
 
 ### Money and integer minor units
 

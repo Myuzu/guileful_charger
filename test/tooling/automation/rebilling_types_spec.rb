@@ -120,4 +120,39 @@ RSpec.describe "Reviewed rebilling and Money interfaces" do
       "argument `attempts`", "argument `payment_methods`", "argument `customer_timezone`")
     expect(output).to include("argument `invoice_total_cents`", "argument `amount_attempted_cents`")
   end
+
+  it "types outcome construction from symbols or strings and composes it with the decision factory" do
+    output, status = typecheck(<<~RUBY)
+      class SpecializedOutcome < Rebilling::DecisionOutcome; end
+      symbolic = Rebilling::DecisionOutcome.new(status: :scheduled, reason: :initial_attempt_failed)
+      coerced = Rebilling::DecisionOutcome.new(status: "not_retryable", reason: "non_retryable_failure_reason")
+      T.assert_type!(symbolic, Rebilling::DecisionOutcome)
+      T.assert_type!(coerced.status, Symbol)
+      T.assert_type!(coerced.reason, Symbol)
+      T.assert_type!(Rebilling::Decision.from_outcome(coerced), Rebilling::Decision)
+      T.assert_type!(SpecializedOutcome.new(status: :scheduled, reason: :initial_attempt_failed), SpecializedOutcome)
+    RUBY
+
+    expect(status).to be_success, output
+  end
+
+  it "rejects non-string/non-symbol outcome inputs statically" do
+    output, status = typecheck(<<~RUBY)
+      Rebilling::DecisionOutcome.new(status: 123, reason: true)
+      Rebilling::DecisionOutcome.new(status: nil, reason: nil)
+    RUBY
+
+    expect(status).not_to be_success
+    expect(output).to include("Errors: 4", "argument `status`", "argument `reason`")
+  end
+
+  it "requires both outcome keyword options statically" do
+    output, status = typecheck(<<~RUBY)
+      Rebilling::DecisionOutcome.new(status: :scheduled)
+      Rebilling::DecisionOutcome.new(reason: :initial_attempt_failed)
+    RUBY
+
+    expect(status).not_to be_success
+    expect(output).to include("Missing required keyword argument `reason`", "Missing required keyword argument `status`")
+  end
 end

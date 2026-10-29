@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 
 # Reviewed contracts for Data.define members. Runtime construction remains Ruby Data;
 # typed callers use keyword construction and partial keyword updates.
