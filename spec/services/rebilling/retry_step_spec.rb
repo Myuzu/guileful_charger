@@ -62,7 +62,7 @@ RSpec.describe Rebilling::RetryStep do
       expect(step.amount_for(context)).to eq(151)
       expect(step.percentage).to eq(12.51)
       expect(step.delay_seconds).to eq(60)
-      expect(step.jitter_seconds_range).to eq(30..60)
+      expect(step.jitter_seconds_range).to eq(30..59)
     end
 
     it "preserves dry coercion and defaults before exposing typed readers" do
@@ -79,6 +79,29 @@ RSpec.describe Rebilling::RetryStep do
   end
 
   describe "retry window" do
+    it "excludes the upper jitter bound for a seed that previously selected it" do
+      now = Time.zone.parse("2026-01-01 12:00:00 UTC")
+      step = described_class.new(percentage: 25, delay: 5.minutes, jitter: 0...120.seconds, key: :exclusive_jitter)
+
+      window = step.retry_window(now: now, context: context, attempt_number: 9)
+
+      expect(step.jitter_seconds_range).to eq(0..119)
+      expect(window.fetch(:earliest_retry_at)).to eq(now + 5.minutes)
+      expect(window.fetch(:latest_retry_at)).to eq(now + 5.minutes + 119.seconds)
+      expect(window.fetch(:retry_at)).to be >= window.fetch(:earliest_retry_at)
+      expect(window.fetch(:retry_at)).to be < now + 7.minutes
+      expect(step.retry_window(now: now, context: context, attempt_number: 9)).to eq(window)
+    end
+
+    it "uses the sole included second of a singleton exclusive jitter interval" do
+      now = Time.utc(2026, 1, 1, 12)
+      step = described_class.new(percentage: 25, delay: 60, jitter: 30...31.seconds)
+
+      window = step.retry_window(now: now, context: context, attempt_number: 4)
+
+      expect(window.values).to all(eq(now + 90))
+    end
+
     it "also accepts an ordinary UTC Time" do
       now = Time.utc(2026, 1, 1, 12)
       step = described_class.new(percentage: 25, delay: 60)
@@ -124,6 +147,10 @@ RSpec.describe Rebilling::RetryStep do
   end
 
   describe "validation" do
+    it "rejects an exclusive jitter interval containing no whole seconds" do
+      expect { described_class.new(percentage: 25, delay: 60, jitter: 0...0) }.to raise_error(ArgumentError, /jitter end/)
+    end
+
     it "translates dry key coercion errors into ArgumentError" do
       expect { described_class.new(percentage: 25, delay: 60, key: 123) }.to raise_error(ArgumentError)
     end

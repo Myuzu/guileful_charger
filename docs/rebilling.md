@@ -130,6 +130,12 @@ For a 1,200-cent invoice, 25% of the total is 300 cents. If only 180 cents remai
 the proposed amount is 180 cents. Choosing the remaining-balance basis changes
 the fraction being calculated, but retains the same cap.
 
+Jitter endpoints are coerced to whole seconds and normalized to inclusive bounds:
+`0...120.seconds` becomes `0..119`, while `0..120.seconds` retains the 120-second
+offset. Both retry selection and `latest_retry_at` use those normalized bounds.
+An interval must contain at least one offset; empty ranges such as `0...0` are
+rejected.
+
 Supply the **same `now`**, snapshots, and configuration for repeatable decisions.
 The default `Time.current` changes between calls. A version number travels with
 the plan, but there is no historical strategy registry yet; changing a generated
