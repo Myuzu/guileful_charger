@@ -1,15 +1,16 @@
-# typed: true
+# typed: strict
 
 module Rebilling
   class FailureClassifier
     extend T::Sig
+    include FailureClassifierContract
 
     RETRYABLE_REASONS = %i[insufficient_funds].freeze
     HARD_DECLINE_REASONS = %i[stolen_card lost_card invalid_card_number fraudulent gateway_error failed].freeze
     CUSTOMER_ACTION_REASONS = %i[authentication_required expired_card incorrect_cvc].freeze
     TECHNICAL_REASONS = %i[system_error network_error processor_unavailable].freeze
 
-    sig { params(attempt: Attempt).returns(FailureClassification) }
+    sig { override.params(attempt: Attempt).returns(FailureClassification) }
     def classify_attempt(attempt)
       return classification_for_category(attempt.failure_category) if attempt.failure_category
 

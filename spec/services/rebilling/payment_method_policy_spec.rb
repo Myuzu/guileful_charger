@@ -1,6 +1,6 @@
 # typed: false
 
-# rubocop:disable RSpec/ExampleLength
+# rubocop:disable RSpec/ExampleLength, RSpec/MultipleExpectations
 require "rails_helper"
 
 RSpec.describe Rebilling::PaymentMethodPolicy do
@@ -8,6 +8,47 @@ RSpec.describe Rebilling::PaymentMethodPolicy do
 
   let(:step) { Rebilling::RetryStep.new(percentage: 25, delay: 1.minute) }
   let(:policy) { described_class.default }
+
+  it "preserves normalized defaults, flags, and immutability" do
+    configured = described_class.new(order: "primary_then_recent_success", exhaust_methods_per_step: false)
+
+    expect(configured.order).to eq(:primary_then_recent_success)
+    expect(configured).not_to be_exhaust_methods_per_step
+    expect(policy).to be_exhaust_methods_per_step
+    expect(configured).to be_frozen
+  end
+
+  it "preserves subclass construction through default" do
+    specialized = Class.new(described_class)
+
+    expect(specialized.default).to be_an_instance_of(specialized)
+  end
+
+  it "returns nil when there are no eligible methods, including a preferred inactive method" do
+    inactive = build_payment_method("pm_inactive", status: :disabled)
+
+    expect(policy.select(build_context, step)).to be_nil
+    expect(policy.select(build_context(payment_methods: [ inactive ]), step, preferred_payment_method_id: inactive.id)).to be_nil
+  end
+
+  it "preserves integer and nil identifiers" do
+    primary = build_payment_method(7, primary: true)
+    backup = build_payment_method(42)
+    unidentified = build_payment_method(nil)
+
+    expect(policy.select(build_context(payment_methods: [ primary, backup ]), step, preferred_payment_method_id: 42)).to equal(backup)
+    expect(policy.select(build_context(payment_methods: [ unidentified ]), step)).to equal(unidentified)
+  end
+
+  it "orders equal-priority methods by recent success and then their identifiers" do
+    timestamp = Time.zone.parse("2026-01-02 12:00:00 UTC")
+    undated = build_payment_method("pm_none")
+    older = build_payment_method("pm_old", last_successful_at: Time.utc(2026, 1, 1))
+    recent_b = build_payment_method("pm_b", last_successful_at: timestamp)
+    recent_a = build_payment_method("pm_a", last_successful_at: timestamp)
+
+    expect(policy.select(build_context(payment_methods: [ undated, older, recent_b, recent_a ]), step)).to equal(recent_a)
+  end
 
   it "prefers the active primary payment method" do
     backup = build_payment_method("pm_backup", primary: false, last_successful_at: 1.day.ago)
@@ -87,5 +128,26 @@ RSpec.describe Rebilling::PaymentMethodPolicy do
     context = build_context(attempts: [ stolen_card_attempt ], payment_methods: [ primary, backup ])
 
     expect(policy.select(context, step).id).to eq("pm_backup")
+  end
+
+  it "preserves runtime injection of a custom classifier" do
+    classification = Rebilling::FailureClassification.new(category: :hard_decline, network_recommendation: nil,
+      retryable: false, requires_credential_refresh: false, customer_action_required: false)
+    classifier = instance_double(Rebilling::FailureClassifier, classify_attempt: classification)
+    configured = described_class.new(failure_classifier: classifier)
+    failed = build_attempt(payment_method_id: "pm_primary")
+    primary = build_payment_method("pm_primary", primary: true)
+    backup = build_payment_method("pm_backup")
+
+    selected = configured.select(build_context(attempts: [ failed ], payment_methods: [ primary, backup ]), step,
+      preferred_payment_method_id: primary.id)
+
+    expect(selected).to equal(backup)
+    expect(classifier).to have_received(:classify_attempt).with(failed)
+  end
+
+  it "leaves invalid order and boolean option errors to dry-types" do
+    expect { described_class.new(order: :unknown) }.to raise_error(Dry::Types::CoercionError, /payment method order/)
+    expect { described_class.new(skip_hard_declined_methods: "true") }.to raise_error(Dry::Types::ConstraintError)
   end
 end
