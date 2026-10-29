@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 
 module Rebilling
   # notification_intent is reserved for the Tier 2 notification ladder. The
@@ -10,7 +10,7 @@ module Rebilling
 
     sig do
       params(outcome: DecisionOutcome, plan: T.nilable(Plan), diagnostics: T::Hash[Symbol, Object],
-        trace: T::Array[T::Hash[Symbol, Object]], notification_intent: Symbol).returns(Decision)
+        trace: T::Array[T::Hash[Symbol, Object]], notification_intent: Symbol).returns(T.attached_class)
     end
     def self.from_outcome(outcome, plan: nil, diagnostics: {}, trace: [], notification_intent: :none)
       new(status:              outcome.status,

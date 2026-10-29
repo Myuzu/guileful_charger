@@ -17,7 +17,7 @@ class Rebilling::RetryStep
       key: Object,
       on_success: Object,
       on_failure: Object
-    ).returns(Rebilling::RetryStep)
+    ).returns(T.attached_class)
   end
   def self.new(
     percentage:,
@@ -68,7 +68,7 @@ class Rebilling::Attempt
       created_at: T.nilable(T.any(Time, ActiveSupport::TimeWithZone)),
       completed_at: T.nilable(T.any(Time, ActiveSupport::TimeWithZone)),
       failed_at: T.nilable(T.any(Time, ActiveSupport::TimeWithZone))
-    ).returns(Rebilling::Attempt)
+    ).returns(T.attached_class)
   end
   def self.new(
     id:,
@@ -136,7 +136,7 @@ class Rebilling::Context
       payment_methods: T::Array[Rebilling::PaymentMethodSnapshot],
       customer_timezone: T.nilable(String),
       metadata: T::Hash[Object, Object]
-    ).returns(Rebilling::Context)
+    ).returns(T.attached_class)
   end
   def self.new(
     invoice_id:,
@@ -191,7 +191,7 @@ class Rebilling::PaymentMethodSnapshot
       last_successful_at: T.nilable(T.any(Time, ActiveSupport::TimeWithZone)),
       last_failed_at: T.nilable(T.any(Time, ActiveSupport::TimeWithZone)),
       failure_category: Object
-    ).returns(Rebilling::PaymentMethodSnapshot)
+    ).returns(T.attached_class)
   end
   def self.new(
     id:,

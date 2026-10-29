@@ -39,4 +39,15 @@ RSpec.describe Rebilling::Decision do
     expect(decision).to be_scheduled
     expect(decision).not_to be_exhausted
   end
+
+  it "preserves the concrete subclass through the outcome factory" do
+    specialized = Class.new(described_class)
+    outcome = Rebilling::DecisionOutcome.new(status: :scheduled, reason: :initial_attempt_failed)
+
+    decision = specialized.from_outcome(outcome)
+
+    expect(decision).to be_an_instance_of(specialized)
+    expect(decision).to be_scheduled
+    expect(decision).to be_frozen
+  end
 end

@@ -23,10 +23,36 @@ RSpec.describe "Rebilling value contracts" do
       expect(value.class.new(*value.to_h.values)).to eq(value)
       expect(value.class[**value.to_h]).to eq(value)
       expect(value.with).to equal(value)
+
+      specialized = Class.new(value.class)
+      derived = specialized.new(**value.to_h)
+      expect(derived).to be_an_instance_of(specialized)
+      expect(specialized[*value.to_h.values]).to eq(derived)
+      expect(derived.with(**value.to_h)).to be_an_instance_of(specialized)
+      expect(derived.deconstruct_keys(nil)).to eq(value.to_h)
+      expect(derived).to be_frozen
     end
     expect(plan.with(amount_cents: 100).amount_cents).to eq(100)
     expect(plan.amount_cents).to eq(300)
     expect(plan.payment_method_id).to eq(42)
     expect(plan.source_attempt_id).to be_nil
+  end
+
+  it "preserves inherited dry constructors and their frozen normalized state" do
+    inputs = {
+      Rebilling::Attempt => { id: nil, attempt_number: "2", status: "failed", amount_attempted_cents: "300" },
+      Rebilling::Context => { invoice_id: 42, invoice_status: "open", invoice_total_cents: "1200",
+        amount_paid_cents: "0", subscription_status: "active" },
+      Rebilling::PaymentMethodSnapshot => { id: nil, status: "active" },
+      Rebilling::RetryStep => { percentage: "12.5", delay: "60", key: "custom" }
+    }
+
+    inputs.each do |base, options|
+      specialized = Class.new(base)
+      value = specialized.new(**options)
+
+      expect(value).to be_an_instance_of(specialized)
+      expect(value).to be_frozen
+    end
   end
 end

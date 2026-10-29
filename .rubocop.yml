@@ -26,28 +26,24 @@ Layout/HashAlignment:
 RSpecRails/InferredSpecType:
   Enabled: false
 
-Sorbet/TrueSigil:
+Sorbet/StrictSigil:
   Enabled: true
   Include:
     - "app/services/rebilling/attempt.rb"
     - "app/services/rebilling/context.rb"
     - "app/services/rebilling/decision.rb"
-    - "app/services/rebilling/failure_classification.rb"
-    - "app/services/rebilling/plan.rb"
-    - "app/services/rebilling/payment_method_snapshot.rb"
-    - "app/services/rebilling/retry_step.rb"
-
-Sorbet/StrictSigil:
-  Enabled: true
-  Include:
+    - "app/services/rebilling/decision_outcome.rb"
     - "app/services/rebilling/decision_recorder.rb"
     - "app/services/rebilling/decision_recorder_contract.rb"
     - "app/services/rebilling/dunning_strategy.rb"
-    - "app/services/rebilling/decision_outcome.rb"
+    - "app/services/rebilling/failure_classification.rb"
     - "app/services/rebilling/failure_classifier.rb"
     - "app/services/rebilling/failure_classifier_contract.rb"
     - "app/services/rebilling/payment_method_policy.rb"
     - "app/services/rebilling/payment_method_policy_contract.rb"
+    - "app/services/rebilling/payment_method_snapshot.rb"
+    - "app/services/rebilling/plan.rb"
+    - "app/services/rebilling/retry_step.rb"
 
 Sorbet/FalseSigil:
   Exclude:

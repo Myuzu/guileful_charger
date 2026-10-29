@@ -37,6 +37,14 @@ RSpec.describe Rebilling::RetryStep do
 
       expect(step.key).to eq(:charge_12_5pct_invoice_total_after_300s)
     end
+
+    it "leaves custom key coercion to dry-types before storing the normalized key" do
+      key = instance_double(String, to_sym: :custom_retry)
+
+      step = described_class.new(percentage: 25, delay: 60, key: key)
+
+      expect(step.key).to eq(:custom_retry)
+    end
   end
 
   describe "amount calculation" do

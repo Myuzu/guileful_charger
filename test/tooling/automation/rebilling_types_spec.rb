@@ -77,7 +77,7 @@ RSpec.describe "Reviewed rebilling and Money interfaces" do
         end
       RBI
       probe = File.join(directory, "probe.rb")
-      File.write(probe, "# typed: true\nextend T::Sig\n#{source}")
+      File.write(probe, "# typed: strict\nextend T::Sig\n#{source}")
       Open3.capture2e(RbConfig.ruby, Gem.bin_path("sorbet", "srb"), "tc", "--no-config", *interfaces, *implementations, dependencies, probe, chdir: directory)
     end
   end
@@ -345,5 +345,44 @@ RSpec.describe "Reviewed rebilling and Money interfaces" do
 
     expect(status).not_to be_success
     expect(output).to include("Errors: 3", "argument `payment_method_policy`", "argument `failure_classifier`", "argument `decision_recorder`")
+  end
+
+  it "preserves subclass types through snapshot constructors and Data factories and updates" do
+    output, status = typecheck(<<~RUBY)
+      class SpecializedAttempt < Rebilling::Attempt; end
+      class SpecializedContext < Rebilling::Context; end
+      class SpecializedSnapshot < Rebilling::PaymentMethodSnapshot; end
+      class SpecializedStep < Rebilling::RetryStep; end
+      class SpecializedPlan < Rebilling::Plan; end
+      class SpecializedClassification < Rebilling::FailureClassification; end
+      class SpecializedDecision < Rebilling::Decision; end
+      class SpecializedCalculation < Rebilling::RetryStep::AmountCalculation; end
+
+      T.assert_type!(SpecializedAttempt.new(id: nil, attempt_number: "2", status: "failed",
+        amount_attempted_cents: "300"), SpecializedAttempt)
+      T.assert_type!(SpecializedContext.new(invoice_id: 42, invoice_status: "open", invoice_total_cents: "1200",
+        amount_paid_cents: "0", subscription_status: "active"), SpecializedContext)
+      T.assert_type!(SpecializedSnapshot.new(id: nil), SpecializedSnapshot)
+      T.assert_type!(SpecializedStep.new(percentage: "12.5", delay: "60"), SpecializedStep)
+
+      plan = SpecializedPlan.new(step_key: :retry, payment_method_id: 42, attempt_number: 2,
+        amount_cents: 300, retry_at: Time.now, earliest_retry_at: Time.now, latest_retry_at: Time.now,
+        retry_strategy: :invoice_total, idempotency_key: "retry:2", strategy_version: 1, source_attempt_id: nil)
+      T.assert_type!(plan, SpecializedPlan)
+      T.assert_type!(plan.with(amount_cents: 100), SpecializedPlan)
+      classification = SpecializedClassification[category: :soft_decline, network_recommendation: nil,
+        retryable: true, requires_credential_refresh: false, customer_action_required: false]
+      T.assert_type!(classification, SpecializedClassification)
+      T.assert_type!(classification.with(retryable: false), SpecializedClassification)
+      outcome = Rebilling::DecisionOutcome.new(status: :scheduled, reason: :initial_attempt_failed)
+      decision = SpecializedDecision.from_outcome(outcome, plan: plan)
+      T.assert_type!(decision, SpecializedDecision)
+      T.assert_type!(decision.with(notification_intent: :notify), SpecializedDecision)
+      calculation = SpecializedCalculation.new(base_cents: 1200, calculated_amount_cents: 300, capped_amount_cents: 300)
+      T.assert_type!(calculation, SpecializedCalculation)
+      T.assert_type!(calculation.with(capped_amount_cents: 100), SpecializedCalculation)
+    RUBY
+
+    expect(status).to be_success, output
   end
 end
