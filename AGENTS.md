@@ -57,6 +57,12 @@ authorized cleanup scope.
 
 ## Implementation and verification
 
+- Use `# typed: strict` for new or newly adopted application Ruby code and
+  handwritten RBIs. Do not introduce `typed: true` as an adoption target.
+  Existing `typed: true` files are legacy migration work; generated RBIs retain
+  their generator's sigils. Require strict files through `Sorbet/StrictSigil` in
+  [`.rubocop.yml`](.rubocop.yml), removing promoted files from the legacy
+  `Sorbet/TrueSigil` list. Static strictness does not change runtime checking policy.
 - Follow [`.rubocop.yml`](.rubocop.yml), Rails naming/autoloading, and nearby
   service/consumer conventions. Keep database/gateway effects outside the pure
   rebilling planner.

@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 
 # Reviewed dry-initializer interfaces. Coerced options accept raw inputs; typed
 # monetary/counter inputs require Integer or integer String to avoid implicit
@@ -231,6 +231,12 @@ end
 
 class Rebilling::DecisionOutcome
   extend T::Sig
+
+  sig do
+    params(status: T.any(Symbol, String), reason: T.any(Symbol, String))
+      .returns(T.attached_class)
+  end
+  def self.new(status:, reason:); end
 
   sig { returns(Symbol) }
   def status; end

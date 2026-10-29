@@ -38,6 +38,11 @@ Sorbet/TrueSigil:
     - "app/services/rebilling/payment_method_snapshot.rb"
     - "app/services/rebilling/retry_step.rb"
 
+Sorbet/StrictSigil:
+  Enabled: true
+  Include:
+    - "app/services/rebilling/decision_outcome.rb"
+
 Sorbet/FalseSigil:
   Exclude:
     # Dry.Types creates the ancestor dynamically; Sorbet cannot resolve it.
