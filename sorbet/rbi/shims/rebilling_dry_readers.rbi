@@ -229,6 +229,42 @@ class Rebilling::PaymentMethodSnapshot
   def failure_category; end
 end
 
+class Rebilling::PaymentMethodPolicy
+  extend T::Sig
+
+  sig do
+    params(
+      order: Object,
+      exhaust_methods_per_step: T::Boolean,
+      retry_same_method_after_soft_decline: T::Boolean,
+      skip_hard_declined_methods: T::Boolean,
+      failure_classifier: Rebilling::FailureClassifierContract
+    ).returns(T.attached_class)
+  end
+  def self.new(
+    order: T.unsafe(nil),
+    exhaust_methods_per_step: T.unsafe(nil),
+    retry_same_method_after_soft_decline: T.unsafe(nil),
+    skip_hard_declined_methods: T.unsafe(nil),
+    failure_classifier: T.unsafe(nil)
+  ); end
+
+  sig { returns(Symbol) }
+  def order; end
+
+  sig { returns(T::Boolean) }
+  def exhaust_methods_per_step; end
+
+  sig { returns(T::Boolean) }
+  def retry_same_method_after_soft_decline; end
+
+  sig { returns(T::Boolean) }
+  def skip_hard_declined_methods; end
+
+  sig { returns(Rebilling::FailureClassifierContract) }
+  def failure_classifier; end
+end
+
 class Rebilling::DecisionOutcome
   extend T::Sig
 

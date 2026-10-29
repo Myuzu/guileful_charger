@@ -52,7 +52,7 @@ gem/DSL RBI paths; annotations and shims require manual review.
 
 Use **`typed: strict`** for every new or newly adopted application Ruby file and
 handwritten RBI. `typed: true` is a legacy migration level, not the adoption target.
-Promotion of the eight legacy classes is tracked in
+Promotion of the remaining legacy classes is tracked in
 [#299](https://github.com/Myuzu/guileful_charger/issues/299).
 Generated interfaces retain their generator's sigils. Most existing Ruby files
 still use `typed: false`: Sorbet checks syntax and constants, but not method bodies.
@@ -60,7 +60,7 @@ still use `typed: false`: Sorbet checks syntax and constants, but not method bod
 | Level | Guarantee |
 | --- | --- |
 | `true` | Checks method bodies while allowing missing signatures and implicit untyped values |
-| `strict` | Also requires method signatures and annotated fields/constants; explicit `T.untyped` is still permitted |
+| `strict` | Also requires signatures and types for fields/constants; safe literal inference is supported and explicit `T.untyped` is still permitted |
 
 These are [static checking levels](https://sorbet.org/docs/static). Neither changes
 the production runtime policy described below. Use accurate contracts and opaque
@@ -68,7 +68,8 @@ forwarding types rather than adding untyped annotations merely to satisfy strict
 
 | Class | Current level | Checked contract |
 | --- | --- | --- |
-| [`FailureClassifier`](../app/services/rebilling/failure_classifier.rb) | `true` (legacy) | Attempt/reason inputs and classification output; nil/string/symbol reasons |
+| [`FailureClassifier`](../app/services/rebilling/failure_classifier.rb) | **`strict`** | Attempt/reason inputs and classification output; implements the classifier contract |
+| [`FailureClassifierContract`](../app/services/rebilling/failure_classifier_contract.rb) | **`strict`** | Injectable classifier interface: Attempt to FailureClassification |
 | [`FailureClassification`](../app/services/rebilling/failure_classification.rb) | `true` (legacy) | Symbol category, optional network recommendation, boolean flags |
 | [`Plan`](../app/services/rebilling/plan.rb) | `true` (legacy) | Integer amounts/counters, symbol strategy keys, string idempotency key, Time/TimeWithZone timestamps |
 | [`Decision`](../app/services/rebilling/decision.rb) | `true` (legacy) | Outcome/optional Plan inputs, diagnostics/trace containers, boolean predicates |
@@ -77,6 +78,7 @@ forwarding types rather than adding untyped annotations merely to satisfy strict
 | [`Attempt`](../app/services/rebilling/attempt.rb) | `true` (legacy) | Integer amount/attempt readers, optional failure/step symbols, status predicates |
 | [`Context`](../app/services/rebilling/context.rb) | `true` (legacy) | Integer balances, Attempt/PaymentMethodSnapshot collections, history queries and observability snapshot |
 | [`PaymentMethodSnapshot`](../app/services/rebilling/payment_method_snapshot.rb) | `true` (legacy) | Boolean primary flag, symbol status/kind fields, eligibility predicates |
+| [`PaymentMethodPolicy`](../app/services/rebilling/payment_method_policy.rb) | **`strict`** | Constructor/defaults, boolean flags, typed candidate filtering/sorting, optional selected snapshot |
 
 The reviewed RBIs describe dynamic `Data.define` members and the dry-initializer
 readers these methods consume. Typed Data callers use keyword `.new`/`[]` and
@@ -112,6 +114,20 @@ the whole application is statically typed.
 Promote files to strict with behavior tests and expand `Sorbet/StrictSigil` in
 [RuboCop configuration](../.rubocop.yml). Remove promoted files from the legacy
 `Sorbet/TrueSigil` list. `rubocop-sorbet` also checks valid sigils and signature style.
+
+### Classifier injection
+
+PaymentMethodPolicy accepts `FailureClassifierContract` for typed injection.
+Implementations include the interface and override `classify_attempt(Attempt)`
+with a `FailureClassification` result, following [Sorbet's interface model](https://sorbet.org/docs/abstract).
+The default FailureClassifier implements the same contract; custom implementations
+can supply different classification logic. Raw constructor forwarding preserves
+existing runtime duck typing and dry option validation.
+
+Selection accepts Context/RetryStep snapshots and returns a nilable
+PaymentMethodSnapshot. Preferred IDs retain the snapshots' `Object` contract,
+including integer and nil identifiers. The policy preserves active/hard-decline
+filtering, per-step exclusions, primary/recent-success/ID ordering, and defaults.
 
 ### Money and integer minor units
 

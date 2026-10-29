@@ -12,14 +12,31 @@ RSpec.describe "Reviewed rebilling and Money interfaces" do
     interfaces = Dir[File.join(root, "sorbet/rbi/shims/*.rbi")].sort
     # Check that the typed Money overlay wins over Tapioca's untyped reflection.
     interfaces.concat(Dir[File.join(root, "sorbet/rbi/gems/money@*.rbi")])
-    implementations = %w[decision failure_classifier].map { |name| File.join(root, "app/services/rebilling/#{name}.rb") }
+    interfaces.concat(Dir[File.join(root, "sorbet/rbi/gems/dry-initializer@*.rbi")])
+    implementations = %w[attempt context decision failure_classifier failure_classifier_contract payment_method_policy payment_method_snapshot].map { |name| File.join(root, "app/services/rebilling/#{name}.rb") }
     Dir.mktmpdir("rebilling-types") do |directory|
       dependencies = File.join(directory, "dependencies.rbi")
       File.write(dependencies, <<~RBI)
-        # typed: true
+        # typed: strict
         module Rebilling; end
+        module Rebilling::Types
+          PaymentMethodOrder = T.let(T.unsafe(nil), Object)
+          Bool = T.let(T.unsafe(nil), Object)
+          NonNegativeInteger = T.let(T.unsafe(nil), Object)
+          Array = T.let(T.unsafe(nil), Object)
+          Hash = T.let(T.unsafe(nil), Object)
+          Nil = T.let(T.unsafe(nil), T.untyped)
+          module Coercible
+            Integer = T.let(T.unsafe(nil), T.untyped)
+            Symbol = T.let(T.unsafe(nil), T.untyped)
+          end
+        end
         module ActiveSupport
-          class TimeWithZone; end
+          class TimeWithZone
+            extend T::Sig
+            sig { returns(Integer) }
+            def to_i; end
+          end
         end
       RBI
       probe = File.join(directory, "probe.rb")
@@ -154,5 +171,61 @@ RSpec.describe "Reviewed rebilling and Money interfaces" do
 
     expect(status).not_to be_success
     expect(output).to include("Missing required keyword argument `reason`", "Missing required keyword argument `status`")
+  end
+
+  it "types payment policy construction, defaults, readers, and optional selection" do
+    output, status = typecheck(<<~RUBY)
+      class SpecializedPaymentPolicy < Rebilling::PaymentMethodPolicy; end
+      sig { params(context: Rebilling::Context, step: Rebilling::RetryStep).void }
+      def choose(context, step)
+        policy = Rebilling::PaymentMethodPolicy.new(order: "primary_then_recent_success", exhaust_methods_per_step: false)
+        T.assert_type!(policy.order, Symbol)
+        T.assert_type!(policy.exhaust_methods_per_step?, T::Boolean)
+        T.assert_type!(policy.select(context, step, preferred_payment_method_id: 42), T.nilable(Rebilling::PaymentMethodSnapshot))
+        T.assert_type!(SpecializedPaymentPolicy.default, SpecializedPaymentPolicy)
+      end
+    RUBY
+
+    expect(status).to be_success, output
+  end
+
+  it "rejects incorrect payment policy flags and selection inputs" do
+    output, status = typecheck(<<~RUBY)
+      Rebilling::PaymentMethodPolicy.new(skip_hard_declined_methods: "true")
+      Rebilling::PaymentMethodPolicy.default.select("not a context", "not a step")
+    RUBY
+
+    expect(status).not_to be_success
+    expect(output).to include("argument `skip_hard_declined_methods`", "argument `context`", "argument `step`")
+  end
+
+  it "accepts an alternative classifier implementing the classifier contract" do
+    output, status = typecheck(<<~RUBY)
+      class CustomClassifier
+        extend T::Sig
+        include Rebilling::FailureClassifierContract
+        sig { override.params(attempt: Rebilling::Attempt).returns(Rebilling::FailureClassification) }
+        def classify_attempt(attempt)
+          Rebilling::FailureClassification.new(category: :unknown, network_recommendation: nil,
+            retryable: false, requires_credential_refresh: false, customer_action_required: false)
+        end
+      end
+      policy = Rebilling::PaymentMethodPolicy.new(failure_classifier: CustomClassifier.new)
+      T.assert_type!(policy.failure_classifier, Rebilling::FailureClassifierContract)
+    RUBY
+
+    expect(status).to be_success, output
+  end
+
+  it "rejects classifiers that do not meet the injected contract" do
+    output, status = typecheck(<<~RUBY)
+      class IncompleteClassifier
+        include Rebilling::FailureClassifierContract
+      end
+      Rebilling::PaymentMethodPolicy.new(failure_classifier: Object.new)
+    RUBY
+
+    expect(status).not_to be_success
+    expect(output).to include("Missing definition for abstract method", "argument `failure_classifier`")
   end
 end
