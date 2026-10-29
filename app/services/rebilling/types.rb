@@ -111,6 +111,8 @@ module Rebilling
 
       start_seconds = Seconds[range.begin]
       end_seconds = Seconds[range.end]
+      # RetryStep samples inclusive whole-second bounds.
+      end_seconds -= 1 if range.exclude_end?
       raise ArgumentError, "jitter end must be greater than or equal to jitter begin" if end_seconds < start_seconds
 
       start_seconds..end_seconds

@@ -8,11 +8,9 @@ module Rebilling
   class Decision
     extend T::Sig
 
-    # This adoption boundary types the factory's return only. Inputs remain
-    # untyped until the dry-initializer DTO interfaces are modeled explicitly.
     sig do
-      params(outcome: T.untyped, plan: T.untyped, diagnostics: T.untyped,
-        trace: T.untyped, notification_intent: T.untyped).returns(Decision)
+      params(outcome: DecisionOutcome, plan: T.nilable(Plan), diagnostics: T::Hash[Symbol, Object],
+        trace: T::Array[T::Hash[Symbol, Object]], notification_intent: Symbol).returns(Decision)
     end
     def self.from_outcome(outcome, plan: nil, diagnostics: {}, trace: [], notification_intent: :none)
       new(status:              outcome.status,
@@ -23,10 +21,12 @@ module Rebilling
           notification_intent: notification_intent)
     end
 
+    sig { returns(T::Boolean) }
     def scheduled?
       status == :scheduled
     end
 
+    sig { returns(T::Boolean) }
     def exhausted?
       status == :exhausted
     end

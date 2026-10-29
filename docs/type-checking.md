@@ -41,22 +41,86 @@ does not connect Hutch to RabbitMQ.
 | [`sorbet/rbi/gems/`](../sorbet/rbi/gems) | Generated gem interfaces |
 | [`sorbet/rbi/dsl/`](../sorbet/rbi/dsl) | Generated Rails/custom DSL interfaces |
 | [`sorbet/rbi/annotations/`](../sorbet/rbi/annotations) | Community annotations; refresh with `bin/tapioca annotations` |
+| [`sorbet/rbi/shims/`](../sorbet/rbi/shims) | Reviewed interfaces for dynamic rebilling values and Money precision |
 | [`sorbet/tapioca/compilers/`](../sorbet/tapioca/compilers) | Tested project-specific compiler code |
 
-Do not hand-edit generated RBIs. There are currently no manual shims. The
-publisher accepts only gem/DSL RBI paths; annotations and any future shims require
-manual review.
+Do not hand-edit generated RBIs. Keep manual contracts in `shims`, backed by
+runtime and isolated positive/negative static tests. The publisher accepts only
+gem/DSL RBI paths; annotations and shims require manual review.
 
 ## Adoption boundary
 
 Most Ruby files use `typed: false`: Sorbet checks syntax and constant resolution,
-but not their method bodies. [`Rebilling::Decision`](../app/services/rebilling/decision.rb)
-uses `typed: true`; its factory types the return value while leaving inputs
-untyped. A green baseline does not mean the whole application is statically typed.
+but not their method bodies. The following rebilling core uses `typed: true`:
+
+| Class | Checked contract |
+| --- | --- |
+| [`FailureClassifier`](../app/services/rebilling/failure_classifier.rb) | Attempt/reason inputs and classification output; nil/string/symbol reasons |
+| [`FailureClassification`](../app/services/rebilling/failure_classification.rb) | Symbol category, optional network recommendation, boolean flags |
+| [`Plan`](../app/services/rebilling/plan.rb) | Integer amounts/counters, symbol strategy keys, string idempotency key, Time/TimeWithZone timestamps |
+| [`Decision`](../app/services/rebilling/decision.rb) | Outcome/optional Plan inputs, diagnostics/trace containers, boolean predicates |
+| [`RetryStep`](../app/services/rebilling/retry_step.rb) | Normalized dry readers, integer amount calculations, deterministic jitter and timestamp windows |
+| [`Attempt`](../app/services/rebilling/attempt.rb) | Integer amount/attempt readers, optional failure/step symbols, status predicates |
+| [`Context`](../app/services/rebilling/context.rb) | Integer balances, Attempt/PaymentMethodSnapshot collections, history queries and observability snapshot |
+| [`PaymentMethodSnapshot`](../app/services/rebilling/payment_method_snapshot.rb) | Boolean primary flag, symbol status/kind fields, eligibility predicates |
+
+The reviewed RBIs describe dynamic `Data.define` members and the dry-initializer
+readers these methods consume. Typed Data callers use keyword `.new`/`[]` and
+partial keyword `.with` updates. Ruby's positional constructors, equality,
+shallow freezing, and `with` behavior remain available at runtime; the interfaces
+do not add Data member validation. Identifier fields remain `Object` because
+snapshot IDs are unconstrained, including nil and integers. Diagnostic/trace
+values also remain heterogeneous; their containers have symbol keys.
+
+RetryStep's constructor accepts broad inputs for dry-types to coerce and validate;
+its output readers expose normalized Integer/Float, Symbol, and integer Range
+types. Typed snapshot constructors accept Integer or integer strings for monetary
+and counter inputs, so a possible fractional Money value needs an explicit policy
+before crossing the boundary. Other coerced fields retain broad inputs.
+Uncoerced timestamps use nilable Time/TimeWithZone contracts, timezone is a
+nilable String, and Context collections contain the corresponding snapshots.
+Those are static caller contracts; existing dry coercions remain unchanged and
+dry-initializer does not gain runtime element or timestamp validation. Context
+freezes supplied arrays and metadata in place, without deep freezing. Metadata
+permits heterogeneous keys and values.
+DecisionOutcome still has only the two reader contracts needed here; its body and
+the rest of the planner remain `typed: false`. A green baseline does not mean the
+whole application is statically typed.
 
 Promote files gradually, add signatures with behavior tests, and expand the
 `Sorbet/TrueSigil` include list in [RuboCop configuration](../.rubocop.yml) as each
 file is adopted. `rubocop-sorbet` also checks valid sigils and signature style.
+
+### Money and integer minor units
+
+Keep the gem contract distinct from the application's stored amounts:
+
+| Value | Sorbet type | Meaning |
+| --- | --- | --- |
+| `Money#cents`, `Money#fractional` | `T.any(Integer, BigDecimal)` | Integer normally; BigDecimal when `Money.default_infinite_precision` is enabled, even for whole subunits |
+| Rebilling `*_cents`, `Plan#amount_cents`, `AmountCalculation` members | `Integer` | Whole minor units, matching the database columns and the Context dry-types contract |
+| RetryStep percentage | `T.any(Integer, Float)` | A percentage, not a monetary amount; the existing calculation rounds up and caps at the remaining integer balance |
+
+The [locked Money source](https://github.com/RubyMoney/money/blob/v7.0.2/lib/money/money.rb)
+defines `cents` as a synonym of `fractional` and selects the return class using the
+precision setting. The app sets UAH and half-even rounding in its
+[initializer](../config/initializers/money.rb), and leaves infinite precision at
+the gem's false default. The manual Money RBI retains the full gem contract so a
+later precision change cannot silently make an Integer-only annotation wrong.
+
+At a future Money-to-planner boundary, prefer the stored integer column; otherwise
+check precision and apply an explicit rounding/rejection policy before converting.
+Do not use `T.cast(..., Integer)` or an unchecked `.to_i` to hide fractional
+subunits. [MoneyRails' monetized readers](https://github.com/RubyMoney/money-rails/blob/v3.0.0/lib/money-rails/active_record/monetizable.rb)
+return Money backed by the separate numeric column; those are different interfaces.
+
+Despite the name, `cents` means the currency's **minor units**, not universally
+hundredths. For example, one UAH is 100 subunits, one JPY is 1, and one KWD is
+1,000. Use the currency's `subunit_to_unit` for major-unit conversions, as in the
+[Money currency documentation](https://rubymoney.github.io/money/#currency).
+Money does not make a bare Integer carry currency information; the current
+rebilling snapshot has no currency field, so currency conversion belongs outside
+this typed core.
 
 ### Runtime checks
 

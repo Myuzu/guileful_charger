@@ -26,7 +26,10 @@ RSpec.describe Rebilling::Context do
     second = build_attempt(id: "pa_3", attempt_number: 3, status: :completed)
     in_flight = build_attempt(id: "pa_4", attempt_number: 4, status: :processing)
 
-    expect(build_context(attempts: [ first, second, in_flight ]).latest_terminal_attempt).to eq(second)
+    context = build_context(attempts: [ first, second, in_flight ])
+
+    expect(context.latest_terminal_attempt).to eq(second)
+    expect(context.latest_attempt_number).to eq(4)
   end
 
   it "detects all in-flight statuses" do
@@ -42,6 +45,7 @@ RSpec.describe Rebilling::Context do
     other = build_attempt(id: "pa_2", attempt_number: 2, status: :failed, retry_step_key: :charge_15)
 
     expect(build_context(attempts: [ matching, other ]).attempts_for_step("charge_25")).to eq([ matching ])
+    expect(build_context(attempts: [ matching, other ]).attempts_for_step(:charge_25)).to eq([ matching ])
   end
 
   it "rejects negative amounts" do
@@ -57,6 +61,38 @@ RSpec.describe Rebilling::Context do
 
   it "returns zero from latest_attempt_number when there are no attempts" do
     expect(build_context.latest_attempt_number).to eq(0)
+  end
+
+  it "returns no terminal attempt for empty or exclusively in-flight history" do
+    expect(build_context.latest_terminal_attempt).to be_nil
+    expect(build_context(attempts: [ build_attempt(status: :processing) ]).latest_terminal_attempt).to be_nil
+    expect(build_context).not_to be_in_flight_attempt
+  end
+
+  it "coerces amounts and statuses while retaining default collections and nil timezone" do
+    context = described_class.new(invoice_id: nil, invoice_status: "partially_paid", invoice_total_cents: "1200",
+      amount_paid_cents: "300", subscription_status: "active")
+
+    expect(context).to have_attributes(invoice_id: nil, invoice_status: :partially_paid, invoice_total_cents: 1200,
+      amount_paid_cents: 300, amount_remaining_cents: 900, subscription_status: :active,
+      attempts: [], payment_methods: [], customer_timezone: nil, metadata: {})
+    expect(context).to be_active_subscription
+    expect(context).not_to be_paid
+    expect(build_context(subscription_status: :paused)).not_to be_active_subscription
+  end
+
+  it "freezes the supplied collections without copying or deep-freezing metadata" do
+    attempts = [ build_attempt ]
+    methods = [ build_payment_method ]
+    metadata = { "labels" => [ "trial" ], region: "EU" }
+    context = build_context(attempts: attempts, payment_methods: methods, metadata: metadata)
+
+    expect(context).to be_frozen
+    expect(context.attempts).to equal(attempts)
+    expect(context.payment_methods).to equal(methods)
+    expect(context.metadata).to equal(metadata)
+    expect([ attempts, methods, metadata ]).to all(be_frozen)
+    expect(metadata.fetch("labels")).not_to be_frozen
   end
 
   it "exposes a stable to_h observability snapshot" do

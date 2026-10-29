@@ -84,4 +84,11 @@ RSpec.describe Rebilling::FailureClassifier do
       expect(classification.retryable).to be(false)
     end
   end
+
+  it "accepts string reasons and preserves categories outside the known reason mapping" do
+    classifier = described_class.new
+
+    expect(classifier.classify_reason("insufficient_funds").category).to eq(:soft_decline)
+    expect(classifier.classify_attempt(attempt(category: "custom_gateway_category")).category).to eq(:custom_gateway_category)
+  end
 end

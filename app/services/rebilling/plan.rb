@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 
 module Rebilling
   Plan = Data.define(:step_key,

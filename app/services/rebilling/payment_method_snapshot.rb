@@ -1,8 +1,9 @@
-# typed: false
+# typed: true
 
 module Rebilling
   class PaymentMethodSnapshot
     extend Dry::Initializer
+    extend T::Sig
 
     ACTIVE_STATUS = :active
     INELIGIBLE_STATUSES = %i[expired invalid requires_action disabled].freeze
@@ -21,10 +22,12 @@ module Rebilling
       freeze
     end
 
+    sig { returns(T::Boolean) }
     def active?
       status == ACTIVE_STATUS
     end
 
+    sig { returns(T::Boolean) }
     def hard_declined?
       failure_category == :hard_decline || INELIGIBLE_STATUSES.include?(status)
     end

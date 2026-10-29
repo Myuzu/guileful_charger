@@ -49,4 +49,22 @@ RSpec.describe Rebilling::Types do
       expect { described_class::DecisionReason[:unknown] }.to raise_error(Dry::Types::CoercionError, /decision reason/)
     end
   end
+
+  it "normalizes inclusive and exclusive jitter to inclusive whole-second bounds" do
+    expect(described_class::JitterRange["30".."60"]).to eq(30..60)
+    expect(described_class::JitterRange["30"..."60"]).to eq(30..59)
+    expect(described_class::JitterRange[30.seconds...60.seconds]).to eq(30..59)
+    expect(described_class::JitterRange[nil]).to eq(0..0)
+  end
+
+  it "retains singleton jitter intervals" do
+    expect(described_class::JitterRange[30..30]).to eq(30..30)
+    expect(described_class::JitterRange[30...31]).to eq(30..30)
+  end
+
+  it "rejects empty and reversed jitter intervals" do
+    [ 0...0, 30...30, 31..30, 31...30 ].each do |range|
+      expect { described_class::JitterRange[range] }.to raise_error(Dry::Types::CoercionError, /jitter end must be greater than or equal to jitter begin/)
+    end
+  end
 end

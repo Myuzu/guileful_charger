@@ -1,18 +1,22 @@
-# typed: false
+# typed: true
 
 module Rebilling
   class FailureClassifier
+    extend T::Sig
+
     RETRYABLE_REASONS = %i[insufficient_funds].freeze
     HARD_DECLINE_REASONS = %i[stolen_card lost_card invalid_card_number fraudulent gateway_error failed].freeze
     CUSTOMER_ACTION_REASONS = %i[authentication_required expired_card incorrect_cvc].freeze
     TECHNICAL_REASONS = %i[system_error network_error processor_unavailable].freeze
 
+    sig { params(attempt: Attempt).returns(FailureClassification) }
     def classify_attempt(attempt)
       return classification_for_category(attempt.failure_category) if attempt.failure_category
 
       classify_reason(attempt.failure_reason)
     end
 
+    sig { params(reason: T.nilable(T.any(Symbol, String))).returns(FailureClassification) }
     def classify_reason(reason)
       normalized_reason = reason&.to_sym
 
@@ -34,6 +38,7 @@ module Rebilling
 
     private
 
+    sig { params(category: T.nilable(T.any(Symbol, String))).returns(FailureClassification) }
     def classification_for_category(category)
       normalized_category = category&.to_sym || :unknown
 
