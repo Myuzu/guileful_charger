@@ -99,20 +99,46 @@ authorized cleanup scope.
   as data, and restrict writes to approved generated paths. Keep action pins and
   explicit least-privilege workflow permissions.
 
-## Commits and pull requests
+## Task and PR lifecycle
 
-- Use a task branch. Fetch `origin/main` before starting a new branch from main;
-  continue an existing task on its branch. Review the diff and stage only task files.
-- Use descriptive conventional commit/PR titles such as `fix: ...` or `docs: ...`.
-  Create/push PRs within the user's requested scope; merge only when instructed.
-- Describe the resulting behavior, motivation, validation, and material limits.
-  Use headings, tables, and checklists where they improve scanning; keep review
-  history and abandoned approaches out of the description.
-- **Apply appropriate existing repository labels to every PR and verify them.**
-  Use `documentation` for Markdown-only changes, `bug` for fixes, and topic labels
-  matching actual scope. Reserve `dependencies` for dependency updates.
-- Update affected guides when behavior changes, and remove task-created temporary
-  artifacts before finishing. Leave unrelated local work intact.
+1. **Select the task.** For project-backed work, use the existing issue and its
+   linked project. When asked for the next task, consider project order, priority,
+   and unresolved dependencies. The typing backlog is
+   [Sorbet inc.](https://github.com/users/Myuzu/projects/6). Read the project's
+   actual status options rather than assuming field IDs or names.
+2. **Start from main.** Fetch `origin/main` and create a fresh branch for each new
+   task; continue ongoing work on its existing branch. Move the linked issue to
+   **In progress** before implementation. Preserve unrelated local work.
+3. **Implement with TDD.** Add meaningful failing behavior/type tests first, then
+   implement at `typed: strict` using the verification rules above. Preserve
+   existing behavior when adopting types. Research official documentation when
+   library details are uncertain. For documentation-only work, use the Markdown,
+   link, and example checks above.
+4. **Prepare the PR.** Review the diff, stage only task files, and use descriptive
+   conventional commit/PR titles such as `feat: ...`, `fix: ...`, or `docs: ...`.
+   Open/push within the requested scope and link the issue with `Closes #...` when
+   appropriate. Explain the resulting behavior, motivation, validation, and limits
+   using headings, tables, and checklists where useful. Omit review history and
+   abandoned approaches. **Apply and verify existing repository labels**:
+   `documentation` for Markdown-only work, `bug` for fixes, relevant topic labels,
+   and `dependencies` only for dependency updates. Move the issue to **In review**
+   when the PR is ready.
+5. **Get independent review before merge.** Spawn a review subagent with a fresh
+   context (`fork_turns: "none"`). Provide the task brief, repository path, exact
+   base/head commits, constraints, and test setup; do not pass conversation history
+   or implementation reasoning. Keep the reviewer read-only. Verify actionable
+   findings, avoid duplicate threads, and post a `COMMENT` review through `gh`
+   against the reviewed commit. If there are no findings, post a summary with
+   checks and limits. Address confirmed findings within the authorized
+   implementation scope and re-review changed code if the head changes. Pure
+   review requests do not authorize source edits.
+6. **Merge only on explicit instruction.** Recheck the reviewed head, mergeability,
+   and required CI checks. Follow the repository's merge strategy and pin the
+   reviewed head with `--match-head-commit` when using `gh pr merge`.
+7. **Complete the task.** Verify the PR is merged and the linked issue is closed,
+   then move its project item to **Done** (the completed column on the typing
+   board). Verify the saved status before reporting completion. Update affected
+   guides and remove task-created temporary artifacts; preserve unrelated work.
 
 ## Maintaining these instructions
 
