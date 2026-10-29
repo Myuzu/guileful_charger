@@ -55,9 +55,40 @@ RSpec.describe Rebilling::RetryStep do
 
       expect(step.amount_for(context)).to eq(150)
     end
+
+    it "rounds a fractional percentage up to a whole minor unit" do
+      step = described_class.new(percentage: "12.51", delay: "60", jitter: ("30"..."60"))
+
+      expect(step.amount_for(context)).to eq(151)
+      expect(step.percentage).to eq(12.51)
+      expect(step.delay_seconds).to eq(60)
+      expect(step.jitter_seconds_range).to eq(30..60)
+    end
+
+    it "preserves dry coercion and defaults before exposing typed readers" do
+      step = described_class.new(percentage: "25", delay: nil, jitter: nil, key: nil,
+        basis: "remaining_balance", on_success: "next", on_failure: "stop")
+
+      expect(step.percentage).to eq(25)
+      expect(step.delay).to eq(0)
+      expect(step.jitter).to eq(0..0)
+      expect(step.key).to eq(:charge_25pct_remaining_balance_after_0s)
+      expect(step.on_success).to eq(:next)
+      expect(step.on_failure).to eq(:stop)
+    end
   end
 
   describe "retry window" do
+    it "also accepts an ordinary UTC Time" do
+      now = Time.utc(2026, 1, 1, 12)
+      step = described_class.new(percentage: 25, delay: 60)
+
+      window = step.retry_window(now: now, context: context, attempt_number: 4)
+
+      expect(window.values).to all(be_a(Time))
+      expect(window.values).to all(eq(now + 60))
+    end
+
     it "returns a deterministic retry time inside the retry window" do
       now = Time.zone.parse("2026-01-01 12:00:00 UTC")
       step = described_class.new(percentage: 25, delay: 5.minutes, jitter: 0..120.seconds)
@@ -93,6 +124,10 @@ RSpec.describe Rebilling::RetryStep do
   end
 
   describe "validation" do
+    it "translates dry key coercion errors into ArgumentError" do
+      expect { described_class.new(percentage: 25, delay: 60, key: 123) }.to raise_error(ArgumentError)
+    end
+
     it "rejects invalid percentages" do
       aggregate_failures do
         expect { described_class.new(percentage: 0, delay: 1.day) }.to raise_error(ArgumentError, /percentage must be greater than 0/)

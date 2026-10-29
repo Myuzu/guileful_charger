@@ -1,10 +1,11 @@
-# typed: false
+# typed: true
 
 require "zlib"
 
 module Rebilling
   class RetryStep
     extend Dry::Initializer
+    extend T::Sig
 
     AmountCalculation = Data.define(:base_cents, :calculated_amount_cents, :capped_amount_cents)
 
@@ -25,18 +26,22 @@ module Rebilling
       raise ArgumentError, e.message
     end
 
+    sig { returns(Integer) }
     def delay_seconds
       delay
     end
 
+    sig { returns(T::Range[Integer]) }
     def jitter_seconds_range
       jitter
     end
 
+    sig { params(context: Context).returns(Integer) }
     def amount_for(context)
       amount_calculation_for(context).capped_amount_cents
     end
 
+    sig { params(context: Context).returns(AmountCalculation) }
     def amount_calculation_for(context)
       base_cents = amount_basis_for(context)
       calculated_amount_cents = ((base_cents * percentage.to_f) / 100).ceil
@@ -47,6 +52,10 @@ module Rebilling
                             capped_amount_cents:     capped_amount_cents)
     end
 
+    sig do
+      params(now: T.any(Time, ActiveSupport::TimeWithZone), context: Context, attempt_number: Integer)
+        .returns(T::Hash[Symbol, T.any(Time, ActiveSupport::TimeWithZone)])
+    end
     def retry_window(now:, context:, attempt_number:)
       base_retry_at = now + delay_seconds.seconds
       earliest_retry_at = base_retry_at + min_jitter_seconds.seconds
@@ -58,6 +67,7 @@ module Rebilling
         latest_retry_at:    latest_retry_at }
     end
 
+    sig { params(context: Context, attempt_number: Integer).returns(Integer) }
     def deterministic_jitter_seconds(context, attempt_number)
       return 0 if max_jitter_seconds.zero?
 
@@ -67,29 +77,32 @@ module Rebilling
 
     private
 
+    sig { params(context: Context).returns(Integer) }
     def amount_basis_for(context)
-      case basis
-      when :invoice_total
-        context.invoice_total_cents
-      when :remaining_balance
-        context.amount_remaining_cents
-      end
+      return context.invoice_total_cents if basis == :invoice_total
+
+      # Types::Basis validates the only other choice as :remaining_balance.
+      context.amount_remaining_cents
     end
 
+    sig { returns(Symbol) }
     def generated_key
       :"charge_#{normalized_percentage}pct_#{basis}_after_#{delay_seconds}s"
     end
 
+    sig { returns(String) }
     def normalized_percentage
       percentage.to_s.tr(".", "_")
     end
 
+    sig { returns(Integer) }
     def min_jitter_seconds
-      jitter_seconds_range.begin
+      T.must(jitter_seconds_range.begin)
     end
 
+    sig { returns(Integer) }
     def max_jitter_seconds
-      jitter_seconds_range.end
+      T.must(jitter_seconds_range.end)
     end
   end
 end

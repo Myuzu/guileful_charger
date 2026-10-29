@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 
 module Rebilling
   FailureClassification = Data.define(:category,
