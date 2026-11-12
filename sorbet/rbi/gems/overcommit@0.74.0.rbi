@@ -323,7 +323,7 @@ class Overcommit::Configuration
 
   # Update the currently stored signature for this hook.
   #
-  # pkg:gem/overcommit#lib/overcommit/configuration.rb:234
+  # pkg:gem/overcommit#lib/overcommit/configuration.rb:235
   def update_signature!; end
 
   # Returns whether this configuration should verify itself by checking the
@@ -336,34 +336,34 @@ class Overcommit::Configuration
 
   protected
 
-  # pkg:gem/overcommit#lib/overcommit/configuration.rb:252
+  # pkg:gem/overcommit#lib/overcommit/configuration.rb:254
   def hash; end
 
   private
 
-  # pkg:gem/overcommit#lib/overcommit/configuration.rb:256
+  # pkg:gem/overcommit#lib/overcommit/configuration.rb:258
   def ad_hoc_hook?(hook_context, hook_name); end
 
-  # pkg:gem/overcommit#lib/overcommit/configuration.rb:266
+  # pkg:gem/overcommit#lib/overcommit/configuration.rb:268
   def built_in_hook?(hook_context, hook_name); end
 
-  # pkg:gem/overcommit#lib/overcommit/configuration.rb:279
+  # pkg:gem/overcommit#lib/overcommit/configuration.rb:281
   def hook_enabled?(hook_context_or_type, hook_name); end
 
-  # pkg:gem/overcommit#lib/overcommit/configuration.rb:273
+  # pkg:gem/overcommit#lib/overcommit/configuration.rb:275
   def hook_exists?(hook_context, hook_name); end
 
   # Returns the unique signature of this configuration.
   #
   # @return [String]
   #
-  # pkg:gem/overcommit#lib/overcommit/configuration.rb:317
+  # pkg:gem/overcommit#lib/overcommit/configuration.rb:319
   def signature; end
 
-  # pkg:gem/overcommit#lib/overcommit/configuration.rb:342
+  # pkg:gem/overcommit#lib/overcommit/configuration.rb:345
   def signature_config_key; end
 
-  # pkg:gem/overcommit#lib/overcommit/configuration.rb:296
+  # pkg:gem/overcommit#lib/overcommit/configuration.rb:298
   def smart_merge(parent, child); end
 
   # Returns the stored signature of this repo's Overcommit configuration.
@@ -373,10 +373,10 @@ class Overcommit::Configuration
   #
   # @return [String]
   #
-  # pkg:gem/overcommit#lib/overcommit/configuration.rb:327
+  # pkg:gem/overcommit#lib/overcommit/configuration.rb:329
   def stored_signature; end
 
-  # pkg:gem/overcommit#lib/overcommit/configuration.rb:346
+  # pkg:gem/overcommit#lib/overcommit/configuration.rb:349
   def verify_signature_config_key; end
 end
 
@@ -601,12 +601,26 @@ module Overcommit::GitConfig
   # pkg:gem/overcommit#lib/overcommit/git_config.rb:16
   def hooks_path; end
 
+  # Config file option for storing hook signatures: the per-worktree file
+  # when extensions.worktreeConfig is on, so worktrees with different
+  # configurations do not overwrite each other's signatures.
+  #
+  # pkg:gem/overcommit#lib/overcommit/git_config.rb:26
+  def signature_scope; end
+
   class << self
     # pkg:gem/overcommit#lib/overcommit/git_config.rb:10
     def comment_character; end
 
     # pkg:gem/overcommit#lib/overcommit/git_config.rb:16
     def hooks_path; end
+
+    # Config file option for storing hook signatures: the per-worktree file
+    # when extensions.worktreeConfig is on, so worktrees with different
+    # configurations do not overwrite each other's signatures.
+    #
+    # pkg:gem/overcommit#lib/overcommit/git_config.rb:26
+    def signature_scope; end
   end
 end
 
@@ -616,11 +630,12 @@ end
 module Overcommit::GitRepo
   private
 
-  # Returns the names of all files that are tracked by git.
+  # Returns the names of all files that are tracked by git, excluding files
+  # that have been deleted from the working tree.
   #
   # @return [Array<String>] list of absolute file paths
   #
-  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:137
+  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:138
   def all_files; end
 
   # Returns the names of all branches containing the given commit.
@@ -628,13 +643,13 @@ module Overcommit::GitRepo
   # @param commit_ref [String] git tree ref that resolves to a commit
   # @return [Array<String>] list of branches containing the given commit
   #
-  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:281
+  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:283
   def branches_containing_commit(commit_ref); end
 
   # Returns the name of the currently checked out branch.
   # @return [String]
   #
-  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:290
+  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:292
   def current_branch; end
 
   # Extract the set of modified lines from a given file.
@@ -649,7 +664,7 @@ module Overcommit::GitRepo
   # Returns whether the current git branch is empty (has no commits).
   # @return [true,false]
   #
-  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:146
+  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:148
   def initial_commit?; end
 
   # Returns the names of files in the given paths that are tracked by git.
@@ -672,13 +687,13 @@ module Overcommit::GitRepo
   # Restore any relevant files that were present when repo was in the middle
   # of a cherry-pick.
   #
-  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:211
+  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:213
   def restore_cherry_pick_state; end
 
   # Restore any relevant files that were present when repo was in the middle
   # of a merge.
   #
-  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:186
+  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:188
   def restore_merge_state; end
 
   # Returns the submodules that have been staged for removal.
@@ -697,7 +712,7 @@ module Overcommit::GitRepo
   #
   # @raise [Overcommit::Exceptions::GitSubmoduleError] when
   #
-  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:238
+  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:240
   def staged_submodule_removals; end
 
   # Store any relevant files that are present when repo is in the middle of a
@@ -705,7 +720,7 @@ module Overcommit::GitRepo
   #
   # Restored via [#restore_cherry_pick_state].
   #
-  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:174
+  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:176
   def store_cherry_pick_state; end
 
   # Store any relevant files that are present when repo is in the middle of a
@@ -713,7 +728,7 @@ module Overcommit::GitRepo
   #
   # Restored via [#restore_merge_state].
   #
-  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:154
+  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:156
   def store_merge_state; end
 
   # Returns a list of SubmoduleStatus objects, one for each submodule in the
@@ -730,7 +745,7 @@ module Overcommit::GitRepo
   # @param options [Hash]
   # @return [Array<Overcommit::GitRepo::Submodule>]
   #
-  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:252
+  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:254
   def submodules(options = T.unsafe(nil)); end
 
   # Returns whether the specified file/path is tracked by this repository.
@@ -742,11 +757,12 @@ module Overcommit::GitRepo
   def tracked?(path); end
 
   class << self
-    # Returns the names of all files that are tracked by git.
+    # Returns the names of all files that are tracked by git, excluding files
+    # that have been deleted from the working tree.
     #
     # @return [Array<String>] list of absolute file paths
     #
-    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:137
+    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:138
     def all_files; end
 
     # Returns the names of all branches containing the given commit.
@@ -754,13 +770,13 @@ module Overcommit::GitRepo
     # @param commit_ref [String] git tree ref that resolves to a commit
     # @return [Array<String>] list of branches containing the given commit
     #
-    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:281
+    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:283
     def branches_containing_commit(commit_ref); end
 
     # Returns the name of the currently checked out branch.
     # @return [String]
     #
-    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:290
+    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:292
     def current_branch; end
 
     # Extract the set of modified lines from a given file.
@@ -775,7 +791,7 @@ module Overcommit::GitRepo
     # Returns whether the current git branch is empty (has no commits).
     # @return [true,false]
     #
-    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:146
+    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:148
     def initial_commit?; end
 
     # Returns the names of files in the given paths that are tracked by git.
@@ -798,13 +814,13 @@ module Overcommit::GitRepo
     # Restore any relevant files that were present when repo was in the middle
     # of a cherry-pick.
     #
-    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:211
+    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:213
     def restore_cherry_pick_state; end
 
     # Restore any relevant files that were present when repo was in the middle
     # of a merge.
     #
-    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:186
+    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:188
     def restore_merge_state; end
 
     # Returns the submodules that have been staged for removal.
@@ -823,7 +839,7 @@ module Overcommit::GitRepo
     #
     # @raise [Overcommit::Exceptions::GitSubmoduleError] when
     #
-    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:238
+    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:240
     def staged_submodule_removals; end
 
     # Store any relevant files that are present when repo is in the middle of a
@@ -831,7 +847,7 @@ module Overcommit::GitRepo
     #
     # Restored via [#restore_cherry_pick_state].
     #
-    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:174
+    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:176
     def store_cherry_pick_state; end
 
     # Store any relevant files that are present when repo is in the middle of a
@@ -839,7 +855,7 @@ module Overcommit::GitRepo
     #
     # Restored via [#restore_merge_state].
     #
-    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:154
+    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:156
     def store_merge_state; end
 
     # Returns a list of SubmoduleStatus objects, one for each submodule in the
@@ -856,7 +872,7 @@ module Overcommit::GitRepo
     # @param options [Hash]
     # @return [Array<Overcommit::GitRepo::Submodule>]
     #
-    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:252
+    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:254
     def submodules(options = T.unsafe(nil)); end
 
     # Returns whether the specified file/path is tracked by this repository.
@@ -882,34 +898,34 @@ Overcommit::GitRepo::SUBMODULE_STATUS_REGEX = T.let(T.unsafe(nil), Regexp)
 
 # Contains information about a registered submodule.
 #
-# pkg:gem/overcommit#lib/overcommit/git_repo.rb:221
+# pkg:gem/overcommit#lib/overcommit/git_repo.rb:223
 class Overcommit::GitRepo::Submodule < ::Struct
-  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:221
+  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:223
   def path; end
 
-  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:221
+  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:223
   def path=(_); end
 
-  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:221
+  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:223
   def url; end
 
-  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:221
+  # pkg:gem/overcommit#lib/overcommit/git_repo.rb:223
   def url=(_); end
 
   class << self
-    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:221
+    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:223
     def [](*_arg0); end
 
-    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:221
+    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:223
     def inspect; end
 
-    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:221
+    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:223
     def keyword_init?; end
 
-    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:221
+    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:223
     def members; end
 
-    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:221
+    # pkg:gem/overcommit#lib/overcommit/git_repo.rb:223
     def new(*_arg0); end
   end
 end
@@ -1541,7 +1557,7 @@ class Overcommit::HookSigner
 
   private
 
-  # pkg:gem/overcommit#lib/overcommit/hook_signer.rb:101
+  # pkg:gem/overcommit#lib/overcommit/hook_signer.rb:102
   def hook_contents; end
 
   # Calculates a hash of a hook using a combination of its configuration and
@@ -1550,13 +1566,13 @@ class Overcommit::HookSigner
   # This way, if either the plugin code changes or its configuration changes,
   # the hash will change and we can alert the user to this change.
   #
-  # pkg:gem/overcommit#lib/overcommit/hook_signer.rb:88
+  # pkg:gem/overcommit#lib/overcommit/hook_signer.rb:89
   def signature; end
 
-  # pkg:gem/overcommit#lib/overcommit/hook_signer.rb:120
+  # pkg:gem/overcommit#lib/overcommit/hook_signer.rb:122
   def signature_config_key; end
 
-  # pkg:gem/overcommit#lib/overcommit/hook_signer.rb:105
+  # pkg:gem/overcommit#lib/overcommit/hook_signer.rb:106
   def stored_signature; end
 end
 
@@ -1926,7 +1942,7 @@ Overcommit::REPO_URL = T.let(T.unsafe(nil), String)
 # Manages execution of a child process, collecting the exit status and
 # standard out/error output.
 #
-# pkg:gem/overcommit#lib/overcommit/subprocess.rb:10
+# pkg:gem/overcommit#lib/overcommit/subprocess.rb:9
 class Overcommit::Subprocess
   class << self
     # Spawns a new process using the given array of arguments (the first
@@ -1937,13 +1953,13 @@ class Overcommit::Subprocess
     # @option options [String] input string to pass via standard input stream
     # @return [Result]
     #
-    # pkg:gem/overcommit#lib/overcommit/subprocess.rb:30
+    # pkg:gem/overcommit#lib/overcommit/subprocess.rb:29
     def spawn(args, options = T.unsafe(nil)); end
 
     # Spawns a new process in the background using the given array of
     # arguments (the first element is the command).
     #
-    # pkg:gem/overcommit#lib/overcommit/subprocess.rb:60
+    # pkg:gem/overcommit#lib/overcommit/subprocess.rb:62
     def spawn_detached(args); end
 
     private
@@ -1951,14 +1967,8 @@ class Overcommit::Subprocess
     # @param process [ChildProcess]
     # @return [Array<IO>]
     #
-    # pkg:gem/overcommit#lib/overcommit/subprocess.rb:89
-    def assign_output_streams(process); end
-
-    # Necessary to run commands in the cmd.exe context.
-    # Args are joined to properly handle quotes and special characters.
-    #
     # pkg:gem/overcommit#lib/overcommit/subprocess.rb:75
-    def win32_prepare_args(args); end
+    def assign_output_streams(process); end
   end
 end
 
@@ -1968,43 +1978,43 @@ end
 # @attr_reader stdout [String] standard output stream output
 # @attr_reader stderr [String] standard error stream output
 #
-# pkg:gem/overcommit#lib/overcommit/subprocess.rb:16
+# pkg:gem/overcommit#lib/overcommit/subprocess.rb:15
 class Overcommit::Subprocess::Result < ::Struct
-  # pkg:gem/overcommit#lib/overcommit/subprocess.rb:16
+  # pkg:gem/overcommit#lib/overcommit/subprocess.rb:15
   def status; end
 
-  # pkg:gem/overcommit#lib/overcommit/subprocess.rb:16
+  # pkg:gem/overcommit#lib/overcommit/subprocess.rb:15
   def status=(_); end
 
-  # pkg:gem/overcommit#lib/overcommit/subprocess.rb:16
+  # pkg:gem/overcommit#lib/overcommit/subprocess.rb:15
   def stderr; end
 
-  # pkg:gem/overcommit#lib/overcommit/subprocess.rb:16
+  # pkg:gem/overcommit#lib/overcommit/subprocess.rb:15
   def stderr=(_); end
 
-  # pkg:gem/overcommit#lib/overcommit/subprocess.rb:16
+  # pkg:gem/overcommit#lib/overcommit/subprocess.rb:15
   def stdout; end
 
-  # pkg:gem/overcommit#lib/overcommit/subprocess.rb:16
+  # pkg:gem/overcommit#lib/overcommit/subprocess.rb:15
   def stdout=(_); end
 
-  # pkg:gem/overcommit#lib/overcommit/subprocess.rb:17
+  # pkg:gem/overcommit#lib/overcommit/subprocess.rb:16
   def success?; end
 
   class << self
-    # pkg:gem/overcommit#lib/overcommit/subprocess.rb:16
+    # pkg:gem/overcommit#lib/overcommit/subprocess.rb:15
     def [](*_arg0); end
 
-    # pkg:gem/overcommit#lib/overcommit/subprocess.rb:16
+    # pkg:gem/overcommit#lib/overcommit/subprocess.rb:15
     def inspect; end
 
-    # pkg:gem/overcommit#lib/overcommit/subprocess.rb:16
+    # pkg:gem/overcommit#lib/overcommit/subprocess.rb:15
     def keyword_init?; end
 
-    # pkg:gem/overcommit#lib/overcommit/subprocess.rb:16
+    # pkg:gem/overcommit#lib/overcommit/subprocess.rb:15
     def members; end
 
-    # pkg:gem/overcommit#lib/overcommit/subprocess.rb:16
+    # pkg:gem/overcommit#lib/overcommit/subprocess.rb:15
     def new(*_arg0); end
   end
 end
