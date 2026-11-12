@@ -166,221 +166,221 @@ end
 module SolidQueue
   extend ::SolidQueue
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:27
+  # pkg:gem/solid_queue#lib/solid_queue.rb:29
   def app_executor; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:27
+  # pkg:gem/solid_queue#lib/solid_queue.rb:29
   def app_executor=(val); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:43
+  # pkg:gem/solid_queue#lib/solid_queue.rb:45
   def clear_finished_jobs_after; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:43
+  # pkg:gem/solid_queue#lib/solid_queue.rb:45
   def clear_finished_jobs_after=(val); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:27
+  # pkg:gem/solid_queue#lib/solid_queue.rb:29
   def connects_to; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:27
+  # pkg:gem/solid_queue#lib/solid_queue.rb:29
   def connects_to=(val); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:44
+  # pkg:gem/solid_queue#lib/solid_queue.rb:46
   def default_concurrency_control_period; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:44
+  # pkg:gem/solid_queue#lib/solid_queue.rb:46
   def default_concurrency_control_period=(val); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:91
+  # pkg:gem/solid_queue#lib/solid_queue.rb:93
   def deprecator; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:33
+  # pkg:gem/solid_queue#lib/solid_queue.rb:35
   def fork_boot_timeout; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:33
+  # pkg:gem/solid_queue#lib/solid_queue.rb:35
   def fork_boot_timeout=(val); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:95
+  # pkg:gem/solid_queue#lib/solid_queue.rb:97
   def instrument(channel, **options, &block); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:26
+  # pkg:gem/solid_queue#lib/solid_queue.rb:28
   def logger; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:26
+  # pkg:gem/solid_queue#lib/solid_queue.rb:28
   def logger=(val); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:55
+  # pkg:gem/solid_queue#lib/solid_queue.rb:57
   def on_exit(&); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:55
+  # pkg:gem/solid_queue#lib/solid_queue.rb:57
   def on_start(&); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:55
+  # pkg:gem/solid_queue#lib/solid_queue.rb:57
   def on_stop(&); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:27
+  # pkg:gem/solid_queue#lib/solid_queue.rb:29
   def on_thread_error; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:27
+  # pkg:gem/solid_queue#lib/solid_queue.rb:29
   def on_thread_error=(val); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:42
+  # pkg:gem/solid_queue#lib/solid_queue.rb:44
   def preserve_finished_jobs; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:42
+  # pkg:gem/solid_queue#lib/solid_queue.rb:44
   def preserve_finished_jobs=(val); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:87
+  # pkg:gem/solid_queue#lib/solid_queue.rb:89
   def preserve_finished_jobs?; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:32
+  # pkg:gem/solid_queue#lib/solid_queue.rb:34
   def process_alive_threshold; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:32
+  # pkg:gem/solid_queue#lib/solid_queue.rb:34
   def process_alive_threshold=(val); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:31
+  # pkg:gem/solid_queue#lib/solid_queue.rb:33
   def process_heartbeat_interval; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:31
+  # pkg:gem/solid_queue#lib/solid_queue.rb:33
   def process_heartbeat_interval=(val); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:57
+  # pkg:gem/solid_queue#lib/solid_queue.rb:59
   def schedule_recurring_task(key, **options); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:35
+  # pkg:gem/solid_queue#lib/solid_queue.rb:37
   def shutdown_timeout; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:35
+  # pkg:gem/solid_queue#lib/solid_queue.rb:37
   def shutdown_timeout=(val); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:37
+  # pkg:gem/solid_queue#lib/solid_queue.rb:39
   def silence_polling; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:37
+  # pkg:gem/solid_queue#lib/solid_queue.rb:39
   def silence_polling=(val); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:83
+  # pkg:gem/solid_queue#lib/solid_queue.rb:85
   def silence_polling?; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:40
+  # pkg:gem/solid_queue#lib/solid_queue.rb:42
   def supervisor; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:40
+  # pkg:gem/solid_queue#lib/solid_queue.rb:42
   def supervisor=(val); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:79
+  # pkg:gem/solid_queue#lib/solid_queue.rb:81
   def supervisor?; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:39
+  # pkg:gem/solid_queue#lib/solid_queue.rb:41
   def supervisor_pidfile; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:39
+  # pkg:gem/solid_queue#lib/solid_queue.rb:41
   def supervisor_pidfile=(val); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:46
+  # pkg:gem/solid_queue#lib/solid_queue.rb:48
   def time_zone; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:48
+  # pkg:gem/solid_queue#lib/solid_queue.rb:50
   def time_zone=(zone); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:61
+  # pkg:gem/solid_queue#lib/solid_queue.rb:63
   def unschedule_recurring_task(key); end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:29
+  # pkg:gem/solid_queue#lib/solid_queue.rb:31
   def use_skip_locked; end
 
-  # pkg:gem/solid_queue#lib/solid_queue.rb:29
+  # pkg:gem/solid_queue#lib/solid_queue.rb:31
   def use_skip_locked=(val); end
 
   class << self
-    # pkg:gem/solid_queue#lib/solid_queue.rb:27
+    # pkg:gem/solid_queue#lib/solid_queue.rb:29
     def app_executor; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:27
+    # pkg:gem/solid_queue#lib/solid_queue.rb:29
     def app_executor=(val); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:43
+    # pkg:gem/solid_queue#lib/solid_queue.rb:45
     def clear_finished_jobs_after; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:43
+    # pkg:gem/solid_queue#lib/solid_queue.rb:45
     def clear_finished_jobs_after=(val); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:27
+    # pkg:gem/solid_queue#lib/solid_queue.rb:29
     def connects_to; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:27
+    # pkg:gem/solid_queue#lib/solid_queue.rb:29
     def connects_to=(val); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:44
+    # pkg:gem/solid_queue#lib/solid_queue.rb:46
     def default_concurrency_control_period; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:44
+    # pkg:gem/solid_queue#lib/solid_queue.rb:46
     def default_concurrency_control_period=(val); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:33
+    # pkg:gem/solid_queue#lib/solid_queue.rb:35
     def fork_boot_timeout; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:33
+    # pkg:gem/solid_queue#lib/solid_queue.rb:35
     def fork_boot_timeout=(val); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:26
+    # pkg:gem/solid_queue#lib/solid_queue.rb:28
     def logger; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:26
+    # pkg:gem/solid_queue#lib/solid_queue.rb:28
     def logger=(val); end
 
     # pkg:gem/solid_queue#lib/solid_queue/version.rb:4
     def next_major_version; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:74
+    # pkg:gem/solid_queue#lib/solid_queue.rb:76
     def on_dispatcher_exit(&block); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:66
+    # pkg:gem/solid_queue#lib/solid_queue.rb:68
     def on_dispatcher_start(&block); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:70
+    # pkg:gem/solid_queue#lib/solid_queue.rb:72
     def on_dispatcher_stop(&block); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:74
+    # pkg:gem/solid_queue#lib/solid_queue.rb:76
     def on_scheduler_exit(&block); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:66
+    # pkg:gem/solid_queue#lib/solid_queue.rb:68
     def on_scheduler_start(&block); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:70
+    # pkg:gem/solid_queue#lib/solid_queue.rb:72
     def on_scheduler_stop(&block); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:27
+    # pkg:gem/solid_queue#lib/solid_queue.rb:29
     def on_thread_error; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:27
+    # pkg:gem/solid_queue#lib/solid_queue.rb:29
     def on_thread_error=(val); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:74
+    # pkg:gem/solid_queue#lib/solid_queue.rb:76
     def on_worker_exit(&block); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:66
+    # pkg:gem/solid_queue#lib/solid_queue.rb:68
     def on_worker_start(&block); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:70
+    # pkg:gem/solid_queue#lib/solid_queue.rb:72
     def on_worker_stop(&block); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:42
+    # pkg:gem/solid_queue#lib/solid_queue.rb:44
     def preserve_finished_jobs; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:42
+    # pkg:gem/solid_queue#lib/solid_queue.rb:44
     def preserve_finished_jobs=(val); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:32
+    # pkg:gem/solid_queue#lib/solid_queue.rb:34
     def process_alive_threshold; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:32
+    # pkg:gem/solid_queue#lib/solid_queue.rb:34
     def process_alive_threshold=(val); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:31
+    # pkg:gem/solid_queue#lib/solid_queue.rb:33
     def process_heartbeat_interval; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:31
+    # pkg:gem/solid_queue#lib/solid_queue.rb:33
     def process_heartbeat_interval=(val); end
 
     # pkg:gem/solid_queue#lib/solid_queue/engine.rb:5
@@ -392,43 +392,43 @@ module SolidQueue
     # pkg:gem/solid_queue#lib/solid_queue/engine.rb:5
     def railtie_routes_url_helpers(include_path_helpers = T.unsafe(nil)); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:35
+    # pkg:gem/solid_queue#lib/solid_queue.rb:37
     def shutdown_timeout; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:35
+    # pkg:gem/solid_queue#lib/solid_queue.rb:37
     def shutdown_timeout=(val); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:37
+    # pkg:gem/solid_queue#lib/solid_queue.rb:39
     def silence_polling; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:37
+    # pkg:gem/solid_queue#lib/solid_queue.rb:39
     def silence_polling=(val); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:40
+    # pkg:gem/solid_queue#lib/solid_queue.rb:42
     def supervisor; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:40
+    # pkg:gem/solid_queue#lib/solid_queue.rb:42
     def supervisor=(val); end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:39
+    # pkg:gem/solid_queue#lib/solid_queue.rb:41
     def supervisor_pidfile; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:39
+    # pkg:gem/solid_queue#lib/solid_queue.rb:41
     def supervisor_pidfile=(val); end
 
     # pkg:gem/solid_queue#lib/solid_queue/engine.rb:5
     def table_name_prefix; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:46
+    # pkg:gem/solid_queue#lib/solid_queue.rb:48
     def time_zone; end
 
     # pkg:gem/solid_queue#lib/solid_queue/engine.rb:5
     def use_relative_model_naming?; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:29
+    # pkg:gem/solid_queue#lib/solid_queue.rb:31
     def use_skip_locked; end
 
-    # pkg:gem/solid_queue#lib/solid_queue.rb:29
+    # pkg:gem/solid_queue#lib/solid_queue.rb:31
     def use_skip_locked=(val); end
   end
 end
@@ -452,16 +452,19 @@ class SolidQueue::AsyncSupervisor < ::SolidQueue::Supervisor
 
   private
 
-  # pkg:gem/solid_queue#lib/solid_queue/async_supervisor.rb:48
+  # pkg:gem/solid_queue#lib/solid_queue/async_supervisor.rb:61
   def all_processes_terminated?; end
+
+  # pkg:gem/solid_queue#lib/solid_queue/async_supervisor.rb:51
+  def attempt_to_deregister; end
 
   # pkg:gem/solid_queue#lib/solid_queue/async_supervisor.rb:20
   def check_and_replace_terminated_processes; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/async_supervisor.rb:38
+  # pkg:gem/solid_queue#lib/solid_queue/async_supervisor.rb:37
   def perform_graceful_termination; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/async_supervisor.rb:44
+  # pkg:gem/solid_queue#lib/solid_queue/async_supervisor.rb:47
   def perform_immediate_termination; end
 
   # pkg:gem/solid_queue#lib/solid_queue/async_supervisor.rb:25
@@ -667,7 +670,6 @@ class SolidQueue::BlockedExecution < ::SolidQueue::Execution
 
   private
 
-  def acquire_concurrency_lock; end
   def promote_to_ready; end
   def ready_attributes; end
   def set_expires_at; end
@@ -720,7 +722,9 @@ class SolidQueue::ClaimedExecution < ::SolidQueue::Execution
 
   def execute; end
   def finalize; end
+  def finalizing; end
   def finished; end
+  def still_claimed?; end
   def unless_already_finalized; end
 
   class << self
@@ -742,6 +746,10 @@ class SolidQueue::ClaimedExecution < ::SolidQueue::Execution
     def __class_attr_defined_enums; end
     def __class_attr_defined_enums=(new_value); end
   end
+end
+
+class SolidQueue::ClaimedExecution::FinalizationError < ::SolidQueue::Processes::UnrecoverableError
+  def initialize(claimed_execution, cause:); end
 end
 
 module SolidQueue::ClaimedExecution::GeneratedAssociationMethods
@@ -1039,7 +1047,7 @@ SolidQueue::Configuration::SCHEDULER_DEFAULTS = T.let(T.unsafe(nil), Hash)
 # pkg:gem/solid_queue#lib/solid_queue/configuration.rb:21
 SolidQueue::Configuration::WORKER_DEFAULTS = T.let(T.unsafe(nil), Hash)
 
-# pkg:gem/solid_queue#lib/solid_queue.rb:24
+# pkg:gem/solid_queue#lib/solid_queue.rb:26
 SolidQueue::DEFAULT_LOGGER = T.let(T.unsafe(nil), ActiveSupport::Logger)
 
 # pkg:gem/solid_queue#lib/solid_queue/dispatcher.rb:4
@@ -1258,12 +1266,15 @@ class SolidQueue::FailedExecution < ::SolidQueue::Execution
 
   private
 
-  def determine_backtrace_size_limit; end
+  def error_column_limit; end
   def exception_backtrace; end
   def exception_class_name; end
   def exception_message; end
   def expand_error_details_from_exception; end
-  def truncate_backtrace(lines, limit); end
+  def fit_into_error_column(error); end
+  def serialized_error_size(error); end
+  def truncate_backtrace(error, limit); end
+  def truncate_message(error, limit); end
 
   class << self
     def retry_all(jobs); end
@@ -1289,12 +1300,12 @@ end
 
 module SolidQueue::FailedExecution::GeneratedAssociationMethods; end
 module SolidQueue::FailedExecution::GeneratedAttributeMethods; end
-SolidQueue::FailedExecution::JSON_OVERHEAD = T.let(T.unsafe(nil), Integer)
+SolidQueue::FailedExecution::TRUNCATED_MESSAGE_OMISSION = T.let(T.unsafe(nil), String)
 
 # pkg:gem/solid_queue#lib/solid_queue/fiber_pool.rb:4
 class SolidQueue::FiberPool < ::SolidQueue::Pool
   # pkg:gem/solid_queue#lib/solid_queue/fiber_pool.rb:5
-  def initialize(size, on_idle: T.unsafe(nil)); end
+  def initialize(size, on_idle: T.unsafe(nil), on_unrecoverable_error: T.unsafe(nil)); end
 
   # pkg:gem/solid_queue#lib/solid_queue/fiber_pool.rb:23
   def available_capacity; end
@@ -1325,13 +1336,13 @@ class SolidQueue::FiberPool < ::SolidQueue::Pool
   # pkg:gem/solid_queue#lib/solid_queue/fiber_pool.rb:105
   def perform_execution(execution); end
 
-  # pkg:gem/solid_queue#lib/solid_queue/fiber_pool.rb:125
+  # pkg:gem/solid_queue#lib/solid_queue/fiber_pool.rb:126
   def raise_if_fatal_error!; end
 
   # pkg:gem/solid_queue#lib/solid_queue/fiber_pool.rb:49
   def reactor_thread; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/fiber_pool.rb:116
+  # pkg:gem/solid_queue#lib/solid_queue/fiber_pool.rb:117
   def register_fatal_error(error); end
 
   # pkg:gem/solid_queue#lib/solid_queue/fiber_pool.rb:55
@@ -1360,16 +1371,8 @@ end
 class SolidQueue::ForkSupervisor < ::SolidQueue::Supervisor
   private
 
-  # pkg:gem/solid_queue#lib/solid_queue/fork_supervisor.rb:93
+  # pkg:gem/solid_queue#lib/solid_queue/fork_supervisor.rb:83
   def all_processes_terminated?; end
-
-  # The database may be unreachable — likely the same reason the fork
-  # terminated. Neither starting a replacement nor shutting down can depend
-  # on it: the jobs claimed by the terminated fork will be failed when its
-  # stale registration is pruned once the database is back.
-  #
-  # pkg:gem/solid_queue#lib/solid_queue/fork_supervisor.rb:87
-  def attempt_to_release_claimed_jobs_by(terminated_fork, status); end
 
   # pkg:gem/solid_queue#lib/solid_queue/fork_supervisor.rb:27
   def check_and_replace_terminated_processes; end
@@ -1427,8 +1430,6 @@ class SolidQueue::Job < ::SolidQueue::Record
   def autosave_associated_records_for_ready_execution(*args); end
   def autosave_associated_records_for_recurring_execution(*args); end
   def autosave_associated_records_for_scheduled_execution(*args); end
-  def concurrency_duration(*, **, &); end
-  def concurrency_limit(*, **, &); end
 
   class << self
     def clearable(*args, **); end
@@ -1472,6 +1473,12 @@ module SolidQueue::Job::Batchable::ClassMethods
   def batch_all(jobs); end
 end
 
+class SolidQueue::Job::ClassMissingError < ::NameError
+  class << self
+    def for(job); end
+  end
+end
+
 module SolidQueue::Job::Clearable
   extend ::ActiveSupport::Concern
 
@@ -1487,24 +1494,34 @@ module SolidQueue::Job::ConcurrencyControls
 
   mixes_in_class_methods ::SolidQueue::Job::ConcurrencyControls::ClassMethods
 
+  def acquire_concurrency_lock; end
+  def acquired_concurrency_limit; end
+  def acquired_semaphore_id; end
   def blocked?; end
+  def concurrency_duration; end
+  def concurrency_limit; end
   def concurrency_limited?; end
+  def job_class; end
   def unblock_next_blocked_job; end
 
   private
 
-  def acquire_concurrency_lock; end
   def block; end
+  def concurrency_lock; end
+  def concurrency_lock_recorded?; end
   def concurrency_on_conflict; end
   def execution; end
   def handle_concurrency_conflict; end
-  def job_class; end
+  def holds_concurrency_slot?; end
+  def record_concurrency_lock(semaphore_id:, limit: T.unsafe(nil)); end
   def release_concurrency_lock; end
   def release_next_blocked_job; end
 end
 
+SolidQueue::Job::ConcurrencyControls::CONCURRENCY_LOCK_KEY = T.let(T.unsafe(nil), String)
+
 module SolidQueue::Job::ConcurrencyControls::ClassMethods
-  def release_all_concurrency_locks(jobs); end
+  def unblock_next_blocked_jobs(jobs); end
 end
 
 class SolidQueue::Job::EnqueueError < ::StandardError; end
@@ -1794,47 +1811,53 @@ module SolidQueue::Pause::GeneratedAttributeMethods; end
 class SolidQueue::Pool
   include ::SolidQueue::AppExecutor
 
-  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:13
-  def initialize(size, on_idle: T.unsafe(nil)); end
+  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:17
+  def initialize(size, on_idle: T.unsafe(nil), on_unrecoverable_error: T.unsafe(nil)); end
 
-  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:35
+  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:40
   def available_capacity; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:39
+  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:44
   def idle?; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:24
+  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:29
   def post(execution); end
 
-  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:11
+  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:15
   def size; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:20
+  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:25
   def type; end
 
   private
 
-  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:44
+  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:64
+  def handle_unrecoverable_error(error); end
+
+  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:49
   def mutex; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:44
+  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:49
   def on_idle; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:50
+  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:49
+  def on_unrecoverable_error; end
+
+  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:55
   def perform_execution(execution); end
 
-  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:58
+  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:72
   def reserve_capacity!; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:66
+  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:80
   def restore_capacity; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:46
+  # pkg:gem/solid_queue#lib/solid_queue/pool.rb:51
   def schedule(execution); end
 
   class << self
     # pkg:gem/solid_queue#lib/solid_queue/pool.rb:7
-    def build(type:, size:, on_idle: T.unsafe(nil)); end
+    def build(type:, size:, on_idle: T.unsafe(nil), on_unrecoverable_error: T.unsafe(nil)); end
   end
 end
 
@@ -2229,6 +2252,13 @@ module SolidQueue::Processes::Registrable
   # pkg:gem/solid_queue#lib/solid_queue/processes/registrable.rb:40
   def launch_heartbeat; end
 
+  # Whether this process's registration is prunable: if the last heartbeat that
+  # we were able to persist is older than the alive threshold, supervisors
+  # consider this one dead and would have pruned its registration by now
+  #
+  # pkg:gem/solid_queue#lib/solid_queue/processes/registrable.rb:72
+  def presumed_dead?; end
+
   # pkg:gem/solid_queue#lib/solid_queue/processes/registrable.rb:18
   def process; end
 
@@ -2241,11 +2271,17 @@ module SolidQueue::Processes::Registrable
   # pkg:gem/solid_queue#lib/solid_queue/processes/registrable.rb:36
   def registered?; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/processes/registrable.rb:63
+  # pkg:gem/solid_queue#lib/solid_queue/processes/registrable.rb:83
   def reload_metadata; end
 
   # pkg:gem/solid_queue#lib/solid_queue/processes/registrable.rb:52
   def stop_heartbeat; end
+
+  # Deregister locally and wake the run loop, which stops when
+  # unregistered, so the supervisor replaces this process
+  #
+  # pkg:gem/solid_queue#lib/solid_queue/processes/registrable.rb:78
+  def stop_to_be_replaced; end
 end
 
 # pkg:gem/solid_queue#lib/solid_queue/processes/runnable.rb:4
@@ -2327,7 +2363,7 @@ module SolidQueue::Processes::Supervised
   # pkg:gem/solid_queue#lib/solid_queue/processes/supervised.rb:28
   def create_fork(&block); end
 
-  # pkg:gem/solid_queue#lib/solid_queue/processes/supervised.rb:35
+  # pkg:gem/solid_queue#lib/solid_queue/processes/supervised.rb:43
   def register_signal_handlers; end
 
   # pkg:gem/solid_queue#lib/solid_queue/processes/supervised.rb:16
@@ -2345,6 +2381,12 @@ class SolidQueue::Processes::ThreadTerminatedError < ::RuntimeError
   # pkg:gem/solid_queue#lib/solid_queue/processes/thread_terminated_error.rb:6
   def initialize(name); end
 end
+
+# Errors that mean the process raising them can no longer account for the
+# work it holds, so it should stop and let its supervisor replace it
+#
+# pkg:gem/solid_queue#lib/solid_queue/processes/unrecoverable_error.rb:7
+class SolidQueue::Processes::UnrecoverableError < ::RuntimeError; end
 
 class SolidQueue::Queue
   def initialize(name); end
@@ -2675,63 +2717,74 @@ class SolidQueue::Scheduler::RecurringSchedule
   # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:9
   def initialize(static_tasks, dynamic_tasks_enabled: T.unsafe(nil)); end
 
-  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:16
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:17
   def configured_tasks; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:20
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:21
   def empty?; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:49
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:48
   def reschedule_dynamic_tasks; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:36
-  def schedule_task(task, run_at: T.unsafe(nil)); end
-
-  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:24
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:25
   def schedule_tasks; end
 
   # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:7
   def scheduled_tasks; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:45
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:44
   def task_keys; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:40
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:37
   def unschedule_tasks; end
 
   private
 
-  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:64
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:66
   def dynamic_tasks; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:68
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:70
   def dynamic_tasks_enabled?; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:98
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:103
   def load_dynamic_tasks; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:85
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:90
   def persist_static_tasks; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:94
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:99
   def reload_dynamic_tasks; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:90
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:95
   def reload_static_tasks; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:102
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:107
   def schedule(task, run_at: T.unsafe(nil)); end
 
-  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:72
+  # Scheduled tasks are tracked by record id, so a dynamic task that's deleted and
+  # created again with the same key is unscheduled and scheduled as a new one.
+  #
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:76
   def schedule_created_dynamic_tasks; end
 
   # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:60
+  def schedule_lock; end
+
+  # Only schedule the next run if the task wasn't unscheduled in the meantime
+  #
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:128
+  def schedule_next_run(task, run_at:); end
+
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:86
+  def schedule_task(task, run_at: T.unsafe(nil)); end
+
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:62
   def static_task_keys; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:58
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:60
   def static_tasks; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:78
+  # pkg:gem/solid_queue#lib/solid_queue/scheduler/recurring_schedule.rb:80
   def unschedule_deleted_dynamic_tasks; end
 end
 
@@ -2747,7 +2800,6 @@ class SolidQueue::Semaphore < ::SolidQueue::Record
     def create_unique_by(attributes); end
     def expired(*args, **); end
     def signal(job); end
-    def signal_all(jobs); end
     def wait(job); end
 
     private
@@ -2770,6 +2822,7 @@ class SolidQueue::Semaphore::Proxy
 
   private
 
+  def acquired_semaphore_id; end
   def attempt_creation; end
   def attempt_decrement; end
   def attempt_increment; end
@@ -2779,10 +2832,8 @@ class SolidQueue::Semaphore::Proxy
   def job=(_arg0); end
   def key; end
   def limit; end
-
-  class << self
-    def signal_all(jobs); end
-  end
+  def limit_to_release; end
+  def semaphore_to_release; end
 end
 
 # pkg:gem/solid_queue#lib/solid_queue/supervisor.rb:4
@@ -2892,6 +2943,14 @@ module SolidQueue::Supervisor::Maintenance
   extend ::ActiveSupport::Concern
 
   private
+
+  # The database may be unreachable — possibly the same reason the
+  # supervised process died. Neither starting a replacement nor shutting
+  # down can depend on it: the jobs claimed by the dead process will be
+  # failed when its stale registration is pruned once the database is back.
+  #
+  # pkg:gem/solid_queue#lib/solid_queue/supervisor/maintenance.rb:51
+  def attempt_to_release_claimed_jobs_by(terminated_process, with_error:); end
 
   # pkg:gem/solid_queue#lib/solid_queue/supervisor/maintenance.rb:30
   def fail_orphaned_executions; end
@@ -3005,7 +3064,7 @@ class SolidQueue::ThreadPool < ::SolidQueue::Pool
 
   private
 
-  # pkg:gem/solid_queue#lib/solid_queue/thread_pool.rb:24
+  # pkg:gem/solid_queue#lib/solid_queue/thread_pool.rb:25
   def executor; end
 
   # pkg:gem/solid_queue#lib/solid_queue/thread_pool.rb:14
@@ -3040,7 +3099,7 @@ class SolidQueue::Worker < ::SolidQueue::Processes::Poller
   # pkg:gem/solid_queue#lib/solid_queue/worker.rb:5
   def lifecycle_hooks; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/worker.rb:30
+  # pkg:gem/solid_queue#lib/solid_queue/worker.rb:31
   def metadata; end
 
   # pkg:gem/solid_queue#lib/solid_queue/worker.rb:11
@@ -3051,19 +3110,22 @@ class SolidQueue::Worker < ::SolidQueue::Processes::Poller
 
   private
 
-  # pkg:gem/solid_queue#lib/solid_queue/worker.rb:58
+  # pkg:gem/solid_queue#lib/solid_queue/worker.rb:67
   def all_work_completed?; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/worker.rb:45
+  # pkg:gem/solid_queue#lib/solid_queue/worker.rb:46
   def claim_executions; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/worker.rb:35
+  # pkg:gem/solid_queue#lib/solid_queue/worker.rb:36
   def poll; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/worker.rb:62
+  # pkg:gem/solid_queue#lib/solid_queue/worker.rb:52
+  def request_termination; end
+
+  # pkg:gem/solid_queue#lib/solid_queue/worker.rb:71
   def set_procline; end
 
-  # pkg:gem/solid_queue#lib/solid_queue/worker.rb:51
+  # pkg:gem/solid_queue#lib/solid_queue/worker.rb:60
   def shutdown; end
 
   class << self

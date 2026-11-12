@@ -15,6 +15,9 @@ end
 # pkg:gem/rubocop-rspec#lib/rubocop/cop/rspec/mixin/file_help.rb:4
 module RuboCop::Cop; end
 
+module RuboCop::Cop::Layout; end
+class RuboCop::Cop::Layout::ExtraSpacing < ::RuboCop::Cop::Base; end
+
 # NOTE: Originally based on the `Rails/Output` cop.
 #
 # pkg:gem/rubocop-rspec#lib/rubocop/cop/rspec/mixin/file_help.rb:5

@@ -1529,12 +1529,12 @@ class AnnotateRb::ModelAnnotator::ModelClassGetter
 
     # Retrieve loaded model class
     #
-    # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_class_getter.rb:40
+    # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_class_getter.rb:42
     def get_loaded_model(model_path, file); end
 
     # Retrieve loaded model class by path to the file where it's supposed to be defined.
     #
-    # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_class_getter.rb:56
+    # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_class_getter.rb:58
     def get_loaded_model_by_path(model_path); end
   end
 end
@@ -1562,13 +1562,13 @@ class AnnotateRb::ModelAnnotator::ModelWrapper
   # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:11
   def initialize(klass, options); end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:157
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:161
   def _retrieve_indexes_from_table; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:141
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:145
   def built_attributes; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:192
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:196
   def classified_sort(cols, grouped_polymorphic); end
 
   # Returns column defaults for annotations.
@@ -1580,7 +1580,7 @@ class AnnotateRb::ModelAnnotator::ModelWrapper
   # from `column_defaults` and only substitute the DB schema value for
   # attributes whose raw default was replaced.
   #
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:79
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:83
   def column_defaults; end
 
   # Gets the columns of the ActiveRecord model, processes them, and then returns them.
@@ -1594,37 +1594,37 @@ class AnnotateRb::ModelAnnotator::ModelWrapper
   # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:45
   def database_name; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:237
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:241
   def enum_types; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:66
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:70
   def has_table_comments?; end
 
   # These are the columns that the globalize gem needs to work but
   # are not necessary for the models to be displayed as annotations.
   #
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:227
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:231
   def ignored_translation_table_columns; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:135
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:139
   def is_column_primary_key?(column_name); end
 
   # Calculates the max width of the schema for the model by looking at the columns, schema comments, with respect
   # to the options.
   #
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:112
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:116
   def max_schema_info_width; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:254
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:258
   def migration_version; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:106
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:110
   def model_name; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:188
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:192
   def position_of_column_comment; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:54
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:58
   def primary_key; end
 
   # Returns the unmodified model columns
@@ -1632,25 +1632,25 @@ class AnnotateRb::ModelAnnotator::ModelWrapper
   # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:50
   def raw_columns; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:153
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:157
   def retrieve_indexes_from_table; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:62
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:66
   def table_comments; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:58
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:62
   def table_exists?; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:102
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:106
   def table_name; end
 
   # Add columns managed by the globalize gem if this gem is being used.
   # TODO: Audit if this is still needed, it seems like Globalize gem is no longer maintained
   #
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:92
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:96
   def translated_columns; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:178
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:182
   def with_comments?; end
 
   private
@@ -1660,26 +1660,40 @@ class AnnotateRb::ModelAnnotator::ModelWrapper
   # Comparing cast values instead would misreport decorated attribute types
   # (an enum casts the DB default `0` into its label) as overrides.
   #
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:288
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:292
   def attribute_default_overridden?(name, column); end
 
   # Rails post-8.1 exposes `Column#cast_type` directly; Rails 8.1 introduced
   # the transitional `Column#fetch_cast_type(connection)`; older versions
   # required `connection.lookup_cast_type_from_column(column)`.
   #
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:319
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:345
   def cast_type_for(column); end
+
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:332
+  def enum_attribute?(name); end
 
   # An enum attribute type casts the raw DB default into its label, which is
   # what `column_defaults` reports and what annotations have historically
   # shown. `enum_default_format` picks between that label, the raw value,
   # and both.
   #
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:298
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:302
   def enum_default(name, column, label); end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:311
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:328
+  def enum_label_for(name, raw); end
+
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:337
   def schema_default_for(column); end
+
+  # `enum :status, {...}, default: :shipped` sets a Ruby-side default without
+  # changing the schema default, so it lands in the override path. Map the
+  # schema value back to its label so the column annotates like any other
+  # enum column.
+  #
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/model_wrapper.rb:320
+  def schema_default_with_enum_label(name, column); end
 end
 
 # Should be the wrapper for an ActiveRecord model that serves as the source of truth of the model
@@ -1888,40 +1902,40 @@ class AnnotateRb::ModelAnnotator::RelatedFilesListBuilder
 
   private
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:230
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:240
   def add_additional_file_patterns; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:220
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:230
   def add_related_admin_files; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:170
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:180
   def add_related_controller_files; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:180
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:190
   def add_related_controller_test_files; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:140
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:150
   def add_related_factory_files; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:130
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:140
   def add_related_fixture_files; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:210
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:220
   def add_related_helper_files; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:190
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:200
   def add_related_request_spec_files; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:200
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:210
   def add_related_routing_spec_files; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:150
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:160
   def add_related_serializer_files; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:160
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:170
   def add_related_serializer_test_files; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:120
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:130
   def add_related_test_files; end
 
   # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:62
@@ -1939,10 +1953,10 @@ class AnnotateRb::ModelAnnotator::RelatedFilesListBuilder
   # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:54
   def exclude_serializer_tests?; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:113
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:123
   def expanded_root_dirs; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:95
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:105
   def model_root_dir; end
 
   # Patterns are expanded for every `root_dir` and resolved by model name alone, so models sharing a
@@ -1950,8 +1964,15 @@ class AnnotateRb::ModelAnnotator::RelatedFilesListBuilder
   #   directories can be nested, so a file belongs to the most specific one containing it, and only
   #   models from that same root directory may annotate it. Returns nil for the project root.
   #
-  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:105
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:115
   def owning_root_dir(file); end
+
+  # Additional file patterns are written by the user as explicit project paths, so a match outside
+  #   every `root_dir` (e.g. `app/serializers/%MODEL_NAME%.rb` for a model living in a pack) belongs
+  #   to the project and is still related. Matches inside another root directory remain excluded.
+  #
+  # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:98
+  def related_file_owned_by_model_root?(file, pattern_type); end
 
   # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/related_files_list_builder.rb:86
   def related_files_for_pattern(pattern_type); end
@@ -1997,6 +2018,11 @@ class AnnotateRb::ModelAnnotator::SingleFileAnnotator
 
     # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/single_file_annotator.rb:7
     def call_with_instructions(instruction); end
+
+    private
+
+    # pkg:gem/annotaterb#lib/annotate_rb/model_annotator/single_file_annotator.rb:60
+    def validate_annotation!(annotation); end
   end
 end
 
@@ -2129,35 +2155,35 @@ end
 class AnnotateRb::Options
   extend ::Forwardable
 
-  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:184
+  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:186
   def initialize(options = T.unsafe(nil), state = T.unsafe(nil)); end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:182
+  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:184
   def [](*, **, &); end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:245
+  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:247
   def get_state(key); end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:197
+  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:199
   def load_defaults; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:249
+  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:251
   def print; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:236
+  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:238
   def set_state(key, value, overwrite = T.unsafe(nil)); end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:193
+  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:195
   def to_h; end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:232
+  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:234
   def with_default_fallback(key); end
 
   private
 
   # Guard against user inputting strings instead of symbols
   #
-  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:256
+  # pkg:gem/annotaterb#lib/annotate_rb/options.rb:258
   def symbolize_exclude_tests; end
 
   class << self
@@ -2166,31 +2192,31 @@ class AnnotateRb::Options
   end
 end
 
-# pkg:gem/annotaterb#lib/annotate_rb/options.rb:175
+# pkg:gem/annotaterb#lib/annotate_rb/options.rb:177
 AnnotateRb::Options::ALL_OPTION_KEYS = T.let(T.unsafe(nil), Array)
 
-# pkg:gem/annotaterb#lib/annotate_rb/options.rb:106
+# pkg:gem/annotaterb#lib/annotate_rb/options.rb:107
 AnnotateRb::Options::DEFAULT_OPTIONS = T.let(T.unsafe(nil), Hash)
 
 # pkg:gem/annotaterb#lib/annotate_rb/options.rb:28
 AnnotateRb::Options::FLAG_OPTIONS = T.let(T.unsafe(nil), Hash)
 
-# pkg:gem/annotaterb#lib/annotate_rb/options.rb:108
+# pkg:gem/annotaterb#lib/annotate_rb/options.rb:109
 AnnotateRb::Options::FLAG_OPTION_KEYS = T.let(T.unsafe(nil), Array)
 
-# pkg:gem/annotaterb#lib/annotate_rb/options.rb:70
+# pkg:gem/annotaterb#lib/annotate_rb/options.rb:71
 AnnotateRb::Options::OTHER_OPTIONS = T.let(T.unsafe(nil), Hash)
 
-# pkg:gem/annotaterb#lib/annotate_rb/options.rb:148
+# pkg:gem/annotaterb#lib/annotate_rb/options.rb:150
 AnnotateRb::Options::OTHER_OPTION_KEYS = T.let(T.unsafe(nil), Array)
 
-# pkg:gem/annotaterb#lib/annotate_rb/options.rb:97
+# pkg:gem/annotaterb#lib/annotate_rb/options.rb:98
 AnnotateRb::Options::PATH_OPTIONS = T.let(T.unsafe(nil), Hash)
 
-# pkg:gem/annotaterb#lib/annotate_rb/options.rb:168
+# pkg:gem/annotaterb#lib/annotate_rb/options.rb:170
 AnnotateRb::Options::PATH_OPTION_KEYS = T.let(T.unsafe(nil), Array)
 
-# pkg:gem/annotaterb#lib/annotate_rb/options.rb:179
+# pkg:gem/annotaterb#lib/annotate_rb/options.rb:181
 AnnotateRb::Options::POSITION_DEFAULT = T.let(T.unsafe(nil), String)
 
 # pkg:gem/annotaterb#lib/annotate_rb/options.rb:17
@@ -2217,13 +2243,13 @@ class AnnotateRb::Parser
   # pkg:gem/annotaterb#lib/annotate_rb/parser.rb:162
   def add_model_options_to_parser(option_parser); end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/parser.rb:389
+  # pkg:gem/annotaterb#lib/annotate_rb/parser.rb:394
   def add_options_to_parser(option_parser); end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/parser.rb:318
+  # pkg:gem/annotaterb#lib/annotate_rb/parser.rb:323
   def add_position_options_to_parser(option_parser); end
 
-  # pkg:gem/annotaterb#lib/annotate_rb/parser.rb:301
+  # pkg:gem/annotaterb#lib/annotate_rb/parser.rb:306
   def add_route_options_to_parser(option_parser); end
 
   # pkg:gem/annotaterb#lib/annotate_rb/parser.rb:140
