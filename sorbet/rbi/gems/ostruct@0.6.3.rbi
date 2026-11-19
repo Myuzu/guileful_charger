@@ -169,10 +169,19 @@ class OpenStruct
   def abort!(*_args, **_kwargs, &_block); end
 
   # pkg:gem/ostruct#lib/ostruct.rb:481
+  def as_json!(options = T.unsafe(nil)); end
+
+  # pkg:gem/ostruct#lib/ostruct.rb:481
   def class!; end
 
   # pkg:gem/ostruct#lib/ostruct.rb:481
   def clone!(freeze: T.unsafe(nil)); end
+
+  # pkg:gem/ostruct#lib/ostruct.rb:481
+  def debugger!(*a, up_level: T.unsafe(nil), **kw); end
+
+  # pkg:gem/ostruct#lib/ostruct.rb:481
+  def deep_dup!; end
 
   # pkg:gem/ostruct#lib/ostruct.rb:481
   def define_singleton_method!(*_arg0); end
@@ -309,7 +318,13 @@ class OpenStruct
   def instance_exec!(*_arg0); end
 
   # pkg:gem/ostruct#lib/ostruct.rb:481
+  def instance_values!; end
+
+  # pkg:gem/ostruct#lib/ostruct.rb:481
   def instance_variable_get!(_arg0); end
+
+  # pkg:gem/ostruct#lib/ostruct.rb:481
+  def instance_variable_names!; end
 
   # pkg:gem/ostruct#lib/ostruct.rb:481
   def instance_variable_set!(_arg0, _arg1); end
@@ -336,6 +351,12 @@ class OpenStruct
 
   # pkg:gem/ostruct#lib/ostruct.rb:481
   def object_id!; end
+
+  # pkg:gem/ostruct#lib/ostruct.rb:481
+  def presence!; end
+
+  # pkg:gem/ostruct#lib/ostruct.rb:481
+  def presence_in!(another_object); end
 
   # pkg:gem/ostruct#lib/ostruct.rb:481
   def pretty_inspect!; end
@@ -403,7 +424,13 @@ class OpenStruct
   def to_h!(&block); end
 
   # pkg:gem/ostruct#lib/ostruct.rb:481
-  def to_json!(state = T.unsafe(nil), *); end
+  def to_json!(options = T.unsafe(nil)); end
+
+  # pkg:gem/ostruct#lib/ostruct.rb:481
+  def to_param!; end
+
+  # pkg:gem/ostruct#lib/ostruct.rb:481
+  def to_query!(key); end
 
   # pkg:gem/ostruct#lib/ostruct.rb:407
   def to_s; end
@@ -413,6 +440,15 @@ class OpenStruct
 
   # pkg:gem/ostruct#lib/ostruct.rb:481
   def to_yaml!(options = T.unsafe(nil)); end
+
+  # pkg:gem/ostruct#lib/ostruct.rb:481
+  def try!(*args, **, &block); end
+
+  # pkg:gem/ostruct#lib/ostruct.rb:481
+  def with!(**attributes); end
+
+  # pkg:gem/ostruct#lib/ostruct.rb:481
+  def with_options!(options, &block); end
 
   # pkg:gem/ostruct#lib/ostruct.rb:481
   def yield_self!; end

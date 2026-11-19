@@ -2868,7 +2868,7 @@ class Puma::IOBuffer < ::StringIO
 end
 
 # pkg:gem/puma#lib/puma/detect.rb:21
-Puma::IS_ARM = T.let(T.unsafe(nil), TrueClass)
+Puma::IS_ARM = T.let(T.unsafe(nil), FalseClass)
 
 # pkg:gem/puma#lib/puma/detect.rb:13
 Puma::IS_JRUBY = T.let(T.unsafe(nil), FalseClass)
