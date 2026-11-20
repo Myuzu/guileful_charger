@@ -3011,7 +3011,7 @@ class RSpec::Matchers::BuiltIn::Change < ::RSpec::Matchers::BuiltIn::BaseMatcher
   def description; end
 
   # pkg:gem/rspec-expectations#lib/rspec/matchers/built_in/change.rb:50
-  def does_not_match?(event_proc); end
+  def does_not_match?(event_proc, &_); end
 
   # @api private
   # @return [String]
@@ -3034,7 +3034,7 @@ class RSpec::Matchers::BuiltIn::Change < ::RSpec::Matchers::BuiltIn::BaseMatcher
   # @private
   #
   # pkg:gem/rspec-expectations#lib/rspec/matchers/built_in/change.rb:45
-  def matches?(event_proc); end
+  def matches?(event_proc, &_); end
 
   # @private
   #
@@ -4241,18 +4241,18 @@ class RSpec::Matchers::BuiltIn::Include < ::RSpec::Matchers::BuiltIn::BaseMatche
   # pkg:gem/rspec-expectations#lib/rspec/matchers/built_in/include.rb:138
   def comparing_hash_to_a_subset?(expected_item); end
 
-  # pkg:gem/rspec-expectations#lib/rspec/matchers/built_in/include.rb:212
+  # pkg:gem/rspec-expectations#lib/rspec/matchers/built_in/include.rb:213
   def convert_to_hash?(obj); end
 
   # :nocov:
   #
-  # pkg:gem/rspec-expectations#lib/rspec/matchers/built_in/include.rb:185
+  # pkg:gem/rspec-expectations#lib/rspec/matchers/built_in/include.rb:186
   def count_enumerable(expected_item); end
 
-  # pkg:gem/rspec-expectations#lib/rspec/matchers/built_in/include.rb:190
+  # pkg:gem/rspec-expectations#lib/rspec/matchers/built_in/include.rb:191
   def count_inclusions; end
 
-  # pkg:gem/rspec-expectations#lib/rspec/matchers/built_in/include.rb:202
+  # pkg:gem/rspec-expectations#lib/rspec/matchers/built_in/include.rb:203
   def diff_would_wrongly_highlight_matched_item?; end
 
   # pkg:gem/rspec-expectations#lib/rspec/matchers/built_in/include.rb:121
