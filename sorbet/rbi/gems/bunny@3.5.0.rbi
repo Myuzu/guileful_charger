@@ -35,7 +35,7 @@ end
 # @see http://rubybunny.info
 # -*- coding: utf-8 -*-
 #
-# pkg:gem/bunny#lib/bunny/version.rb:4
+# pkg:gem/bunny#lib/bunny/version.rb:3
 module Bunny
   class << self
     # Instantiates a new connection. The actual network
@@ -335,8 +335,8 @@ end
 #     ch2 = conn.create_channel
 #     q   = "bunny.examples.recovery.q#{rand}"
 #
-#     ch2.queue_declare(q, :durable => false)
-#     ch2.queue_declare(q, :durable => true)
+#     ch2.queue_declare(q, durable: false)
+#     ch2.queue_declare(q, durable: true)
 #   rescue Bunny::PreconditionFailed => e
 #     puts "Channel-level exception! Code: #{e.channel_close.reply_code}, message: #{e.channel_close.reply_text}"
 #   ensure
@@ -349,14 +349,14 @@ end
 # @see http://rubybunny.info/articles/exchanges.html Exchanges and Publishing
 # @see http://rubybunny.info/articles/error_handling.html Error Handling and Recovery Guide
 #
-# pkg:gem/bunny#lib/bunny/channel.rb:128
+# pkg:gem/bunny#lib/bunny/channel.rb:126
 class Bunny::Channel
   # @param [Bunny::Session] connection AMQP 0.9.1 connection
   # @param [Integer] id Channel id, pass nil to make Bunny automatically allocate it
   # @param [HashMap] opts Additional options
   # @option opts [Bunny::ConsumerWorkPool] work_pool Thread pool for delivery processing, by default of size 1
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:183
+  # pkg:gem/bunny#lib/bunny/channel.rb:181
   def initialize(connection = T.unsafe(nil), id = T.unsafe(nil), opts = T.unsafe(nil)); end
 
   # Acknowledges a message. Acknowledged messages are completely removed from the queue.
@@ -367,15 +367,15 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:721
+  # pkg:gem/bunny#lib/bunny/channel.rb:717
   def ack(delivery_tag, multiple = T.unsafe(nil)); end
 
-  # pkg:gem/bunny#lib/bunny/channel.rb:724
+  # pkg:gem/bunny#lib/bunny/channel.rb:720
   def acknowledge(delivery_tag, multiple = T.unsafe(nil)); end
 
   # @return [Boolean] true if this channel is open
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:367
+  # pkg:gem/bunny#lib/bunny/channel.rb:365
   def active; end
 
   # @param [String] queue_name
@@ -385,13 +385,13 @@ class Bunny::Channel
   # @param [Hash] arguments
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2154
+  # pkg:gem/bunny#lib/bunny/channel.rb:2102
   def add_consumer(queue_name, consumer_tag, no_ack, exclusive, arguments, &block); end
 
   # @return [Boolean] true if there are consumers on this channel
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1330
+  # pkg:gem/bunny#lib/bunny/channel.rb:1314
   def any_consumers?; end
 
   # Acknowledges a delivery (message).
@@ -416,7 +416,7 @@ class Bunny::Channel
   #
   #   ch    = conn.create_channel
   #   # we assume the queue exists and has messages
-  #   delivery_info, properties, payload = ch.basic_get("bunny.examples.queue3", :manual_ack => true)
+  #   delivery_info, properties, payload = ch.basic_get("bunny.examples.queue3", manual_ack: true)
   #   ch.basic_ack(delivery_info.delivery_tag.to_i)
   #
   # @example Ack multiple messages fetched via basic.get
@@ -425,16 +425,16 @@ class Bunny::Channel
   #
   #   ch    = conn.create_channel
   #   # we assume the queue exists and has messages
-  #   _, _, payload1 = ch.basic_get("bunny.examples.queue3", :manual_ack => true)
-  #   _, _, payload2 = ch.basic_get("bunny.examples.queue3", :manual_ack => true)
-  #   delivery_info, properties, payload3 = ch.basic_get("bunny.examples.queue3", :manual_ack => true)
+  #   _, _, payload1 = ch.basic_get("bunny.examples.queue3", manual_ack: true)
+  #   _, _, payload2 = ch.basic_get("bunny.examples.queue3", manual_ack: true)
+  #   delivery_info, properties, payload3 = ch.basic_get("bunny.examples.queue3", manual_ack: true)
   #   # ack all fetched messages up to payload3
   #   ch.basic_ack(delivery_info.delivery_tag.to_i, true)
   #
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1101
+  # pkg:gem/bunny#lib/bunny/channel.rb:1089
   def basic_ack(delivery_tag, multiple = T.unsafe(nil)); end
 
   # Removes a consumer. Messages for this consumer will no longer be delivered. If the queue
@@ -450,7 +450,7 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1308
+  # pkg:gem/bunny#lib/bunny/channel.rb:1292
   def basic_cancel(consumer_tag, opts = T.unsafe(nil)); end
 
   # Registers a consumer for queue. Delivered messages will be handled with the block
@@ -467,7 +467,7 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1188
+  # pkg:gem/bunny#lib/bunny/channel.rb:1176
   def basic_consume(queue, consumer_tag = T.unsafe(nil), no_ack = T.unsafe(nil), exclusive = T.unsafe(nil), arguments = T.unsafe(nil), &block); end
 
   # Registers a consumer for queue as {Bunny::Consumer} instance.
@@ -479,7 +479,7 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1246
+  # pkg:gem/bunny#lib/bunny/channel.rb:1230
   def basic_consume_with(consumer); end
 
   # Synchronously fetches a message from the queue, if there are any. This method is
@@ -499,13 +499,13 @@ class Bunny::Channel
   #   conn.start
   #   ch   = conn.create_channel
   #   # here we assume the queue already exists and has messages
-  #   delivery_info, properties, payload = ch.basic_get("bunny.examples.queue1", :manual_ack => true)
+  #   delivery_info, properties, payload = ch.basic_get("bunny.examples.queue1", manual_ack: true)
   #   ch.acknowledge(delivery_info.delivery_tag)
   # @see Bunny::Queue#pop
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:930
+  # pkg:gem/bunny#lib/bunny/channel.rb:918
   def basic_get(queue, opts = T.unsafe(nil)); end
 
   # Rejects or requeues messages just like {Bunny::Channel#basic_reject} but can do so
@@ -542,7 +542,7 @@ class Bunny::Channel
   #
   #   ch    = conn.create_channel
   #   # we assume the queue exists and has messages
-  #   delivery_info, properties, payload = ch.basic_get("bunny.examples.queue3", :manual_ack => true)
+  #   delivery_info, properties, payload = ch.basic_get("bunny.examples.queue3", manual_ack: true)
   #   ch.basic_nack(delivery_info.delivery_tag, false, true)
   #
   #
@@ -552,9 +552,9 @@ class Bunny::Channel
   #
   #   ch    = conn.create_channel
   #   # we assume the queue exists and has messages
-  #   _, _, payload1 = ch.basic_get("bunny.examples.queue3", :manual_ack => true)
-  #   _, _, payload2 = ch.basic_get("bunny.examples.queue3", :manual_ack => true)
-  #   delivery_info, properties, payload3 = ch.basic_get("bunny.examples.queue3", :manual_ack => true)
+  #   _, _, payload1 = ch.basic_get("bunny.examples.queue3", manual_ack: true)
+  #   _, _, payload2 = ch.basic_get("bunny.examples.queue3", manual_ack: true)
+  #   delivery_info, properties, payload3 = ch.basic_get("bunny.examples.queue3", manual_ack: true)
   #   # requeue all fetched messages up to payload3
   #   ch.basic_nack(delivery_info.delivery_tag, true, true)
   #
@@ -562,7 +562,7 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/extensions.html RabbitMQ Extensions guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1163
+  # pkg:gem/bunny#lib/bunny/channel.rb:1151
   def basic_nack(delivery_tag, multiple = T.unsafe(nil), requeue = T.unsafe(nil)); end
 
   # Publishes a message using basic.publish AMQP 0.9.1 method.
@@ -589,7 +589,7 @@ class Bunny::Channel
   # @return [Bunny::Channel] Self
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:772
+  # pkg:gem/bunny#lib/bunny/channel.rb:768
   def basic_publish(payload, exchange, routing_key, opts = T.unsafe(nil)); end
 
   # Publishes multiple messages in a batch with a single mutex acquisition.
@@ -609,7 +609,7 @@ class Bunny::Channel
   #
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:845
+  # pkg:gem/bunny#lib/bunny/channel.rb:837
   def basic_publish_batch(payloads, exchange, routing_key, opts = T.unsafe(nil)); end
 
   # Controls message delivery rate using basic.qos AMQP 0.9.1 method.
@@ -630,7 +630,7 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:981
+  # pkg:gem/bunny#lib/bunny/channel.rb:969
   def basic_qos(prefetch_count, global = T.unsafe(nil)); end
 
   # Redeliver unacknowledged messages
@@ -639,7 +639,7 @@ class Bunny::Channel
   # @return [AMQ::Protocol::Basic::RecoverOk] RabbitMQ response
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1005
+  # pkg:gem/bunny#lib/bunny/channel.rb:993
   def basic_recover(requeue); end
 
   # Rejects or requeues a message.
@@ -674,28 +674,28 @@ class Bunny::Channel
   #
   #   ch    = conn.create_channel
   #   # we assume the queue exists and has messages
-  #   delivery_info, properties, payload = ch.basic_get("bunny.examples.queue3", :manual_ack => true)
+  #   delivery_info, properties, payload = ch.basic_get("bunny.examples.queue3", manual_ack: true)
   #   ch.basic_reject(delivery_info.delivery_tag, true)
   #
   # @see Bunny::Channel#basic_nack
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1055
+  # pkg:gem/bunny#lib/bunny/channel.rb:1043
   def basic_reject(delivery_tag, requeue = T.unsafe(nil)); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2178
+  # pkg:gem/bunny#lib/bunny/channel.rb:2126
   def can_accept_queue_declare_ok?(method); end
 
-  # pkg:gem/bunny#lib/bunny/channel.rb:170
+  # pkg:gem/bunny#lib/bunny/channel.rb:168
   def cancel_consumers_before_closing; end
 
-  # pkg:gem/bunny#lib/bunny/channel.rb:391
+  # pkg:gem/bunny#lib/bunny/channel.rb:389
   def cancel_consumers_before_closing!; end
 
-  # pkg:gem/bunny#lib/bunny/channel.rb:395
+  # pkg:gem/bunny#lib/bunny/channel.rb:393
   def cancel_consumers_before_closing?; end
 
   # Enables or disables message flow for the channel. When message flow is disabled,
@@ -709,35 +709,35 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1813
+  # pkg:gem/bunny#lib/bunny/channel.rb:1761
   def channel_flow(active); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2284
+  # pkg:gem/bunny#lib/bunny/channel.rb:2241
   def channel_level_exception_after_operation_that_has_no_response?(method); end
 
   # @return [Bunny::Session] Connection this channel was opened on
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:372
+  # pkg:gem/bunny#lib/bunny/channel.rb:370
   def client; end
 
   # Closes the channel. Closed channels can no longer be used (this includes associated
   # {Bunny::Queue}, {Bunny::Exchange} and {Bunny::Consumer} instances.
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:274
+  # pkg:gem/bunny#lib/bunny/channel.rb:272
   def close; end
 
   # @return [Boolean] true if this channel is closed (manually or because of an exception), false otherwise
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:338
+  # pkg:gem/bunny#lib/bunny/channel.rb:336
   def closed?; end
 
   # @group Other settings
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:385
+  # pkg:gem/bunny#lib/bunny/channel.rb:383
   def configure(&block); end
 
   # Enables publisher confirms for the channel.
@@ -756,45 +756,45 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/extensions.html RabbitMQ Extensions guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1910
+  # pkg:gem/bunny#lib/bunny/channel.rb:1858
   def confirm_select(callback = T.unsafe(nil), tracking: T.unsafe(nil), outstanding_limit: T.unsafe(nil), confirm_timeout: T.unsafe(nil)); end
 
   # @return [Integer, nil] Timeout in milliseconds for waiting on publisher confirms
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:161
+  # pkg:gem/bunny#lib/bunny/channel.rb:159
   def confirm_timeout; end
 
   # @return [Boolean] true if publisher confirm tracking is enabled
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:157
+  # pkg:gem/bunny#lib/bunny/channel.rb:155
   def confirms_tracking_enabled; end
 
   # @return [Bunny::Session] AMQP connection this channel was opened on
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:137
+  # pkg:gem/bunny#lib/bunny/channel.rb:135
   def connection; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:343
+  # pkg:gem/bunny#lib/bunny/channel.rb:341
   def connection_closed!; end
 
-  # pkg:gem/bunny#lib/bunny/channel.rb:1236
+  # pkg:gem/bunny#lib/bunny/channel.rb:1220
   def consume(queue, consumer_tag = T.unsafe(nil), no_ack = T.unsafe(nil), exclusive = T.unsafe(nil), arguments = T.unsafe(nil), &block); end
 
-  # pkg:gem/bunny#lib/bunny/channel.rb:1294
+  # pkg:gem/bunny#lib/bunny/channel.rb:1278
   def consume_with(consumer); end
 
   # @return [Hash<String, Bunny::Consumer>] Consumer instances declared on this channel
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:163
+  # pkg:gem/bunny#lib/bunny/channel.rb:161
   def consumers; end
 
   # Provides access to the default exchange
   # @see http://rubybunny.info/articles/exchanges.html Exchanges and Publishing guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:482
+  # pkg:gem/bunny#lib/bunny/channel.rb:480
   def default_exchange; end
 
   # Declares a Tanzu RabbitMQ delayed queue (a durable, replicated queue type).
@@ -813,19 +813,19 @@ class Bunny::Channel
   # @see #queue
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:587
+  # pkg:gem/bunny#lib/bunny/channel.rb:584
   def delayed_queue(name, opts = T.unsafe(nil)); end
 
   # @param [String] consumer_tag
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2694
+  # pkg:gem/bunny#lib/bunny/channel.rb:2651
   def delete_recorded_consumer(consumer_tag); end
 
   # @param [Bunny::Exchange] exchange
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2630
+  # pkg:gem/bunny#lib/bunny/channel.rb:2587
   def delete_recorded_exchange(exchange); end
 
   # @param [Bunny::Channel] ch
@@ -835,13 +835,13 @@ class Bunny::Channel
   # @param [Hash] arguments
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2676
+  # pkg:gem/bunny#lib/bunny/channel.rb:2633
   def delete_recorded_exchange_binding(ch, source_name, destination_name, routing_key, arguments); end
 
   # @param [String] name
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2636
+  # pkg:gem/bunny#lib/bunny/channel.rb:2593
   def delete_recorded_exchange_named(name); end
 
   # @param [Bunny::Channel] ch
@@ -851,55 +851,55 @@ class Bunny::Channel
   # @param [Hash] arguments
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2656
+  # pkg:gem/bunny#lib/bunny/channel.rb:2613
   def delete_recorded_queue_binding(ch, exchange_name, queue_name, routing_key, arguments); end
 
   # @param [String] name
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2590
+  # pkg:gem/bunny#lib/bunny/channel.rb:2547
   def delete_recorded_queue_named(name); end
 
   # @param [Bunny::Queue, Bunny::RecordedQueue] queue
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2584
+  # pkg:gem/bunny#lib/bunny/channel.rb:2541
   def delete_recoreded_queue(queue); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2320
+  # pkg:gem/bunny#lib/bunny/channel.rb:2277
   def deliver_to_consumer(consumer, basic_deliver, properties, content); end
 
   # @return [Integer] Offset for the confirmations sequence index.
   # This will be set to the current sequence index during automatic network failure recovery
   # to keep the sequence monotonic for the user and abstract the reset from the protocol
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:147
+  # pkg:gem/bunny#lib/bunny/channel.rb:145
   def delivery_tag_offset; end
 
   # @param [Bunny::Exchange] exchange
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2602
+  # pkg:gem/bunny#lib/bunny/channel.rb:2559
   def deregister_exchange(exchange); end
 
   # @param [String] name
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2608
+  # pkg:gem/bunny#lib/bunny/channel.rb:2565
   def deregister_exchange_named(name); end
 
   # @param [Bunny::Queue] queue
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2555
+  # pkg:gem/bunny#lib/bunny/channel.rb:2512
   def deregister_queue(queue); end
 
   # @param [Bunny::String] name
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2561
+  # pkg:gem/bunny#lib/bunny/channel.rb:2518
   def deregister_queue_named(name); end
 
   # Declares a direct exchange or looks it up in the cache of previously
@@ -917,7 +917,7 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/extensions.html RabbitMQ Extensions to AMQP 0.9.1 guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:439
+  # pkg:gem/bunny#lib/bunny/channel.rb:437
   def direct(name, opts = T.unsafe(nil)); end
 
   # Declares a new server-named queue that is automatically deleted when the
@@ -932,7 +932,7 @@ class Bunny::Channel
   # @see #queue
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:644
+  # pkg:gem/bunny#lib/bunny/channel.rb:641
   def durable_queue(name, type = T.unsafe(nil), opts = T.unsafe(nil)); end
 
   # Declares a headers exchange or looks it up in the cache of previously
@@ -950,7 +950,7 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/exchanges.html Exchanges and Publishing guide
   # @see http://rubybunny.info/articles/extensions.html RabbitMQ Extensions to AMQP 0.9.1 guide
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:500
+  # pkg:gem/bunny#lib/bunny/channel.rb:498
   def exchange(name, opts = T.unsafe(nil)); end
 
   # Binds an exchange to another exchange using exchange.bind AMQP 0.9.1 extension
@@ -969,14 +969,14 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/extensions.html RabbitMQ Extensions guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1693
+  # pkg:gem/bunny#lib/bunny/channel.rb:1665
   def exchange_bind(source, destination, opts = T.unsafe(nil)); end
 
   # We need this bypassing topology version to avoid modifying the collections
   # as we iterate over them during topology recovery.
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1716
+  # pkg:gem/bunny#lib/bunny/channel.rb:1680
   def exchange_bind_without_recording_topology(source, destination, opts = T.unsafe(nil)); end
 
   # Declares a exchange using exchange.declare AMQP 0.9.1 method.
@@ -996,7 +996,7 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/exchanges.html Exchanges and Publishing guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1587
+  # pkg:gem/bunny#lib/bunny/channel.rb:1559
   def exchange_declare(name, type, opts = T.unsafe(nil)); end
 
   # We need this bypassing topology version to avoid modifying the collections
@@ -1014,7 +1014,7 @@ class Bunny::Channel
   #                                          exist, {Bunny::NotFound} will be raised.
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1621
+  # pkg:gem/bunny#lib/bunny/channel.rb:1593
   def exchange_declare_without_recording_topology(name, type, opts = T.unsafe(nil)); end
 
   # Deletes a exchange using exchange.delete AMQP 0.9.1 method
@@ -1028,7 +1028,7 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/exchanges.html Exchanges and Publishing guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1660
+  # pkg:gem/bunny#lib/bunny/channel.rb:1632
   def exchange_delete(name, opts = T.unsafe(nil)); end
 
   # Unbinds an exchange from another exchange using exchange.unbind AMQP 0.9.1 extension
@@ -1047,12 +1047,12 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/extensions.html RabbitMQ Extensions guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1764
+  # pkg:gem/bunny#lib/bunny/channel.rb:1720
   def exchange_unbind(source, destination, opts = T.unsafe(nil)); end
 
   # @return [Hash<String, Bunny::Exchange>] Exchange instances declared on this channel
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:151
+  # pkg:gem/bunny#lib/bunny/channel.rb:149
   def exchanges; end
 
   # Declares a fanout exchange or looks it up in the cache of previously
@@ -1070,19 +1070,19 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/extensions.html RabbitMQ Extensions to AMQP 0.9.1 guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:421
+  # pkg:gem/bunny#lib/bunny/channel.rb:419
   def fanout(name, opts = T.unsafe(nil)); end
 
   # @param [String] name
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2543
+  # pkg:gem/bunny#lib/bunny/channel.rb:2500
   def find_exchange(name); end
 
   # @param [String] name
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2537
+  # pkg:gem/bunny#lib/bunny/channel.rb:2494
   def find_queue(name); end
 
   # Flow control. When set to false, RabbitMQ will stop delivering messages on this
@@ -1091,12 +1091,12 @@ class Bunny::Channel
   # @param [Boolean] active Should messages to consumers on this channel be delivered?
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:684
+  # pkg:gem/bunny#lib/bunny/channel.rb:680
   def flow(active); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:377
+  # pkg:gem/bunny#lib/bunny/channel.rb:375
   def frame_size; end
 
   # Unique string supposed to be used as a consumer tag.
@@ -1104,39 +1104,39 @@ class Bunny::Channel
   # @return [String]  Unique string.
   # @api plugin
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1975
+  # pkg:gem/bunny#lib/bunny/channel.rb:1923
   def generate_consumer_tag(prefix = T.unsafe(nil)); end
 
   # Handle delivery tag offset calculations to keep the the delivery tag monotonic after a reset
   # due to automatic network failure recovery. @unconfirmed_set contains indices already offsetted.
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2342
+  # pkg:gem/bunny#lib/bunny/channel.rb:2299
   def handle_ack_or_nack(delivery_tag_before_offset, multiple, nack); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2295
+  # pkg:gem/bunny#lib/bunny/channel.rb:2252
   def handle_basic_get_empty(basic_get_empty); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2289
+  # pkg:gem/bunny#lib/bunny/channel.rb:2246
   def handle_basic_get_ok(basic_get_ok, properties, content); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2329
+  # pkg:gem/bunny#lib/bunny/channel.rb:2286
   def handle_basic_return(basic_return, properties, content); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2300
+  # pkg:gem/bunny#lib/bunny/channel.rb:2257
   def handle_frameset(basic_deliver, properties, content); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2184
+  # pkg:gem/bunny#lib/bunny/channel.rb:2139
   def handle_method(method); end
 
   # Declares a headers exchange or looks it up in the cache of previously
@@ -1154,20 +1154,20 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/extensions.html RabbitMQ Extensions to AMQP 0.9.1 guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:475
+  # pkg:gem/bunny#lib/bunny/channel.rb:473
   def headers(name, opts = T.unsafe(nil)); end
 
   # @return [Integer] Channel id
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:135
+  # pkg:gem/bunny#lib/bunny/channel.rb:133
   def id; end
 
   # @return [Integer] Channel id
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:135
+  # pkg:gem/bunny#lib/bunny/channel.rb:133
   def id=(_arg0); end
 
-  # pkg:gem/bunny#lib/bunny/channel.rb:2113
+  # pkg:gem/bunny#lib/bunny/channel.rb:2061
   def inspect; end
 
   # Declares a Tanzu RabbitMQ JMS queue (a durable, replicated queue type).
@@ -1185,24 +1185,24 @@ class Bunny::Channel
   # @see #queue
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:618
+  # pkg:gem/bunny#lib/bunny/channel.rb:615
   def jms_queue(name, opts = T.unsafe(nil)); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2524
+  # pkg:gem/bunny#lib/bunny/channel.rb:2481
   def maybe_kill_consumer_work_pool!; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2519
+  # pkg:gem/bunny#lib/bunny/channel.rb:2476
   def maybe_pause_consumer_work_pool!; end
 
   # Used by the Automatic Network Failure Recovery feature.
   #
   # @api private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2088
+  # pkg:gem/bunny#lib/bunny/channel.rb:2036
   def maybe_reinitialize_consumer_pool!; end
 
   # Starts consumer work pool. Lazily called by #basic_consume to avoid creating new threads
@@ -1210,7 +1210,7 @@ class Bunny::Channel
   # publishing). MK.
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2512
+  # pkg:gem/bunny#lib/bunny/channel.rb:2469
   def maybe_start_consumer_work_pool!; end
 
   # Rejects a message. A rejected message can be requeued or
@@ -1224,22 +1224,22 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:736
+  # pkg:gem/bunny#lib/bunny/channel.rb:732
   def nack(delivery_tag, multiple = T.unsafe(nil), requeue = T.unsafe(nil)); end
 
   # @return [Set<Integer>] Set of nacked message indexes that have been nacked
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:155
+  # pkg:gem/bunny#lib/bunny/channel.rb:153
   def nacked_set; end
 
   # @return [Integer] Next publisher confirmations sequence index
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:143
+  # pkg:gem/bunny#lib/bunny/channel.rb:141
   def next_publish_seq_no; end
 
   # @return [Integer] Channel id
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:362
+  # pkg:gem/bunny#lib/bunny/channel.rb:360
   def number; end
 
   # Defines a handler for errors that are not responses to a particular
@@ -1247,7 +1247,7 @@ class Bunny::Channel
   #
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1991
+  # pkg:gem/bunny#lib/bunny/channel.rb:1939
   def on_error(&block); end
 
   # Defines a handler for uncaught exceptions in consumers
@@ -1255,43 +1255,43 @@ class Bunny::Channel
   #
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1999
+  # pkg:gem/bunny#lib/bunny/channel.rb:1947
   def on_uncaught_exception(&block); end
 
   # Opens the channel and resets its internal state
   # @return [Bunny::Channel] Self
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:256
+  # pkg:gem/bunny#lib/bunny/channel.rb:254
   def open; end
 
   # @return [Boolean] true if this channel is open, false otherwise
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:332
+  # pkg:gem/bunny#lib/bunny/channel.rb:330
   def open?; end
 
   # @return [Integer, nil] Maximum outstanding unconfirmed messages before throttling
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:159
+  # pkg:gem/bunny#lib/bunny/channel.rb:157
   def outstanding_limit; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2173
+  # pkg:gem/bunny#lib/bunny/channel.rb:2121
   def pending_server_named_queue_declaration?; end
 
-  # pkg:gem/bunny#lib/bunny/channel.rb:998
+  # pkg:gem/bunny#lib/bunny/channel.rb:986
   def prefetch(prefetch_count, global = T.unsafe(nil)); end
 
   # @return [Integer] active basic.qos prefetch value
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:166
+  # pkg:gem/bunny#lib/bunny/channel.rb:164
   def prefetch_count; end
 
   # @return [Integer] active basic.qos prefetch global mode
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:168
+  # pkg:gem/bunny#lib/bunny/channel.rb:166
   def prefetch_global; end
 
   # Declares a queue or looks it up in the per-channel cache.
@@ -1309,7 +1309,7 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/extensions.html RabbitMQ Extensions guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:523
+  # pkg:gem/bunny#lib/bunny/channel.rb:521
   def queue(name = T.unsafe(nil), opts = T.unsafe(nil)); end
 
   # Binds a queue to an exchange using queue.bind AMQP 0.9.1 method
@@ -1326,14 +1326,14 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/bindings.html Bindings guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1479
+  # pkg:gem/bunny#lib/bunny/channel.rb:1463
   def queue_bind(name, exchange, opts = T.unsafe(nil)); end
 
   # We need this bypassing topology version to avoid modifying the collections
   # as we iterate over them during topology recovery.
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1499
+  # pkg:gem/bunny#lib/bunny/channel.rb:1479
   def queue_bind_without_recording_topology(name, exchange, opts = T.unsafe(nil)); end
 
   # Declares a queue using queue.declare AMQP 0.9.1 method.
@@ -1355,14 +1355,14 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1357
+  # pkg:gem/bunny#lib/bunny/channel.rb:1341
   def queue_declare(name, opts = T.unsafe(nil)); end
 
   # We need this bypassing topology version to avoid modifying the collections
   # as we iterate over them during topology recovery.
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1377
+  # pkg:gem/bunny#lib/bunny/channel.rb:1361
   def queue_declare_without_recording_topology(name, opts = T.unsafe(nil)); end
 
   # Deletes a queue using queue.delete AMQP 0.9.1 method
@@ -1377,7 +1377,7 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1428
+  # pkg:gem/bunny#lib/bunny/channel.rb:1412
   def queue_delete(name, opts = T.unsafe(nil)); end
 
   # Purges a queue (removes all messages from it) using queue.purge AMQP 0.9.1 method.
@@ -1388,7 +1388,7 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1453
+  # pkg:gem/bunny#lib/bunny/channel.rb:1437
   def queue_purge(name, opts = T.unsafe(nil)); end
 
   # Unbinds a queue from an exchange using queue.unbind AMQP 0.9.1 method
@@ -1405,12 +1405,12 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/bindings.html Bindings guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1540
+  # pkg:gem/bunny#lib/bunny/channel.rb:1516
   def queue_unbind(name, exchange, opts = T.unsafe(nil)); end
 
   # @return [Hash<String, Bunny::Queue>] Queue instances declared on this channel
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:149
+  # pkg:gem/bunny#lib/bunny/channel.rb:147
   def queues; end
 
   # Declares a new client-named quorum queue.
@@ -1425,17 +1425,17 @@ class Bunny::Channel
   # @see #queue
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:543
+  # pkg:gem/bunny#lib/bunny/channel.rb:540
   def quorum_queue(name, opts = T.unsafe(nil)); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2441
+  # pkg:gem/bunny#lib/bunny/channel.rb:2398
   def read_and_reset_only_acks_received; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2531
+  # pkg:gem/bunny#lib/bunny/channel.rb:2488
   def read_next_frame(options = T.unsafe(nil)); end
 
   # @param [Bunny::Channel] ch
@@ -1447,13 +1447,13 @@ class Bunny::Channel
   # @param [Hash] arguments
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2688
+  # pkg:gem/bunny#lib/bunny/channel.rb:2645
   def record_consumer_with(ch, consumer_tag, queue_name, callable, manual_ack, exclusive, arguments); end
 
   # @param [Bunny::Exchange] exchange
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2614
+  # pkg:gem/bunny#lib/bunny/channel.rb:2571
   def record_exchange(exchange); end
 
   # @param [Bunny::Channel] ch
@@ -1463,7 +1463,7 @@ class Bunny::Channel
   # @param [Hash] arguments
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2666
+  # pkg:gem/bunny#lib/bunny/channel.rb:2623
   def record_exchange_binding_with(ch, source_name, destination_name, routing_key, arguments); end
 
   # @param [Bunny::Channel] ch
@@ -1473,13 +1473,13 @@ class Bunny::Channel
   # @param [Boolean] auto_delete
   # @param [Hash] arguments
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2624
+  # pkg:gem/bunny#lib/bunny/channel.rb:2581
   def record_exchange_with(ch, name, type, durable, auto_delete, arguments); end
 
   # @param [Bunny::Queue] queue
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2567
+  # pkg:gem/bunny#lib/bunny/channel.rb:2524
   def record_queue(queue); end
 
   # @param [Bunny::Channel] ch
@@ -1489,7 +1489,7 @@ class Bunny::Channel
   # @param [Hash] arguments
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2646
+  # pkg:gem/bunny#lib/bunny/channel.rb:2603
   def record_queue_binding_with(ch, exchange_name, queue_name, routing_key, arguments); end
 
   # Used by the Automatic Network Failure
@@ -1499,7 +1499,7 @@ class Bunny::Channel
   # @param [String] new_name
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2074
+  # pkg:gem/bunny#lib/bunny/channel.rb:2022
   def record_queue_name_change(old_name, new_name); end
 
   # @param [Bunny::Channel] ch
@@ -1510,18 +1510,18 @@ class Bunny::Channel
   # @param [Boolean] exclusive
   # @param [Hash] arguments
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2578
+  # pkg:gem/bunny#lib/bunny/channel.rb:2535
   def record_queue_with(ch, name, server_named, durable, auto_delete, exclusive, arguments); end
 
   # Tells RabbitMQ to redeliver unacknowledged messages
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:690
+  # pkg:gem/bunny#lib/bunny/channel.rb:686
   def recover(ignored = T.unsafe(nil)); end
 
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2096
+  # pkg:gem/bunny#lib/bunny/channel.rb:2044
   def recover_cancelled_consumers!; end
 
   # Recovers publisher confirms mode. Used by the Automatic Network Failure
@@ -1530,7 +1530,7 @@ class Bunny::Channel
   #
   # @api plugin
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2037
+  # pkg:gem/bunny#lib/bunny/channel.rb:1985
   def recover_confirm_mode; end
 
   # Recovers basic.qos setting, exchanges, queues and consumers. Used by the Automatic Network Failure
@@ -1538,7 +1538,7 @@ class Bunny::Channel
   #
   # @api plugin
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2013
+  # pkg:gem/bunny#lib/bunny/channel.rb:1961
   def recover_from_network_failure; end
 
   # Recovers basic.qos setting. Used by the Automatic Network Failure
@@ -1546,7 +1546,7 @@ class Bunny::Channel
   #
   # @api plugin
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2028
+  # pkg:gem/bunny#lib/bunny/channel.rb:1976
   def recover_prefetch_setting; end
 
   # Recovers transaction mode. Used by the Automatic Network Failure
@@ -1554,39 +1554,39 @@ class Bunny::Channel
   #
   # @api plugin
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2064
+  # pkg:gem/bunny#lib/bunny/channel.rb:2012
   def recover_tx_mode; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:348
+  # pkg:gem/bunny#lib/bunny/channel.rb:346
   def recovering!; end
 
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2101
+  # pkg:gem/bunny#lib/bunny/channel.rb:2049
   def recovers_cancelled_consumers?; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:353
+  # pkg:gem/bunny#lib/bunny/channel.rb:351
   def recovery_completed!; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2128
+  # pkg:gem/bunny#lib/bunny/channel.rb:2076
   def register_consumer(consumer_tag, consumer); end
 
   # @param [Bunny::Exchange] exchange
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2596
+  # pkg:gem/bunny#lib/bunny/channel.rb:2553
   def register_exchange(exchange); end
 
   # @param [Bunny::Queue] queue
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2549
+  # pkg:gem/bunny#lib/bunny/channel.rb:2506
   def register_queue(queue); end
 
   # Rejects a message. A rejected message can be requeued or
@@ -1599,12 +1599,12 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:710
+  # pkg:gem/bunny#lib/bunny/channel.rb:706
   def reject(delivery_tag, requeue = T.unsafe(nil)); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2496
+  # pkg:gem/bunny#lib/bunny/channel.rb:2453
   def release_all_continuations; end
 
   # Reopens a channel that was closed by the server (e.g. due to a consumer
@@ -1619,12 +1619,17 @@ class Bunny::Channel
   # @see Bunny::Session#recover_channel_topology
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:312
+  # pkg:gem/bunny#lib/bunny/channel.rb:310
   def reopen; end
+
+  # @private
+  #
+  # pkg:gem/bunny#lib/bunny/channel.rb:2132
+  def send_basic_cancel_ok(consumer_tag); end
 
   # @return [Symbol] Channel status (:opening, :open, :closed)
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:139
+  # pkg:gem/bunny#lib/bunny/channel.rb:137
   def status; end
 
   # Declares a new client-named stream (that Bunny can use as if it was a queue).
@@ -1643,13 +1648,13 @@ class Bunny::Channel
   # @see #queue
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:565
+  # pkg:gem/bunny#lib/bunny/channel.rb:562
   def stream(name, opts = T.unsafe(nil)); end
 
   # Synchronizes given block using this channel's mutex.
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1967
+  # pkg:gem/bunny#lib/bunny/channel.rb:1915
   def synchronize(&block); end
 
   # Declares a new server-named queue that is automatically deleted when the
@@ -1659,12 +1664,12 @@ class Bunny::Channel
   # @see #queue
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:667
+  # pkg:gem/bunny#lib/bunny/channel.rb:663
   def temporary_queue(opts = T.unsafe(nil)); end
 
   # @return [String] Brief human-readable representation of the channel
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2109
+  # pkg:gem/bunny#lib/bunny/channel.rb:2057
   def to_s; end
 
   # Declares a topic exchange or looks it up in the cache of previously
@@ -1682,52 +1687,52 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/extensions.html RabbitMQ Extensions to AMQP 0.9.1 guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:457
+  # pkg:gem/bunny#lib/bunny/channel.rb:455
   def topic(name, opts = T.unsafe(nil)); end
 
   # Commits current transaction
   # @return [AMQ::Protocol::Tx::CommitOk] RabbitMQ response
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1850
+  # pkg:gem/bunny#lib/bunny/channel.rb:1798
   def tx_commit; end
 
   # Rolls back current transaction
   # @return [AMQ::Protocol::Tx::RollbackOk] RabbitMQ response
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1865
+  # pkg:gem/bunny#lib/bunny/channel.rb:1813
   def tx_rollback; end
 
   # Puts the channel into transaction mode (starts a transaction)
   # @return [AMQ::Protocol::Tx::SelectOk] RabbitMQ response
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1834
+  # pkg:gem/bunny#lib/bunny/channel.rb:1782
   def tx_select; end
 
   # @return [Set<Integer>] Set of published message indexes that are currently unconfirmed
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:153
+  # pkg:gem/bunny#lib/bunny/channel.rb:151
   def unconfirmed_set; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2138
+  # pkg:gem/bunny#lib/bunny/channel.rb:2086
   def unregister_consumer(consumer_tag); end
 
   # @return [Boolean] true if this channel has Publisher Confirms enabled, false otherwise
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1890
+  # pkg:gem/bunny#lib/bunny/channel.rb:1838
   def using_publisher_confirmations?; end
 
-  # pkg:gem/bunny#lib/bunny/channel.rb:1893
+  # pkg:gem/bunny#lib/bunny/channel.rb:1841
   def using_publisher_confirms?; end
 
   # @return [Boolean] true if this channel has transactions enabled
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1878
+  # pkg:gem/bunny#lib/bunny/channel.rb:1826
   def using_tx?; end
 
   # Blocks calling thread until confirms are received for all
@@ -1741,109 +1746,109 @@ class Bunny::Channel
   # @see http://rubybunny.info/articles/extensions.html RabbitMQ Extensions guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:1955
+  # pkg:gem/bunny#lib/bunny/channel.rb:1903
   def wait_for_confirms; end
 
   # Waits for a slot when outstanding limit is reached.
   # Assumes @unconfirmed_set_mutex is already held.
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2452
+  # pkg:gem/bunny#lib/bunny/channel.rb:2409
   def wait_for_outstanding_slot_locked; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2470
+  # pkg:gem/bunny#lib/bunny/channel.rb:2427
   def wait_for_publish_confirm(seq_no, continuation); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2400
+  # pkg:gem/bunny#lib/bunny/channel.rb:2357
   def wait_on_basic_get_continuations; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2418
+  # pkg:gem/bunny#lib/bunny/channel.rb:2375
   def wait_on_confirms_continuations; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2382
+  # pkg:gem/bunny#lib/bunny/channel.rb:2339
   def wait_on_continuations; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:249
+  # pkg:gem/bunny#lib/bunny/channel.rb:247
   def wait_on_continuations_timeout; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2123
+  # pkg:gem/bunny#lib/bunny/channel.rb:2071
   def with_continuation_timeout(&block); end
 
   # @return [Bunny::ConsumerWorkPool] Thread pool delivered messages are dispatched to.
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:141
+  # pkg:gem/bunny#lib/bunny/channel.rb:139
   def work_pool; end
 
   protected
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2701
+  # pkg:gem/bunny#lib/bunny/channel.rb:2658
   def closed!; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2771
+  # pkg:gem/bunny#lib/bunny/channel.rb:2728
   def guarding_against_stale_delivery_tags(tag, &block); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2708
+  # pkg:gem/bunny#lib/bunny/channel.rb:2665
   def instantiate_channel_level_exception(frame); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2766
+  # pkg:gem/bunny#lib/bunny/channel.rb:2723
   def new_continuation; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2745
+  # pkg:gem/bunny#lib/bunny/channel.rb:2702
   def raise_if_channel_close!(method); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2729
+  # pkg:gem/bunny#lib/bunny/channel.rb:2686
   def raise_if_continuation_resulted_in_a_channel_error!; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2734
+  # pkg:gem/bunny#lib/bunny/channel.rb:2691
   def raise_if_no_longer_open!; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel.rb:2758
+  # pkg:gem/bunny#lib/bunny/channel.rb:2715
   def reset_continuations; end
 end
 
-# pkg:gem/bunny#lib/bunny/channel.rb:172
+# pkg:gem/bunny#lib/bunny/channel.rb:170
 Bunny::Channel::DEFAULT_CONTENT_TYPE = T.let(T.unsafe(nil), String)
 
 # Default outstanding limit for publisher confirms with tracking.
 # Batch size of 1000 provides optimal throughput per benchmarks.
 #
-# pkg:gem/bunny#lib/bunny/channel.rb:176
+# pkg:gem/bunny#lib/bunny/channel.rb:174
 Bunny::Channel::DEFAULT_OUTSTANDING_CONFIRMS_LIMIT = T.let(T.unsafe(nil), Integer)
 
 # prefetch_count is of type short in the protocol. MK.
 #
-# pkg:gem/bunny#lib/bunny/channel.rb:962
+# pkg:gem/bunny#lib/bunny/channel.rb:950
 Bunny::Channel::MAX_PREFETCH_COUNT = T.let(T.unsafe(nil), Integer)
 
-# pkg:gem/bunny#lib/bunny/channel.rb:177
+# pkg:gem/bunny#lib/bunny/channel.rb:175
 Bunny::Channel::SHORTSTR_LIMIT = T.let(T.unsafe(nil), Integer)
 
 # Raised when a closed channel is used
@@ -1870,11 +1875,11 @@ class Bunny::ChannelError < ::Bunny::ConnectionLevelException; end
 # Allocating and releasing ids is synchronized and can be performed
 # from multiple threads.
 #
-# pkg:gem/bunny#lib/bunny/channel_id_allocator.rb:15
+# pkg:gem/bunny#lib/bunny/channel_id_allocator.rb:13
 class Bunny::ChannelIdAllocator
   # @param [Integer] max_channel Max allowed channel id
   #
-  # pkg:gem/bunny#lib/bunny/channel_id_allocator.rb:22
+  # pkg:gem/bunny#lib/bunny/channel_id_allocator.rb:20
   def initialize(max_channel = T.unsafe(nil)); end
 
   # Returns true if given channel id has been previously allocated and not yet released.
@@ -1886,7 +1891,7 @@ class Bunny::ChannelIdAllocator
   # @see ChannelManager#next_channel_id
   # @see ChannelManager#release_channel_id
   #
-  # pkg:gem/bunny#lib/bunny/channel_id_allocator.rb:63
+  # pkg:gem/bunny#lib/bunny/channel_id_allocator.rb:61
   def allocated_channel_id?(i); end
 
   # Returns next available channel id. This method is thread safe.
@@ -1896,7 +1901,7 @@ class Bunny::ChannelIdAllocator
   # @see ChannelManager#release_channel_id
   # @see ChannelManager#reset_channel_id_allocator
   #
-  # pkg:gem/bunny#lib/bunny/channel_id_allocator.rb:36
+  # pkg:gem/bunny#lib/bunny/channel_id_allocator.rb:34
   def next_channel_id; end
 
   # Releases previously allocated channel id. This method is thread safe.
@@ -1906,7 +1911,7 @@ class Bunny::ChannelIdAllocator
   # @see ChannelManager#next_channel_id
   # @see ChannelManager#reset_channel_id_allocator
   #
-  # pkg:gem/bunny#lib/bunny/channel_id_allocator.rb:48
+  # pkg:gem/bunny#lib/bunny/channel_id_allocator.rb:46
   def release_channel_id(i); end
 
   # Resets channel allocator. This method is thread safe.
@@ -1914,12 +1919,12 @@ class Bunny::ChannelIdAllocator
   # @see Channel.next_channel_id
   # @see Channel.release_channel_id
   #
-  # pkg:gem/bunny#lib/bunny/channel_id_allocator.rb:73
+  # pkg:gem/bunny#lib/bunny/channel_id_allocator.rb:71
   def reset_channel_id_allocator; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/channel_id_allocator.rb:80
+  # pkg:gem/bunny#lib/bunny/channel_id_allocator.rb:78
   def synchronize(&block); end
 end
 
@@ -1939,7 +1944,7 @@ end
 
 # backwards compatibility
 #
-# pkg:gem/bunny#lib/bunny/session.rb:1841
+# pkg:gem/bunny#lib/bunny/session.rb:1899
 Bunny::Client = Bunny::Session
 
 # Raised when read or write I/O operations time out (but only if
@@ -1955,7 +1960,7 @@ class Bunny::CommandInvalid < ::Bunny::ConnectionLevelException; end
 
 # @private
 #
-# pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:6
+# pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:4
 module Bunny::Concurrent; end
 
 # Minimalistic implementation of a synchronized fixnum value,
@@ -1965,48 +1970,48 @@ module Bunny::Concurrent; end
 #
 # @api public
 #
-# pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:15
+# pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:13
 class Bunny::Concurrent::AtomicFixnum
-  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:16
+  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:14
   def initialize(n = T.unsafe(nil)); end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:68
+  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:66
   def ==(m); end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:72
+  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:70
   def ===(v); end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:65
+  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:63
   def dec; end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:60
+  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:58
   def decrement; end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:66
+  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:64
   def decrement_and_get; end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:21
+  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:19
   def get; end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:42
+  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:40
   def get_and_add(i); end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:51
+  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:49
   def get_and_increment; end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:39
+  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:37
   def inc; end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:34
+  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:32
   def increment; end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:40
+  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:38
   def increment_and_get; end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:28
+  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:26
   def set(n); end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:26
+  # pkg:gem/bunny#lib/bunny/concurrent/atomic_fixnum.rb:24
   def to_i; end
 end
 
@@ -2014,33 +2019,33 @@ end
 #
 # @private
 #
-# pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:10
+# pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:8
 class Bunny::Concurrent::ContinuationQueue
-  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:11
+  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:9
   def initialize; end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:23
+  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:21
   def <<(item); end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:49
+  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:47
   def clear; end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:55
+  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:53
   def empty?; end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:62
+  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:60
   def length; end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:29
+  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:27
   def poll(timeout_in_ms = T.unsafe(nil)); end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:25
+  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:23
   def pop; end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:17
+  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:15
   def push(item); end
 
-  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:59
+  # pkg:gem/bunny#lib/bunny/concurrent/continuation_queue.rb:57
   def size; end
 end
 
@@ -2067,44 +2072,44 @@ end
 # @see https://github.com/ruby-amqp/bunny/issues/721
 # @api public
 #
-# pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:29
+# pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:27
 class Bunny::Concurrent::ExceptionAccumulator
-  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:30
+  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:28
   def initialize; end
 
   # Returns all accumulated exceptions.
   #
   # @return [Array<Exception>]
   #
-  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:69
+  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:67
   def all; end
 
   # Returns true if any exceptions have been accumulated.
   #
   # @return [Boolean]
   #
-  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:48
+  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:46
   def any?; end
 
   # Clears all accumulated exceptions.
   #
   # @return [Array<Exception>] the exceptions that were cleared
   #
-  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:84
+  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:82
   def clear; end
 
   # Returns the number of accumulated exceptions.
   #
   # @return [Integer]
   #
-  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:62
+  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:60
   def count; end
 
   # Returns true if no exceptions have been accumulated.
   #
   # @return [Boolean]
   #
-  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:55
+  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:53
   def empty?; end
 
   # Returns and removes the first accumulated exception (FIFO order).
@@ -2112,7 +2117,7 @@ class Bunny::Concurrent::ExceptionAccumulator
   #
   # @return [Exception, nil]
   #
-  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:77
+  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:75
   def pop; end
 
   # Called by background threads to record an exception.
@@ -2120,7 +2125,7 @@ class Bunny::Concurrent::ExceptionAccumulator
   #
   # @param exception [Exception] the exception to accumulate
   #
-  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:39
+  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:37
   def raise(exception); end
 
   # Raises all accumulated exceptions wrapped in a single exception if any exist,
@@ -2128,7 +2133,7 @@ class Bunny::Concurrent::ExceptionAccumulator
   #
   # @raise [Bunny::AccumulatedExceptions] wrapper containing all accumulated exceptions
   #
-  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:105
+  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:103
   def raise_all!; end
 
   # Raises the first accumulated exception if any exist, removing it from the accumulator.
@@ -2136,7 +2141,7 @@ class Bunny::Concurrent::ExceptionAccumulator
   #
   # @raise [Exception] the first accumulated exception
   #
-  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:96
+  # pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:94
   def raise_first!; end
 end
 
@@ -2309,55 +2314,55 @@ end
 #
 # @private
 #
-# pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:12
+# pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:10
 class Bunny::ConsumerWorkPool
-  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:22
+  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:20
   def initialize(size = T.unsafe(nil), abort_on_exception = T.unsafe(nil), shutdown_timeout = T.unsafe(nil)); end
 
-  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:20
+  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:18
   def abort_on_exception; end
 
-  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:54
+  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:52
   def backlog; end
 
-  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:58
+  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:56
   def busy?; end
 
-  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:79
+  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:77
   def join(timeout = T.unsafe(nil)); end
 
-  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:95
+  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:93
   def kill; end
 
-  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:83
+  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:81
   def pause; end
 
-  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:88
+  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:86
   def resume; end
 
-  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:50
+  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:48
   def running?; end
 
-  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:62
+  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:60
   def shutdown(wait_for_workers = T.unsafe(nil)); end
 
-  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:19
+  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:17
   def size; end
 
-  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:38
+  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:36
   def start; end
 
-  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:34
+  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:32
   def submit(callable = T.unsafe(nil), &block); end
 
   # API
   #
-  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:18
+  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:16
   def threads; end
 
   protected
 
-  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:103
+  # pkg:gem/bunny#lib/bunny/consumer_work_pool.rb:101
   def run_loop; end
 end
 
@@ -2479,6 +2484,11 @@ class Bunny::DeliveryInfo
   #
   # pkg:gem/bunny#lib/bunny/delivery_info.rb:66
   def to_s; end
+
+  private
+
+  # pkg:gem/bunny#lib/bunny/delivery_info.rb:103
+  def printable_hash; end
 end
 
 # Base class for all Bunny exceptions
@@ -2489,7 +2499,7 @@ class Bunny::Exception < ::StandardError; end
 
 # Alias for backward compatibility and convenience
 #
-# pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:114
+# pkg:gem/bunny#lib/bunny/concurrent/exception_accumulator.rb:112
 Bunny::ExceptionAccumulator = Bunny::Concurrent::ExceptionAccumulator
 
 # Represents AMQP 0.9.1 exchanges.
@@ -2522,13 +2532,13 @@ class Bunny::Exchange
   # @return [Hash] Additional optional arguments (typically used by RabbitMQ extensions and plugins)
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/exchange.rb:135
+  # pkg:gem/bunny#lib/bunny/exchange.rb:133
   def arguments; end
 
   # @return [Boolean] true if this exchange was declared as automatically deleted (deleted as soon as last consumer unbinds).
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/exchange.rb:123
+  # pkg:gem/bunny#lib/bunny/exchange.rb:121
   def auto_delete?; end
 
   # Binds an exchange to another (source) exchange using exchange.bind AMQP 0.9.1 extension
@@ -2546,7 +2556,7 @@ class Bunny::Exchange
   # @see http://rubybunny.info/articles/extensions.html RabbitMQ Extensions guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/exchange.rb:198
+  # pkg:gem/bunny#lib/bunny/exchange.rb:196
   def bind(source, opts = T.unsafe(nil)); end
 
   # @return [Bunny::Channel]
@@ -2563,24 +2573,24 @@ class Bunny::Exchange
   # @see http://rubybunny.info/articles/exchanges.html Exchanges and Publishing guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/exchange.rb:179
+  # pkg:gem/bunny#lib/bunny/exchange.rb:177
   def delete(opts = T.unsafe(nil)); end
 
   # @return [Boolean] true if this exchange was declared as durable (will survive broker restart).
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/exchange.rb:117
+  # pkg:gem/bunny#lib/bunny/exchange.rb:115
   def durable?; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/exchange.rb:250
+  # pkg:gem/bunny#lib/bunny/exchange.rb:248
   def handle_return(basic_return, properties, content); end
 
   # @return [Boolean] true if this exchange is internal (used solely for exchange-to-exchange
   #                   bindings and cannot be published to by clients)
   #
-  # pkg:gem/bunny#lib/bunny/exchange.rb:129
+  # pkg:gem/bunny#lib/bunny/exchange.rb:127
   def internal?; end
 
   # @return [String]
@@ -2592,7 +2602,7 @@ class Bunny::Exchange
   # @see http://rubybunny.info/articles/exchanges.html
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/exchange.rb:229
+  # pkg:gem/bunny#lib/bunny/exchange.rb:227
   def on_return(&block); end
 
   # Options hash this exchange instance was instantiated with
@@ -2609,12 +2619,12 @@ class Bunny::Exchange
 
   # predefined?
   #
-  # pkg:gem/bunny#lib/bunny/exchange.rb:262
+  # pkg:gem/bunny#lib/bunny/exchange.rb:260
   def predeclared?; end
 
   # @return [Boolean] true if this exchange is a pre-defined one (amq.direct, amq.fanout, amq.match and so on)
   #
-  # pkg:gem/bunny#lib/bunny/exchange.rb:259
+  # pkg:gem/bunny#lib/bunny/exchange.rb:257
   def predefined?; end
 
   # Publishes a message
@@ -2641,7 +2651,7 @@ class Bunny::Exchange
   # @see http://rubybunny.info/articles/exchanges.html Exchanges and Publishing guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/exchange.rb:163
+  # pkg:gem/bunny#lib/bunny/exchange.rb:161
   def publish(payload, opts = T.unsafe(nil)); end
 
   # @return [Symbol]
@@ -2671,7 +2681,7 @@ class Bunny::Exchange
   # @see http://rubybunny.info/articles/extensions.html RabbitMQ Extensions guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/exchange.rb:219
+  # pkg:gem/bunny#lib/bunny/exchange.rb:217
   def unbind(source, opts = T.unsafe(nil)); end
 
   # Waits until all outstanding publisher confirms on the channel
@@ -2681,20 +2691,20 @@ class Bunny::Exchange
   #
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/exchange.rb:241
+  # pkg:gem/bunny#lib/bunny/exchange.rb:239
   def wait_for_confirms; end
 
   protected
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/exchange.rb:267
+  # pkg:gem/bunny#lib/bunny/exchange.rb:265
   def declare!; end
 
   class << self
     # @private
     #
-    # pkg:gem/bunny#lib/bunny/exchange.rb:272
+    # pkg:gem/bunny#lib/bunny/exchange.rb:270
     def add_default_options(name, opts); end
 
     # The default exchange. This exchange is a direct exchange that is predefined by the broker
@@ -2710,7 +2720,7 @@ class Bunny::Exchange
     # @example Publishing a messages to the tasks queue
     #   channel     = Bunny::Channel.new(connection)
     #   tasks_queue = channel.queue("tasks")
-    #   Bunny::Exchange.default(channel).publish("make clean", :routing_key => "tasks")
+    #   Bunny::Exchange.default(channel).publish("make clean", routing_key: "tasks")
     #
     # @see http://rubybunny.info/articles/exchanges.html Exchanges and Publishing guide
     # @see http://www.rabbitmq.com/resources/specs/amqp0-9-1.pdf AMQP 0.9.1 specification (Section 2.1.2.4)
@@ -2778,40 +2788,37 @@ class Bunny::FrameError < ::Bunny::ConnectionLevelException; end
 # pkg:gem/bunny#lib/bunny/framing.rb:5
 module Bunny::Framing; end
 
-# pkg:gem/bunny#lib/bunny/framing.rb:8
+# pkg:gem/bunny#lib/bunny/framing.rb:7
 Bunny::Framing::DATA_SLICE = T.let(T.unsafe(nil), Range)
 
 # pkg:gem/bunny#lib/bunny/framing.rb:6
-Bunny::Framing::ENCODINGS_SUPPORTED = T.let(T.unsafe(nil), String)
-
-# pkg:gem/bunny#lib/bunny/framing.rb:7
 Bunny::Framing::HEADER_SLICE = T.let(T.unsafe(nil), Range)
 
 # @private
 #
-# pkg:gem/bunny#lib/bunny/framing.rb:38
+# pkg:gem/bunny#lib/bunny/framing.rb:37
 module Bunny::Framing::IO; end
 
-# pkg:gem/bunny#lib/bunny/framing.rb:39
+# pkg:gem/bunny#lib/bunny/framing.rb:38
 class Bunny::Framing::IO::Frame < ::AMQ::Protocol::Frame
   class << self
-    # pkg:gem/bunny#lib/bunny/framing.rb:40
+    # pkg:gem/bunny#lib/bunny/framing.rb:39
     def decode(io); end
   end
 end
 
-# pkg:gem/bunny#lib/bunny/framing.rb:9
+# pkg:gem/bunny#lib/bunny/framing.rb:8
 Bunny::Framing::PAYLOAD_SLICE = T.let(T.unsafe(nil), Range)
 
 # @private
 #
-# pkg:gem/bunny#lib/bunny/framing.rb:12
+# pkg:gem/bunny#lib/bunny/framing.rb:11
 module Bunny::Framing::String; end
 
-# pkg:gem/bunny#lib/bunny/framing.rb:13
+# pkg:gem/bunny#lib/bunny/framing.rb:12
 class Bunny::Framing::String::Frame < ::AMQ::Protocol::Frame
   class << self
-    # pkg:gem/bunny#lib/bunny/framing.rb:14
+    # pkg:gem/bunny#lib/bunny/framing.rb:13
     def decode(string); end
   end
 end
@@ -2889,28 +2896,28 @@ end
 #
 # @private
 #
-# pkg:gem/bunny#lib/bunny/heartbeat_sender.rb:11
+# pkg:gem/bunny#lib/bunny/heartbeat_sender.rb:10
 class Bunny::HeartbeatSender
   # API
   #
-  # pkg:gem/bunny#lib/bunny/heartbeat_sender.rb:17
+  # pkg:gem/bunny#lib/bunny/heartbeat_sender.rb:16
   def initialize(transport, logger); end
 
-  # pkg:gem/bunny#lib/bunny/heartbeat_sender.rb:42
+  # pkg:gem/bunny#lib/bunny/heartbeat_sender.rb:41
   def signal_activity!; end
 
-  # pkg:gem/bunny#lib/bunny/heartbeat_sender.rb:25
+  # pkg:gem/bunny#lib/bunny/heartbeat_sender.rb:24
   def start(period = T.unsafe(nil)); end
 
-  # pkg:gem/bunny#lib/bunny/heartbeat_sender.rb:38
+  # pkg:gem/bunny#lib/bunny/heartbeat_sender.rb:37
   def stop; end
 
   protected
 
-  # pkg:gem/bunny#lib/bunny/heartbeat_sender.rb:64
+  # pkg:gem/bunny#lib/bunny/heartbeat_sender.rb:63
   def beat; end
 
-  # pkg:gem/bunny#lib/bunny/heartbeat_sender.rb:48
+  # pkg:gem/bunny#lib/bunny/heartbeat_sender.rb:47
   def run; end
 end
 
@@ -3191,14 +3198,14 @@ class Bunny::Queue
   # @return [Hash] Additional optional arguments (typically used by RabbitMQ extensions and plugins)
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:128
+  # pkg:gem/bunny#lib/bunny/queue.rb:126
   def arguments; end
 
   # @return [Boolean] true if this queue was declared as automatically deleted (deleted as soon as last consumer unbinds).
   # @api public
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:115
+  # pkg:gem/bunny#lib/bunny/queue.rb:113
   def auto_delete?; end
 
   # Binds queue to an exchange
@@ -3213,7 +3220,7 @@ class Bunny::Queue
   # @see http://rubybunny.info/articles/bindings.html Bindings guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:159
+  # pkg:gem/bunny#lib/bunny/queue.rb:157
   def bind(exchange, opts = T.unsafe(nil)); end
 
   # @return [Bunny::Channel] Channel this queue uses
@@ -3223,12 +3230,12 @@ class Bunny::Queue
 
   # @return [Integer] How many active consumers the queue has
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:372
+  # pkg:gem/bunny#lib/bunny/queue.rb:370
   def consumer_count; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:390
+  # pkg:gem/bunny#lib/bunny/queue.rb:388
   def declare!; end
 
   # Deletes the queue
@@ -3241,32 +3248,32 @@ class Bunny::Queue
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:341
+  # pkg:gem/bunny#lib/bunny/queue.rb:339
   def delete(opts = T.unsafe(nil)); end
 
   # @return [Boolean] true if this queue was declared as durable (will survive broker restart).
   # @api public
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:101
+  # pkg:gem/bunny#lib/bunny/queue.rb:99
   def durable?; end
 
   # @return [Boolean] true if this queue was declared as exclusive (limited to just one consumer)
   # @api public
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:108
+  # pkg:gem/bunny#lib/bunny/queue.rb:106
   def exclusive?; end
 
-  # pkg:gem/bunny#lib/bunny/queue.rb:317
+  # pkg:gem/bunny#lib/bunny/queue.rb:315
   def get(opts = T.unsafe(nil), &block); end
 
-  # pkg:gem/bunny#lib/bunny/queue.rb:144
+  # pkg:gem/bunny#lib/bunny/queue.rb:142
   def inspect; end
 
   # @return [Integer] How many messages the queue has ready (e.g. not delivered but not unacknowledged)
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:366
+  # pkg:gem/bunny#lib/bunny/queue.rb:364
   def message_count; end
 
   # @return [String] Queue name
@@ -3297,14 +3304,14 @@ class Bunny::Queue
   #   ch   = conn.create_channel
   #   q = ch.queue("test1")
   #   x = ch.default_exchange
-  #   x.publish("Hello, everybody!", :routing_key => 'test1')
+  #   x.publish("Hello, everybody!", routing_key: 'test1')
   #
   #   delivery_info, properties, payload = q.pop
   #
   #   puts "This is the message: " + payload + "\n\n"
   #   conn.close
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:290
+  # pkg:gem/bunny#lib/bunny/queue.rb:288
   def pop(opts = T.unsafe(nil), &block); end
 
   # Publishes a message to the queue via default exchange. Takes the same arguments
@@ -3314,28 +3321,28 @@ class Bunny::Queue
   # @see Bunny::Channel#default_exchange
   # @see http://rubybunny.info/articles/exchanges.html Exchanges and Publishing guide
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:325
+  # pkg:gem/bunny#lib/bunny/queue.rb:323
   def publish(payload, opts = T.unsafe(nil)); end
 
   # Purges a queue (removes all messages from it)
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:350
+  # pkg:gem/bunny#lib/bunny/queue.rb:348
   def purge(opts = T.unsafe(nil)); end
 
   # @return [Boolean] true if this queue was declared as server named.
   # @api public
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:122
+  # pkg:gem/bunny#lib/bunny/queue.rb:120
   def server_named?; end
 
   # @return [Hash] A hash with information about the number of queue messages and consumers
   # @see #message_count
   # @see #consumer_count
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:359
+  # pkg:gem/bunny#lib/bunny/queue.rb:357
   def status; end
 
   # Adds a consumer to the queue (subscribes for message deliveries).
@@ -3352,7 +3359,7 @@ class Bunny::Queue
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:216
+  # pkg:gem/bunny#lib/bunny/queue.rb:214
   def subscribe(opts = T.unsafe(nil), &block); end
 
   # Adds a consumer object to the queue (subscribes for message deliveries).
@@ -3365,10 +3372,10 @@ class Bunny::Queue
   # @see http://rubybunny.info/articles/queues.html Queues and Consumers guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:259
+  # pkg:gem/bunny#lib/bunny/queue.rb:257
   def subscribe_with(consumer, opts = T.unsafe(nil)); end
 
-  # pkg:gem/bunny#lib/bunny/queue.rb:139
+  # pkg:gem/bunny#lib/bunny/queue.rb:137
   def to_s; end
 
   # Unbinds queue from an exchange
@@ -3383,27 +3390,27 @@ class Bunny::Queue
   # @see http://rubybunny.info/articles/bindings.html Bindings guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:188
+  # pkg:gem/bunny#lib/bunny/queue.rb:186
   def unbind(exchange, opts = T.unsafe(nil)); end
 
   # @param value [String]
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/queue.rb:134
+  # pkg:gem/bunny#lib/bunny/queue.rb:132
   def update_name_to(value); end
 
   protected
 
-  # pkg:gem/bunny#lib/bunny/queue.rb:415
+  # pkg:gem/bunny#lib/bunny/queue.rb:413
   def verify_type!(args); end
 
   class << self
     # @private
     #
-    # pkg:gem/bunny#lib/bunny/queue.rb:398
+    # pkg:gem/bunny#lib/bunny/queue.rb:396
     def add_default_options(name, opts); end
 
-    # pkg:gem/bunny#lib/bunny/queue.rb:377
+    # pkg:gem/bunny#lib/bunny/queue.rb:375
     def verify_type!(args0 = T.unsafe(nil)); end
   end
 end
@@ -3467,53 +3474,53 @@ Bunny::Queue::XArgs::SELECTOR_FIELD_MAX_BYTES = T.let(T.unsafe(nil), String)
 # This mimics the way RabbitMQ Java is designed quite closely.
 # @private
 #
-# pkg:gem/bunny#lib/bunny/reader_loop.rb:12
+# pkg:gem/bunny#lib/bunny/reader_loop.rb:10
 class Bunny::ReaderLoop
-  # pkg:gem/bunny#lib/bunny/reader_loop.rb:14
+  # pkg:gem/bunny#lib/bunny/reader_loop.rb:12
   def initialize(transport, session, session_error_handler); end
 
-  # pkg:gem/bunny#lib/bunny/reader_loop.rb:120
+  # pkg:gem/bunny#lib/bunny/reader_loop.rb:118
   def join; end
 
-  # pkg:gem/bunny#lib/bunny/reader_loop.rb:131
+  # pkg:gem/bunny#lib/bunny/reader_loop.rb:129
   def kill; end
 
-  # pkg:gem/bunny#lib/bunny/reader_loop.rb:116
+  # pkg:gem/bunny#lib/bunny/reader_loop.rb:114
   def raise(e); end
 
-  # pkg:gem/bunny#lib/bunny/reader_loop.rb:32
+  # pkg:gem/bunny#lib/bunny/reader_loop.rb:30
   def resume; end
 
-  # pkg:gem/bunny#lib/bunny/reader_loop.rb:37
+  # pkg:gem/bunny#lib/bunny/reader_loop.rb:35
   def run_loop; end
 
-  # pkg:gem/bunny#lib/bunny/reader_loop.rb:75
+  # pkg:gem/bunny#lib/bunny/reader_loop.rb:73
   def run_once; end
 
-  # pkg:gem/bunny#lib/bunny/reader_loop.rb:28
+  # pkg:gem/bunny#lib/bunny/reader_loop.rb:26
   def start; end
 
-  # pkg:gem/bunny#lib/bunny/reader_loop.rb:98
+  # pkg:gem/bunny#lib/bunny/reader_loop.rb:96
   def stop; end
 
-  # pkg:gem/bunny#lib/bunny/reader_loop.rb:102
+  # pkg:gem/bunny#lib/bunny/reader_loop.rb:100
   def stopped?; end
 
-  # pkg:gem/bunny#lib/bunny/reader_loop.rb:106
+  # pkg:gem/bunny#lib/bunny/reader_loop.rb:104
   def stopping?; end
 
-  # pkg:gem/bunny#lib/bunny/reader_loop.rb:110
+  # pkg:gem/bunny#lib/bunny/reader_loop.rb:108
   def terminate_with(e); end
 
   protected
 
-  # pkg:gem/bunny#lib/bunny/reader_loop.rb:150
+  # pkg:gem/bunny#lib/bunny/reader_loop.rb:148
   def io_error?(e); end
 
-  # pkg:gem/bunny#lib/bunny/reader_loop.rb:140
+  # pkg:gem/bunny#lib/bunny/reader_loop.rb:138
   def log_exception(e, level: T.unsafe(nil)); end
 
-  # pkg:gem/bunny#lib/bunny/reader_loop.rb:156
+  # pkg:gem/bunny#lib/bunny/reader_loop.rb:154
   def terminate?; end
 end
 
@@ -3969,7 +3976,7 @@ end
 #
 # pkg:gem/bunny#lib/bunny/cruby/ssl_socket.rb:11
 class Bunny::SSLSocket < ::OpenSSL::SSL::SSLSocket
-  # pkg:gem/bunny#lib/bunny/cruby/ssl_socket.rb:29
+  # pkg:gem/bunny#lib/bunny/cruby/ssl_socket.rb:18
   def initialize(*args); end
 
   # Reads given number of bytes with an optional timeout
@@ -3980,7 +3987,7 @@ class Bunny::SSLSocket < ::OpenSSL::SSL::SSLSocket
   # @return [String] Data read from the socket
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/cruby/ssl_socket.rb:41
+  # pkg:gem/bunny#lib/bunny/cruby/ssl_socket.rb:30
   def read_fully(count, timeout = T.unsafe(nil)); end
 
   # Reads given number of bytes into an existing buffer with an optional timeout
@@ -3992,7 +3999,7 @@ class Bunny::SSLSocket < ::OpenSSL::SSL::SSLSocket
   # @return [String] The buffer with data appended
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/cruby/ssl_socket.rb:80
+  # pkg:gem/bunny#lib/bunny/cruby/ssl_socket.rb:69
   def read_fully_into(buffer, count, timeout = T.unsafe(nil)); end
 
   # Writes provided data using IO#write_nonblock, taking care of handling
@@ -4007,14 +4014,14 @@ class Bunny::SSLSocket < ::OpenSSL::SSL::SSLSocket
   #
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/cruby/ssl_socket.rb:124
+  # pkg:gem/bunny#lib/bunny/cruby/ssl_socket.rb:113
   def write_nonblock_fully(data, timeout = T.unsafe(nil)); end
 end
 
 # pkg:gem/bunny#lib/bunny/cruby/ssl_socket.rb:13
 Bunny::SSLSocket::READ_RETRY_EXCEPTION_CLASSES = T.let(T.unsafe(nil), Array)
 
-# pkg:gem/bunny#lib/bunny/cruby/ssl_socket.rb:21
+# pkg:gem/bunny#lib/bunny/cruby/ssl_socket.rb:15
 Bunny::SSLSocket::WRITE_RETRY_EXCEPTION_CLASSES = T.let(T.unsafe(nil), Array)
 
 # An alias for the standard SSLSocket,
@@ -4031,7 +4038,7 @@ Bunny::ServerDownError = Bunny::TCPConnectionFailed
 # Represents AMQP 0.9.1 connection (to a RabbitMQ node).
 # @see http://rubybunny.info/articles/connecting.html Connecting to RabbitMQ guide
 #
-# pkg:gem/bunny#lib/bunny/session.rb:26
+# pkg:gem/bunny#lib/bunny/session.rb:24
 class Bunny::Session
   # @param [String, Hash] connection_string_or_opts Connection string or a hash of connection options
   # @param [Hash] optz Extra options not related to connection
@@ -4080,41 +4087,41 @@ class Bunny::Session
   # @see http://rubybunny.info/articles/tls.html TLS/SSL guide
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:146
+  # pkg:gem/bunny#lib/bunny/session.rb:144
   def initialize(connection_string_or_opts = T.unsafe(nil), optz = T.unsafe(nil)); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1274
+  # pkg:gem/bunny#lib/bunny/session.rb:1316
   def addresses_from(options); end
 
   # Defines a callable (e.g. a block) that will be called
   # when the connection recovery failed after the specified
   # numbers of recovery attempts.
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:626
+  # pkg:gem/bunny#lib/bunny/session.rb:629
   def after_recovery_attempts_exhausted(&block); end
 
   # Defines a callable (e.g. a block) that will be called
   # after successful connection recovery.
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:619
+  # pkg:gem/bunny#lib/bunny/session.rb:622
   def after_recovery_completed(&block); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:970
+  # pkg:gem/bunny#lib/bunny/session.rb:996
   def announce_network_failure_recovery; end
 
   # @return [Boolean] true if this connection has automatic recovery from network failure enabled
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:479
+  # pkg:gem/bunny#lib/bunny/session.rb:482
   def automatically_recover?; end
 
   # Defines a callable (e.g. a block) that will be called
   # before every connection recovery attempt.
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:613
+  # pkg:gem/bunny#lib/bunny/session.rb:616
   def before_recovery_attempt_starts(&block); end
 
   # @return [Boolean] true if the connection is currently blocked by RabbitMQ because it's running low on
@@ -4122,22 +4129,22 @@ class Bunny::Session
   # @see #on_blocked
   # @see #on_unblocked
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:507
+  # pkg:gem/bunny#lib/bunny/session.rb:510
   def blocked?; end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:408
+  # pkg:gem/bunny#lib/bunny/session.rb:411
   def channel(n = T.unsafe(nil), consumer_pool_size = T.unsafe(nil), consumer_pool_abort_on_exception = T.unsafe(nil), consumer_pool_shutdown_timeout = T.unsafe(nil)); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:85
+  # pkg:gem/bunny#lib/bunny/session.rb:83
   def channel_id_allocator; end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:83
+  # pkg:gem/bunny#lib/bunny/session.rb:81
   def channel_max; end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:1247
+  # pkg:gem/bunny#lib/bunny/session.rb:1289
   def clean_up_and_fail_on_connection_close!(method); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:1259
+  # pkg:gem/bunny#lib/bunny/session.rb:1301
   def clean_up_on_shutdown; end
 
   # Clears all accumulated exceptions from the session error handler.
@@ -4147,65 +4154,65 @@ class Bunny::Session
   # @raise [NoMethodError] if the session error handler doesn't respond to #clear
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:544
+  # pkg:gem/bunny#lib/bunny/session.rb:547
   def clear_exceptions; end
 
   # Closes the connection. This involves closing all of its channels.
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:411
+  # pkg:gem/bunny#lib/bunny/session.rb:414
   def close(await_response = T.unsafe(nil)); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:687
+  # pkg:gem/bunny#lib/bunny/session.rb:690
   def close_all_channels; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:662
+  # pkg:gem/bunny#lib/bunny/session.rb:665
   def close_channel(ch); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:696
+  # pkg:gem/bunny#lib/bunny/session.rb:699
   def close_connection(await_response = T.unsafe(nil)); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1431
+  # pkg:gem/bunny#lib/bunny/session.rb:1473
   def close_transport; end
 
   # @return [Boolean] true if this AMQP 0.9.1 connection is closed
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:461
+  # pkg:gem/bunny#lib/bunny/session.rb:464
   def closed?; end
 
   # @return [Boolean] true if this AMQP 0.9.1 connection is closing
   # @api private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:456
+  # pkg:gem/bunny#lib/bunny/session.rb:459
   def closing?; end
 
   # Provides a way to fine tune the socket used by connection.
   # Accepts a block that the socket will be yielded to.
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:307
+  # pkg:gem/bunny#lib/bunny/session.rb:306
   def configure_socket(&block); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:476
+  # pkg:gem/bunny#lib/bunny/session.rb:479
   def connected?; end
 
   # @return [Boolean] true if this connection is still not fully open
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:450
+  # pkg:gem/bunny#lib/bunny/session.rb:453
   def connecting?; end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:96
+  # pkg:gem/bunny#lib/bunny/session.rb:94
   def connection_name; end
 
   # @return [Integer] Timeout for blocking protocol operations (queue.declare, queue.bind, etc), in milliseconds. Default is 15000.
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:94
+  # pkg:gem/bunny#lib/bunny/session.rb:92
   def continuation_timeout; end
 
   # Opens a new channel and returns it. This method will block the calling
@@ -4214,24 +4221,24 @@ class Bunny::Session
   #
   # @return [Bunny::Channel] Newly opened channel
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:390
+  # pkg:gem/bunny#lib/bunny/session.rb:393
   def create_channel(n = T.unsafe(nil), consumer_pool_size = T.unsafe(nil), consumer_pool_abort_on_exception = T.unsafe(nil), consumer_pool_shutdown_timeout = T.unsafe(nil)); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1035
+  # pkg:gem/bunny#lib/bunny/session.rb:1069
   def decrement_recovery_attemp_counter!; end
 
   # @param [String] consumer_tag
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:963
+  # pkg:gem/bunny#lib/bunny/session.rb:989
   def delete_recorded_consumer(consumer_tag); end
 
   # @param [Bunny::Exchange] exchange
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:899
+  # pkg:gem/bunny#lib/bunny/session.rb:925
   def delete_recorded_exchange(exchange); end
 
   # @param [Bunny::Channel] ch
@@ -4241,13 +4248,13 @@ class Bunny::Session
   # @param [Hash] arguments
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:945
+  # pkg:gem/bunny#lib/bunny/session.rb:971
   def delete_recorded_exchange_binding(ch, source_name, destination_name, routing_key, arguments); end
 
   # @param [String] name
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:905
+  # pkg:gem/bunny#lib/bunny/session.rb:931
   def delete_recorded_exchange_named(name); end
 
   # @param [Bunny::Channel] ch
@@ -4257,19 +4264,19 @@ class Bunny::Session
   # @param [Hash] arguments
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:925
+  # pkg:gem/bunny#lib/bunny/session.rb:951
   def delete_recorded_queue_binding(ch, exchange_name, queue_name, routing_key, arguments); end
 
   # @param [String] name
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:877
+  # pkg:gem/bunny#lib/bunny/session.rb:903
   def delete_recorded_queue_named(name); end
 
   # @param [Bunny::Queue, Bunny::RecordedQueue] queue
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:871
+  # pkg:gem/bunny#lib/bunny/session.rb:897
   def delete_recoreded_queue(queue); end
 
   # Returns true if any exceptions have been accumulated by the session error handler.
@@ -4279,7 +4286,7 @@ class Bunny::Session
   # @raise [NoMethodError] if the session error handler doesn't respond to #any?
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:524
+  # pkg:gem/bunny#lib/bunny/session.rb:527
   def exception_occurred?; end
 
   # Returns all accumulated exceptions from the session error handler.
@@ -4289,7 +4296,7 @@ class Bunny::Session
   # @raise [NoMethodError] if the session error handler doesn't respond to #all
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:534
+  # pkg:gem/bunny#lib/bunny/session.rb:537
   def exceptions; end
 
   # Checks if a exchange with given name exists.
@@ -4301,16 +4308,21 @@ class Bunny::Session
   # @param [String] name Exchange name
   # @return [Boolean] true if exchange exists
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:599
+  # pkg:gem/bunny#lib/bunny/session.rb:602
   def exchange_exists?(name); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:677
+  # pkg:gem/bunny#lib/bunny/session.rb:680
   def find_channel(number); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:83
+  # pkg:gem/bunny#lib/bunny/session.rb:81
   def frame_max; end
+
+  # @private
+  #
+  # pkg:gem/bunny#lib/bunny/session.rb:1050
+  def give_up_on_recovery; end
 
   # Handles incoming frames and dispatches them.
   #
@@ -4321,121 +4333,121 @@ class Bunny::Session
   #
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:720
+  # pkg:gem/bunny#lib/bunny/session.rb:723
   def handle_frame(ch_number, method); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:787
+  # pkg:gem/bunny#lib/bunny/session.rb:790
   def handle_frameset(ch_number, frames); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:808
+  # pkg:gem/bunny#lib/bunny/session.rb:813
   def handle_network_failure(exception); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:83
+  # pkg:gem/bunny#lib/bunny/session.rb:81
   def heartbeat; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1372
+  # pkg:gem/bunny#lib/bunny/session.rb:1414
   def heartbeat_from(options); end
 
   # @deprecated
   # @return [Integer] Heartbeat timeout (not interval) used
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:268
+  # pkg:gem/bunny#lib/bunny/session.rb:267
   def heartbeat_interval; end
 
   # @return [Integer] Heartbeat timeout used
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:271
+  # pkg:gem/bunny#lib/bunny/session.rb:270
   def heartbeat_timeout; end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:290
+  # pkg:gem/bunny#lib/bunny/session.rb:289
   def host; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1313
+  # pkg:gem/bunny#lib/bunny/session.rb:1355
   def host_from_address(address); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1300
+  # pkg:gem/bunny#lib/bunny/session.rb:1342
   def host_with_port?(address); end
 
   # @return [String] RabbitMQ hostname (or IP address) used
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:258
+  # pkg:gem/bunny#lib/bunny/session.rb:257
   def hostname; end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:1550
+  # pkg:gem/bunny#lib/bunny/session.rb:1592
   def inspect; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1219
+  # pkg:gem/bunny#lib/bunny/session.rb:1261
   def instantiate_connection_level_exception(frame); end
 
   # @return [Integer] Client socket port
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:316
+  # pkg:gem/bunny#lib/bunny/session.rb:315
   def local_port; end
 
   # @return [Logger]
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:92
+  # pkg:gem/bunny#lib/bunny/session.rb:90
   def logger; end
 
   # @return [Boolean] true if this AMQP 0.9.1 connection has been closed by the user (as opposed to the server)
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:466
+  # pkg:gem/bunny#lib/bunny/session.rb:469
   def manually_closed?; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1060
+  # pkg:gem/bunny#lib/bunny/session.rb:1094
   def mark_channels_after_recovery!; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1414
+  # pkg:gem/bunny#lib/bunny/session.rb:1456
   def maybe_shutdown_reader_loop; end
 
   # Authentication mechanism, e.g. "PLAIN" or "EXTERNAL"
   # @return [String]
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:90
+  # pkg:gem/bunny#lib/bunny/session.rb:88
   def mechanism; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:303
+  # pkg:gem/bunny#lib/bunny/session.rb:302
   def mutex_impl; end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:95
+  # pkg:gem/bunny#lib/bunny/session.rb:93
   def network_recovery_interval; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1377
+  # pkg:gem/bunny#lib/bunny/session.rb:1419
   def next_channel_id; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1204
+  # pkg:gem/bunny#lib/bunny/session.rb:1246
   def notify_of_recovery_attempt_start; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1214
+  # pkg:gem/bunny#lib/bunny/session.rb:1256
   def notify_of_recovery_attempts_exhausted; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1209
+  # pkg:gem/bunny#lib/bunny/session.rb:1251
   def notify_of_recovery_completion; end
 
   # Defines a callback that will be executed when RabbitMQ blocks the connection
@@ -4446,7 +4458,7 @@ class Bunny::Session
   #
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:490
+  # pkg:gem/bunny#lib/bunny/session.rb:493
   def on_blocked(&block); end
 
   # Defines a callback that will be executed when RabbitMQ unblocks the connection
@@ -4455,43 +4467,43 @@ class Bunny::Session
   # @see #on_blocked
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:499
+  # pkg:gem/bunny#lib/bunny/session.rb:502
   def on_unblocked(&block); end
 
   # @return [Boolean] true if this AMQP 0.9.1 connection is open
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:471
+  # pkg:gem/bunny#lib/bunny/session.rb:474
   def open?; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:646
+  # pkg:gem/bunny#lib/bunny/session.rb:649
   def open_channel(ch); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:83
+  # pkg:gem/bunny#lib/bunny/session.rb:81
   def pass; end
 
   # @return [String] Password used
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:262
+  # pkg:gem/bunny#lib/bunny/session.rb:261
   def password; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1367
+  # pkg:gem/bunny#lib/bunny/session.rb:1409
   def password_from(options); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:294
+  # pkg:gem/bunny#lib/bunny/session.rb:293
   def port; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1289
+  # pkg:gem/bunny#lib/bunny/session.rb:1331
   def port_from(options); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1336
+  # pkg:gem/bunny#lib/bunny/session.rb:1378
   def port_from_address(address); end
 
   # Checks if a queue with given name exists.
@@ -4503,12 +4515,12 @@ class Bunny::Session
   # @param [String] name Queue name
   # @return [Boolean] true if queue exists
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:577
+  # pkg:gem/bunny#lib/bunny/session.rb:580
   def queue_exists?(name); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:782
+  # pkg:gem/bunny#lib/bunny/session.rb:785
   def raise_if_continuation_resulted_in_a_connection_error!; end
 
   # Raises the first accumulated exception if any exist.
@@ -4521,12 +4533,12 @@ class Bunny::Session
   # @raise [NoMethodError] if the session error handler doesn't respond to #raise_first!
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:557
+  # pkg:gem/bunny#lib/bunny/session.rb:560
   def raise_on_exception!; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1409
+  # pkg:gem/bunny#lib/bunny/session.rb:1451
   def reader_loop; end
 
   # @param [Bunny::Channel] ch
@@ -4538,13 +4550,13 @@ class Bunny::Session
   # @param [Hash] arguments
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:957
+  # pkg:gem/bunny#lib/bunny/session.rb:983
   def record_consumer_with(ch, consumer_tag, queue_name, callable, manual_ack, exclusive, arguments); end
 
   # @param [Bunny::Exchange] exchange
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:883
+  # pkg:gem/bunny#lib/bunny/session.rb:909
   def record_exchange(exchange); end
 
   # @param [Bunny::Channel] ch
@@ -4554,7 +4566,7 @@ class Bunny::Session
   # @param [Hash] arguments
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:935
+  # pkg:gem/bunny#lib/bunny/session.rb:961
   def record_exchange_binding_with(ch, source_name, destination_name, routing_key, arguments); end
 
   # @param [Bunny::Channel] ch
@@ -4564,13 +4576,13 @@ class Bunny::Session
   # @param [Boolean] auto_delete
   # @param [Hash] arguments
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:893
+  # pkg:gem/bunny#lib/bunny/session.rb:919
   def record_exchange_with(ch, name, type, durable, auto_delete, arguments); end
 
   # @param [Bunny::Queue] queue
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:854
+  # pkg:gem/bunny#lib/bunny/session.rb:880
   def record_queue(queue); end
 
   # @param [Bunny::Channel] ch
@@ -4580,14 +4592,14 @@ class Bunny::Session
   # @param [Hash] arguments
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:915
+  # pkg:gem/bunny#lib/bunny/session.rb:941
   def record_queue_binding_with(ch, exchange_name, queue_name, routing_key, arguments); end
 
   # @param [String] old_name
   # @param [String] new_name
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1168
+  # pkg:gem/bunny#lib/bunny/session.rb:1206
   def record_queue_name_change(old_name, new_name); end
 
   # @param [Bunny::Channel] ch
@@ -4598,7 +4610,7 @@ class Bunny::Session
   # @param [Boolean] exclusive
   # @param [Hash] arguments
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:865
+  # pkg:gem/bunny#lib/bunny/session.rb:891
   def record_queue_with(ch, name, server_named, durable, auto_delete, exclusive, arguments); end
 
   # Recovers topology (exchanges, queues, bindings, consumers) for a single channel.
@@ -4608,103 +4620,103 @@ class Bunny::Session
   # @param [Bunny::Channel] ch Channel whose topology should be recovered
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:636
+  # pkg:gem/bunny#lib/bunny/session.rb:639
   def recover_channel_topology(ch); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1049
+  # pkg:gem/bunny#lib/bunny/session.rb:1083
   def recover_channels; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:979
+  # pkg:gem/bunny#lib/bunny/session.rb:1005
   def recover_connection_and_channels; end
 
   # @param [Bunny::RecordedConsumer] c
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1196
+  # pkg:gem/bunny#lib/bunny/session.rb:1234
   def recover_consumer(c); end
 
   # @param [Bunny::RecordedExchange] x
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1133
+  # pkg:gem/bunny#lib/bunny/session.rb:1171
   def recover_exchange(x); end
 
   # @param [Bunny::RecordedExchangeBindingBinding] rb
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1185
+  # pkg:gem/bunny#lib/bunny/session.rb:1223
   def recover_exchange_binding(rb); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:803
+  # pkg:gem/bunny#lib/bunny/session.rb:808
   def recover_from_connection_close?; end
 
   # @param [Bunny::RecordedQueue] q
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1144
+  # pkg:gem/bunny#lib/bunny/session.rb:1182
   def recover_queue(q); end
 
   # @param [Bunny::RecordedQueueBinding] rb
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1174
+  # pkg:gem/bunny#lib/bunny/session.rb:1212
   def recover_queue_binding(rb); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1069
+  # pkg:gem/bunny#lib/bunny/session.rb:1103
   def recover_topology; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1075
+  # pkg:gem/bunny#lib/bunny/session.rb:1109
   def recover_topology_with(filter = T.unsafe(nil)); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:98
+  # pkg:gem/bunny#lib/bunny/session.rb:96
   def recoverable_exceptions; end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:98
+  # pkg:gem/bunny#lib/bunny/session.rb:96
   def recoverable_exceptions=(_arg0); end
 
   # @return [Boolean]
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:842
+  # pkg:gem/bunny#lib/bunny/session.rb:868
   def recoverable_network_failure?(exception); end
 
   # @return [Boolean]
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:848
+  # pkg:gem/bunny#lib/bunny/session.rb:874
   def recovering_from_network_failure?; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1025
+  # pkg:gem/bunny#lib/bunny/session.rb:1059
   def recovery_attempts_limited?; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1387
+  # pkg:gem/bunny#lib/bunny/session.rb:1429
   def register_channel(ch); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1382
+  # pkg:gem/bunny#lib/bunny/session.rb:1424
   def release_channel_id(i); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:298
+  # pkg:gem/bunny#lib/bunny/session.rb:297
   def reset_address_index; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1044
+  # pkg:gem/bunny#lib/bunny/session.rb:1078
   def reset_recovery_attempt_counter!; end
 
   # Sends frame to the peer, checking that connection is open.
@@ -4713,7 +4725,7 @@ class Bunny::Session
   # @raise [ConnectionClosedError]
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1453
+  # pkg:gem/bunny#lib/bunny/session.rb:1495
   def send_frame(frame, signal_activity = T.unsafe(nil)); end
 
   # Sends frame to the peer, checking that connection is open.
@@ -4723,7 +4735,7 @@ class Bunny::Session
   # @raise [ConnectionClosedError]
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1471
+  # pkg:gem/bunny#lib/bunny/session.rb:1513
   def send_frame_without_timeout(frame, signal_activity = T.unsafe(nil)); end
 
   # Sends multiple frames, in one go. For thread safety this method takes a channel
@@ -4731,7 +4743,7 @@ class Bunny::Session
   #
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1484
+  # pkg:gem/bunny#lib/bunny/session.rb:1526
   def send_frameset(frames, channel); end
 
   # Sends multiple frames, one by one. For thread safety this method takes a channel
@@ -4740,24 +4752,30 @@ class Bunny::Session
   #
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1509
+  # pkg:gem/bunny#lib/bunny/session.rb:1551
   def send_frameset_without_timeout(frames, channel); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1527
+  # pkg:gem/bunny#lib/bunny/session.rb:1569
   def send_raw_without_timeout(data, channel); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:84
+  # pkg:gem/bunny#lib/bunny/session.rb:82
   def server_authentication_mechanisms; end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:84
+  # pkg:gem/bunny#lib/bunny/session.rb:82
   def server_capabilities; end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:84
+  # @param [Symbol] capability a server capability name
+  # @return [Boolean] true if the server advertises the capability as supported
+  #
+  # pkg:gem/bunny#lib/bunny/session.rb:1598
+  def server_has_capability?(capability); end
+
+  # pkg:gem/bunny#lib/bunny/session.rb:82
   def server_locales; end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:84
+  # pkg:gem/bunny#lib/bunny/session.rb:82
   def server_properties; end
 
   # Returns the session error handler.
@@ -4766,26 +4784,26 @@ class Bunny::Session
   # @return [Object] the session error handler
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:516
+  # pkg:gem/bunny#lib/bunny/session.rb:519
   def session_error_handler; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1030
+  # pkg:gem/bunny#lib/bunny/session.rb:1064
   def should_retry_recovery?; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1443
+  # pkg:gem/bunny#lib/bunny/session.rb:1485
   def signal_activity!; end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:97
+  # pkg:gem/bunny#lib/bunny/session.rb:95
   def socket_configurator; end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:97
+  # pkg:gem/bunny#lib/bunny/session.rb:95
   def socket_configurator=(_arg0); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:283
+  # pkg:gem/bunny#lib/bunny/session.rb:282
   def ssl?; end
 
   # Starts the connection process.
@@ -4794,104 +4812,104 @@ class Bunny::Session
   # @see http://rubybunny.info/articles/connecting.html
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:325
+  # pkg:gem/bunny#lib/bunny/session.rb:324
   def start; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1404
+  # pkg:gem/bunny#lib/bunny/session.rb:1446
   def start_reader_loop; end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:83
+  # pkg:gem/bunny#lib/bunny/session.rb:81
   def status; end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:432
+  # pkg:gem/bunny#lib/bunny/session.rb:435
   def stop(await_response = T.unsafe(nil)); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:682
+  # pkg:gem/bunny#lib/bunny/session.rb:685
   def synchronised_find_channel(number); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:83
+  # pkg:gem/bunny#lib/bunny/session.rb:81
   def threaded; end
 
   # @return [Boolean] true if this connection uses a separate thread for I/O activity
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:286
+  # pkg:gem/bunny#lib/bunny/session.rb:285
   def threaded?; end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:277
+  # pkg:gem/bunny#lib/bunny/session.rb:276
   def tls?; end
 
   # @return [String]
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1545
+  # pkg:gem/bunny#lib/bunny/session.rb:1587
   def to_s; end
 
   # @return [Bunny::TopologyRegistry]
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:87
+  # pkg:gem/bunny#lib/bunny/session.rb:85
   def topology_registry; end
 
   # @return [Bunny::Transport]
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:82
+  # pkg:gem/bunny#lib/bunny/session.rb:80
   def transport; end
 
   # Socket operation write timeout used by this connection
   # @return [Float]
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:381
+  # pkg:gem/bunny#lib/bunny/session.rb:384
   def transport_write_timeout; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1394
+  # pkg:gem/bunny#lib/bunny/session.rb:1436
   def unregister_channel(ch); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:370
+  # pkg:gem/bunny#lib/bunny/session.rb:373
   def update_secret(value, reason); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:83
+  # pkg:gem/bunny#lib/bunny/session.rb:81
   def user; end
 
   # @return [String] Username used
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:260
+  # pkg:gem/bunny#lib/bunny/session.rb:259
   def username; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1362
+  # pkg:gem/bunny#lib/bunny/session.rb:1404
   def username_from(options); end
 
   # @return [Boolean] true if this connection uses TLS (SSL)
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:280
+  # pkg:gem/bunny#lib/bunny/session.rb:279
   def uses_ssl?; end
 
   # @return [Boolean] true if this connection uses TLS (SSL)
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:274
+  # pkg:gem/bunny#lib/bunny/session.rb:273
   def uses_tls?; end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:247
+  # pkg:gem/bunny#lib/bunny/session.rb:246
   def validate_connection_options(options); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:83
+  # pkg:gem/bunny#lib/bunny/session.rb:81
   def vhost; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1357
+  # pkg:gem/bunny#lib/bunny/session.rb:1399
   def vhost_from(options); end
 
   # @return [String] Virtual host used
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:264
+  # pkg:gem/bunny#lib/bunny/session.rb:263
   def virtual_host; end
 
   # Creates a temporary channel, yields it to the block given to this
@@ -4899,102 +4917,102 @@ class Bunny::Session
   #
   # @return [Bunny::Session] self
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:438
+  # pkg:gem/bunny#lib/bunny/session.rb:441
   def with_channel(n = T.unsafe(nil)); end
 
   protected
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1751
+  # pkg:gem/bunny#lib/bunny/session.rb:1809
   def credentials_encoder_for(mechanism); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1746
+  # pkg:gem/bunny#lib/bunny/session.rb:1804
   def encode_credentials(username, password); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:1679
+  # pkg:gem/bunny#lib/bunny/session.rb:1737
   def heartbeat_disabled?(val); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:1831
+  # pkg:gem/bunny#lib/bunny/session.rb:1889
   def ignoring_io_errors(&block); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1557
+  # pkg:gem/bunny#lib/bunny/session.rb:1605
   def init_connection; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1770
+  # pkg:gem/bunny#lib/bunny/session.rb:1828
   def init_default_logger(logfile, level); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1780
+  # pkg:gem/bunny#lib/bunny/session.rb:1838
   def init_default_logger_without_progname(logfile, level); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1695
+  # pkg:gem/bunny#lib/bunny/session.rb:1753
   def initialize_heartbeat_sender; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1708
+  # pkg:gem/bunny#lib/bunny/session.rb:1766
   def initialize_transport; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1731
+  # pkg:gem/bunny#lib/bunny/session.rb:1789
   def maybe_close_transport; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1703
+  # pkg:gem/bunny#lib/bunny/session.rb:1761
   def maybe_shutdown_heartbeat_sender; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1684
+  # pkg:gem/bunny#lib/bunny/session.rb:1742
   def negotiate_value(client_value, server_value); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:1820
+  # pkg:gem/bunny#lib/bunny/session.rb:1878
   def normalize_auth_mechanism(value); end
 
-  # pkg:gem/bunny#lib/bunny/session.rb:1808
+  # pkg:gem/bunny#lib/bunny/session.rb:1866
   def normalize_client_channel_max(n); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1789
+  # pkg:gem/bunny#lib/bunny/session.rb:1847
   def normalize_log_level(level); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1572
+  # pkg:gem/bunny#lib/bunny/session.rb:1620
   def open_connection; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1756
+  # pkg:gem/bunny#lib/bunny/session.rb:1814
   def reset_continuations; end
 
   # Sends AMQ protocol header (also known as preamble).
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1739
+  # pkg:gem/bunny#lib/bunny/session.rb:1797
   def send_preamble; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1802
+  # pkg:gem/bunny#lib/bunny/session.rb:1860
   def shut_down_all_consumer_work_pools!; end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/session.rb:1761
+  # pkg:gem/bunny#lib/bunny/session.rb:1819
   def wait_on_continuations; end
 
   class << self
@@ -5003,7 +5021,7 @@ class Bunny::Session
     # @param [String | Hash] uri amqp or amqps URI to parse
     # @return [Hash] Parsed URI as a hash
     #
-    # pkg:gem/bunny#lib/bunny/session.rb:565
+    # pkg:gem/bunny#lib/bunny/session.rb:568
     def parse_uri(uri); end
   end
 end
@@ -5011,69 +5029,69 @@ end
 # Hard limit the user cannot go over regardless of server configuration.
 # @private
 #
-# pkg:gem/bunny#lib/bunny/session.rb:42
+# pkg:gem/bunny#lib/bunny/session.rb:40
 Bunny::Session::CHANNEL_MAX_LIMIT = T.let(T.unsafe(nil), Integer)
 
 # backwards compatibility
 # @private
 #
-# pkg:gem/bunny#lib/bunny/session.rb:47
+# pkg:gem/bunny#lib/bunny/session.rb:45
 Bunny::Session::CONNECT_TIMEOUT = T.let(T.unsafe(nil), Float)
 
-# pkg:gem/bunny#lib/bunny/session.rb:43
+# pkg:gem/bunny#lib/bunny/session.rb:41
 Bunny::Session::DEFAULT_CHANNEL_MAX = T.let(T.unsafe(nil), Integer)
 
 # RabbitMQ client metadata
 #
-# pkg:gem/bunny#lib/bunny/session.rb:53
+# pkg:gem/bunny#lib/bunny/session.rb:51
 Bunny::Session::DEFAULT_CLIENT_PROPERTIES = T.let(T.unsafe(nil), Hash)
 
 # @private
 #
-# pkg:gem/bunny#lib/bunny/session.rb:50
+# pkg:gem/bunny#lib/bunny/session.rb:48
 Bunny::Session::DEFAULT_CONTINUATION_TIMEOUT = T.let(T.unsafe(nil), Integer)
 
 # @private
 #
-# pkg:gem/bunny#lib/bunny/session.rb:39
+# pkg:gem/bunny#lib/bunny/session.rb:37
 Bunny::Session::DEFAULT_FRAME_MAX = T.let(T.unsafe(nil), Integer)
 
 # Default heartbeat interval, the same value as RabbitMQ 3.0 uses.
 #
-# pkg:gem/bunny#lib/bunny/session.rb:37
+# pkg:gem/bunny#lib/bunny/session.rb:35
 Bunny::Session::DEFAULT_HEARTBEAT = T.let(T.unsafe(nil), Symbol)
 
 # Default host used for connection
 #
-# pkg:gem/bunny#lib/bunny/session.rb:29
+# pkg:gem/bunny#lib/bunny/session.rb:27
 Bunny::Session::DEFAULT_HOST = T.let(T.unsafe(nil), String)
 
 # @private
 #
-# pkg:gem/bunny#lib/bunny/session.rb:70
+# pkg:gem/bunny#lib/bunny/session.rb:68
 Bunny::Session::DEFAULT_LOCALE = T.let(T.unsafe(nil), String)
 
 # Default reconnection interval for TCP connection failures
 #
-# pkg:gem/bunny#lib/bunny/session.rb:73
+# pkg:gem/bunny#lib/bunny/session.rb:71
 Bunny::Session::DEFAULT_NETWORK_RECOVERY_INTERVAL = T.let(T.unsafe(nil), Float)
 
 # Default password used for connection
 #
-# pkg:gem/bunny#lib/bunny/session.rb:35
+# pkg:gem/bunny#lib/bunny/session.rb:33
 Bunny::Session::DEFAULT_PASSWORD = T.let(T.unsafe(nil), String)
 
-# pkg:gem/bunny#lib/bunny/session.rb:75
+# pkg:gem/bunny#lib/bunny/session.rb:73
 Bunny::Session::DEFAULT_RECOVERABLE_EXCEPTIONS = T.let(T.unsafe(nil), Array)
 
 # Default username used for connection
 #
-# pkg:gem/bunny#lib/bunny/session.rb:33
+# pkg:gem/bunny#lib/bunny/session.rb:31
 Bunny::Session::DEFAULT_USER = T.let(T.unsafe(nil), String)
 
 # Default virtual host used for connection
 #
-# pkg:gem/bunny#lib/bunny/session.rb:31
+# pkg:gem/bunny#lib/bunny/session.rb:29
 Bunny::Session::DEFAULT_VHOST = T.let(T.unsafe(nil), String)
 
 # pkg:gem/bunny#lib/bunny/exceptions.rb:111
@@ -5101,7 +5119,7 @@ module Bunny::Socket
   # @return [String] Data read from the socket
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/cruby/socket.rb:55
+  # pkg:gem/bunny#lib/bunny/cruby/socket.rb:44
   def read_fully(count, timeout = T.unsafe(nil)); end
 
   # Reads given number of bytes into an existing buffer with an optional timeout
@@ -5113,7 +5131,7 @@ module Bunny::Socket
   # @return [String] The buffer with data appended
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/cruby/socket.rb:85
+  # pkg:gem/bunny#lib/bunny/cruby/socket.rb:74
   def read_fully_into(buffer, count, timeout = T.unsafe(nil)); end
 
   # Writes provided data using IO#write_nonblock, taking care of handling
@@ -5128,11 +5146,11 @@ module Bunny::Socket
   #
   # @api public
   #
-  # pkg:gem/bunny#lib/bunny/cruby/socket.rb:119
+  # pkg:gem/bunny#lib/bunny/cruby/socket.rb:108
   def write_nonblock_fully(data, timeout = T.unsafe(nil)); end
 
   class << self
-    # pkg:gem/bunny#lib/bunny/cruby/socket.rb:30
+    # pkg:gem/bunny#lib/bunny/cruby/socket.rb:19
     def open(host, port, options = T.unsafe(nil)); end
   end
 end
@@ -5140,7 +5158,7 @@ end
 # pkg:gem/bunny#lib/bunny/cruby/socket.rb:14
 Bunny::Socket::READ_RETRY_EXCEPTION_CLASSES = T.let(T.unsafe(nil), Array)
 
-# pkg:gem/bunny#lib/bunny/cruby/socket.rb:22
+# pkg:gem/bunny#lib/bunny/cruby/socket.rb:16
 Bunny::Socket::WRITE_RETRY_EXCEPTION_CLASSES = T.let(T.unsafe(nil), Array)
 
 # An alias for the standard MRI Socket,
@@ -5512,83 +5530,83 @@ end
 
 # @private
 #
-# pkg:gem/bunny#lib/bunny/transport.rb:18
+# pkg:gem/bunny#lib/bunny/transport.rb:16
 class Bunny::Transport
-  # pkg:gem/bunny#lib/bunny/transport.rb:62
+  # pkg:gem/bunny#lib/bunny/transport.rb:60
   def initialize(session, host, port, opts); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:224
+  # pkg:gem/bunny#lib/bunny/transport.rb:227
   def close(reason = T.unsafe(nil)); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:232
+  # pkg:gem/bunny#lib/bunny/transport.rb:235
   def closed?; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:148
+  # pkg:gem/bunny#lib/bunny/transport.rb:151
   def configure_socket(&block); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:152
+  # pkg:gem/bunny#lib/bunny/transport.rb:155
   def configure_tls_context(&block); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:110
+  # pkg:gem/bunny#lib/bunny/transport.rb:108
   def connect; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:54
+  # pkg:gem/bunny#lib/bunny/transport.rb:52
   def connect_timeout; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:144
+  # pkg:gem/bunny#lib/bunny/transport.rb:147
   def connected?; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:54
+  # pkg:gem/bunny#lib/bunny/transport.rb:52
   def disconnect_timeout; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:236
+  # pkg:gem/bunny#lib/bunny/transport.rb:239
   def flush; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:54
+  # pkg:gem/bunny#lib/bunny/transport.rb:52
   def host; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:91
+  # pkg:gem/bunny#lib/bunny/transport.rb:89
   def hostname; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:326
+  # pkg:gem/bunny#lib/bunny/transport.rb:329
   def initialize_socket; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:95
+  # pkg:gem/bunny#lib/bunny/transport.rb:93
   def local_address; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:340
+  # pkg:gem/bunny#lib/bunny/transport.rb:354
   def maybe_initialize_socket; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:228
+  # pkg:gem/bunny#lib/bunny/transport.rb:231
   def open?; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:54
+  # pkg:gem/bunny#lib/bunny/transport.rb:52
   def port; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:344
+  # pkg:gem/bunny#lib/bunny/transport.rb:358
   def post_initialize_socket; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:240
+  # pkg:gem/bunny#lib/bunny/transport.rb:243
   def read_fully(count); end
 
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/transport.rb:287
+  # pkg:gem/bunny#lib/bunny/transport.rb:290
   def read_fully_into(buffer, count); end
 
   # Exposed primarily for Bunny::Channel
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/transport.rb:263
+  # pkg:gem/bunny#lib/bunny/transport.rb:266
   def read_next_frame(opts = T.unsafe(nil)); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:256
+  # pkg:gem/bunny#lib/bunny/transport.rb:259
   def read_ready?(timeout = T.unsafe(nil)); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:54
+  # pkg:gem/bunny#lib/bunny/transport.rb:52
   def read_timeout; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:57
+  # pkg:gem/bunny#lib/bunny/transport.rb:55
   def read_timeout=(v); end
 
   # Sends frame to the peer.
@@ -5596,7 +5614,7 @@ class Bunny::Transport
   # @raise [ConnectionClosedError]
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/transport.rb:203
+  # pkg:gem/bunny#lib/bunny/transport.rb:206
   def send_frame(frame); end
 
   # Sends frame to the peer without timeout control.
@@ -5604,151 +5622,156 @@ class Bunny::Transport
   # @raise [ConnectionClosedError]
   # @private
   #
-  # pkg:gem/bunny#lib/bunny/transport.rb:215
+  # pkg:gem/bunny#lib/bunny/transport.rb:218
   def send_frame_without_timeout(frame); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:54
+  # pkg:gem/bunny#lib/bunny/transport.rb:52
   def session; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:54
+  # pkg:gem/bunny#lib/bunny/transport.rb:52
   def socket; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:107
+  # pkg:gem/bunny#lib/bunny/transport.rb:105
   def ssl?; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:102
+  # pkg:gem/bunny#lib/bunny/transport.rb:100
   def tls?; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:55
+  # pkg:gem/bunny#lib/bunny/transport.rb:53
   def tls_ca_certificates; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:55
+  # pkg:gem/bunny#lib/bunny/transport.rb:53
   def tls_certificate_path; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:55
+  # pkg:gem/bunny#lib/bunny/transport.rb:53
   def tls_context; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:55
+  # Needs the openssl gem >= 3.3, which added SSLSocket#timeout= and made #connect honour it
+  #
+  # pkg:gem/bunny#lib/bunny/transport.rb:344
+  def tls_handshake; end
+
+  # pkg:gem/bunny#lib/bunny/transport.rb:53
   def tls_key_path; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:104
+  # pkg:gem/bunny#lib/bunny/transport.rb:102
   def uses_ssl?; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:99
+  # pkg:gem/bunny#lib/bunny/transport.rb:97
   def uses_tls?; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:55
+  # pkg:gem/bunny#lib/bunny/transport.rb:53
   def verify_peer; end
 
   # Writes data to the socket. If read/write timeout was specified the operation will return after that
   # amount of time has elapsed waiting for the socket.
   #
-  # pkg:gem/bunny#lib/bunny/transport.rb:158
+  # pkg:gem/bunny#lib/bunny/transport.rb:161
   def write(data); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:54
+  # pkg:gem/bunny#lib/bunny/transport.rb:52
   def write_timeout; end
 
   # Writes data to the socket without timeout checks
   #
-  # pkg:gem/bunny#lib/bunny/transport.rb:181
+  # pkg:gem/bunny#lib/bunny/transport.rb:184
   def write_without_timeout(data, raise_exceptions = T.unsafe(nil)); end
 
   protected
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:438
+  # pkg:gem/bunny#lib/bunny/transport.rb:452
   def as_boolean(val); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:463
+  # pkg:gem/bunny#lib/bunny/transport.rb:477
   def check_local_certificate_path!(s); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:467
+  # pkg:gem/bunny#lib/bunny/transport.rb:481
   def check_local_key_path!(s); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:532
+  # pkg:gem/bunny#lib/bunny/transport.rb:551
   def initialize_tls_certificate_store(certs); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:485
+  # pkg:gem/bunny#lib/bunny/transport.rb:499
   def initialize_tls_context(ctx, opts = T.unsafe(nil)); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:412
+  # pkg:gem/bunny#lib/bunny/transport.rb:426
   def inline_client_certificate_from(opts); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:416
+  # pkg:gem/bunny#lib/bunny/transport.rb:430
   def inline_client_key_from(opts); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:406
+  # pkg:gem/bunny#lib/bunny/transport.rb:420
   def log_peer_certificate_chain_info(severity, chain); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:402
+  # pkg:gem/bunny#lib/bunny/transport.rb:416
   def log_peer_certificate_info(severity, peer_cert, prefix = T.unsafe(nil)); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:388
+  # pkg:gem/bunny#lib/bunny/transport.rb:402
   def peer_certificate_info(peer_cert, prefix = T.unsafe(nil)); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:420
+  # pkg:gem/bunny#lib/bunny/transport.rb:434
   def prepare_tls_context(opts); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:471
+  # pkg:gem/bunny#lib/bunny/transport.rb:485
   def read_client_certificate!; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:478
+  # pkg:gem/bunny#lib/bunny/transport.rb:492
   def read_client_key!; end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:563
+  # pkg:gem/bunny#lib/bunny/transport.rb:582
   def timeout_from(options); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:360
+  # pkg:gem/bunny#lib/bunny/transport.rb:374
   def tls_ca_certificates_paths_from(opts); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:372
+  # pkg:gem/bunny#lib/bunny/transport.rb:386
   def tls_certificate_from(opts); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:364
+  # pkg:gem/bunny#lib/bunny/transport.rb:378
   def tls_certificate_path_from(opts); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:354
+  # pkg:gem/bunny#lib/bunny/transport.rb:368
   def tls_enabled?(opts); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:380
+  # pkg:gem/bunny#lib/bunny/transport.rb:394
   def tls_key_from(opts); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:368
+  # pkg:gem/bunny#lib/bunny/transport.rb:382
   def tls_key_path_from(opts); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:556
+  # pkg:gem/bunny#lib/bunny/transport.rb:575
   def tls_version_constant(value); end
 
-  # pkg:gem/bunny#lib/bunny/transport.rb:449
+  # pkg:gem/bunny#lib/bunny/transport.rb:463
   def wrap_in_tls_socket(socket); end
 
   class << self
-    # pkg:gem/bunny#lib/bunny/transport.rb:322
+    # pkg:gem/bunny#lib/bunny/transport.rb:325
     def ping!(host, port, timeout); end
 
-    # pkg:gem/bunny#lib/bunny/transport.rb:305
+    # pkg:gem/bunny#lib/bunny/transport.rb:308
     def reachable?(host, port, timeout); end
 
-    # pkg:gem/bunny#lib/bunny/transport.rb:319
+    # pkg:gem/bunny#lib/bunny/transport.rb:322
     def reacheable?(host, port, timeout); end
   end
 end
 
 # Default TCP connection timeout
 #
-# pkg:gem/bunny#lib/bunny/transport.rb:25
+# pkg:gem/bunny#lib/bunny/transport.rb:23
 Bunny::Transport::DEFAULT_CONNECTION_TIMEOUT = T.let(T.unsafe(nil), Float)
 
-# pkg:gem/bunny#lib/bunny/transport.rb:27
+# pkg:gem/bunny#lib/bunny/transport.rb:25
 Bunny::Transport::DEFAULT_READ_TIMEOUT = T.let(T.unsafe(nil), Float)
 
-# pkg:gem/bunny#lib/bunny/transport.rb:28
+# pkg:gem/bunny#lib/bunny/transport.rb:26
 Bunny::Transport::DEFAULT_WRITE_TIMEOUT = T.let(T.unsafe(nil), Float)
 
 # mimics METHODS_MAP in ssl.rb but also lists TLS 1.3
 # and string constants
 #
-# pkg:gem/bunny#lib/bunny/transport.rb:32
+# pkg:gem/bunny#lib/bunny/transport.rb:30
 Bunny::Transport::TLS_VERSION_ALIASES = T.let(T.unsafe(nil), Hash)
 
 # Raised when RabbitMQ responds with 505 UNEXPECTED_FRAME
@@ -5758,5 +5781,5 @@ class Bunny::UnexpectedFrame < ::Bunny::ConnectionLevelException; end
 
 # @return [String] Version of the library
 #
-# pkg:gem/bunny#lib/bunny/version.rb:6
+# pkg:gem/bunny#lib/bunny/version.rb:5
 Bunny::VERSION = T.let(T.unsafe(nil), String)

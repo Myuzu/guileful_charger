@@ -5,7 +5,7 @@
 # Please instead update this file by running `bin/tapioca gem hutch`.
 
 
-# pkg:gem/hutch#lib/hutch/adapters/bunny.rb:4
+# pkg:gem/hutch#lib/hutch/logging.rb:4
 module Hutch
   class << self
     # pkg:gem/hutch#lib/hutch.rb:57
@@ -77,77 +77,87 @@ end
 # pkg:gem/hutch#lib/hutch/adapter.rb:9
 Hutch::Adapter = Hutch::Adapters::BunnyAdapter
 
-# pkg:gem/hutch#lib/hutch/adapters/bunny.rb:5
+# pkg:gem/hutch#lib/hutch/adapters/bunny.rb:7
 module Hutch::Adapters; end
 
-# pkg:gem/hutch#lib/hutch/adapters/bunny.rb:6
+# pkg:gem/hutch#lib/hutch/adapters/bunny.rb:8
 class Hutch::Adapters::BunnyAdapter
+  include ::Hutch::Logging
   extend ::Forwardable
 
-  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:16
+  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:20
   def initialize(opts = T.unsafe(nil)); end
 
-  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:14
+  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:18
   def close(*, **, &); end
 
-  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:14
+  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:18
   def create_channel(*, **, &); end
 
-  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:28
+  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:52
   def current_timestamp; end
 
-  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:14
+  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:18
   def disconnect(*, **, &); end
 
-  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:14
+  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:36
+  def install_channel_recovery(ch); end
+
+  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:18
   def open?(*, **, &); end
 
-  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:24
+  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:28
   def prefetch_channel(ch, prefetch); end
 
-  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:14
+  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:32
+  def queue_exists?(name); end
+
+  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:18
   def recover_channel_topology(*, **, &); end
 
-  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:14
+  # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:18
   def start(*, **, &); end
 
   class << self
-    # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:20
+    # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:24
     def decode_message(delivery_info, properties, payload); end
 
-    # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:32
+    # pkg:gem/hutch#lib/hutch/adapters/bunny.rb:56
     def new_exchange(ch, exchange_type, exchange_name, exchange_options); end
   end
 end
 
-# pkg:gem/hutch#lib/hutch/adapters/bunny.rb:11
+# pkg:gem/hutch#lib/hutch/adapters/bunny.rb:15
+Hutch::Adapters::BunnyAdapter::ChannelAlreadyClosed = Bunny::ChannelAlreadyClosed
+
+# pkg:gem/hutch#lib/hutch/adapters/bunny.rb:14
 Hutch::Adapters::BunnyAdapter::ConnectionRefused = Bunny::TCPConnectionFailed
 
-# pkg:gem/hutch#lib/hutch/adapters/bunny.rb:9
+# pkg:gem/hutch#lib/hutch/adapters/bunny.rb:12
 Hutch::Adapters::BunnyAdapter::DEFAULT_VHOST = T.let(T.unsafe(nil), String)
 
-# pkg:gem/hutch#lib/hutch/adapters/bunny.rb:12
+# pkg:gem/hutch#lib/hutch/adapters/bunny.rb:16
 Hutch::Adapters::BunnyAdapter::PreconditionFailed = Bunny::PreconditionFailed
 
 # pkg:gem/hutch#lib/hutch/exceptions.rb:11
 class Hutch::AuthenticationError < ::Hutch::Exception; end
 
-# pkg:gem/hutch#lib/hutch/broker.rb:9
+# pkg:gem/hutch#lib/hutch/broker.rb:10
 class Hutch::Broker
   include ::Hutch::Logging
 
   # @param config [nil,Hash] Configuration override
   #
-  # pkg:gem/hutch#lib/hutch/broker.rb:33
+  # pkg:gem/hutch#lib/hutch/broker.rb:34
   def initialize(config = T.unsafe(nil)); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:264
-  def ack(delivery_tag); end
+  # pkg:gem/hutch#lib/hutch/broker.rb:261
+  def ack(delivery_tag, channel: T.unsafe(nil)); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:12
+  # pkg:gem/hutch#lib/hutch/broker.rb:13
   def api_client; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:12
+  # pkg:gem/hutch#lib/hutch/broker.rb:13
   def api_client=(_arg0); end
 
   # Bind a queue to the broker's exchange on the routing keys provided. Any
@@ -162,13 +172,13 @@ class Hutch::Broker
   # pkg:gem/hutch#lib/hutch/broker.rb:203
   def bindings; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:12
+  # pkg:gem/hutch#lib/hutch/broker.rb:13
   def channel; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:12
+  # pkg:gem/hutch#lib/hutch/broker.rb:13
   def channel=(_arg0); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:276
+  # pkg:gem/hutch#lib/hutch/broker.rb:273
   def confirm_select(*args); end
 
   # Connect to broker
@@ -181,92 +191,101 @@ class Hutch::Broker
   # @param [Hash] options The options to connect with
   # @option options [Boolean] :enable_http_api_use
   #
-  # pkg:gem/hutch#lib/hutch/broker.rb:46
+  # pkg:gem/hutch#lib/hutch/broker.rb:47
   def connect(options = T.unsafe(nil)); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:12
+  # pkg:gem/hutch#lib/hutch/broker.rb:13
   def connection; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:12
+  # pkg:gem/hutch#lib/hutch/broker.rb:13
   def connection=(_arg0); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:139
+  # pkg:gem/hutch#lib/hutch/broker.rb:135
   def declare_exchange(ch = T.unsafe(nil)); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:150
+  # pkg:gem/hutch#lib/hutch/broker.rb:146
   def declare_exchange!(*args); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:154
+  # pkg:gem/hutch#lib/hutch/broker.rb:150
   def declare_publisher!; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:71
+  # pkg:gem/hutch#lib/hutch/broker.rb:72
   def disconnect; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:12
+  # pkg:gem/hutch#lib/hutch/broker.rb:13
   def exchange; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:12
+  # pkg:gem/hutch#lib/hutch/broker.rb:13
   def exchange=(_arg0); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:174
+  # pkg:gem/hutch#lib/hutch/broker.rb:170
   def http_api_use_enabled?; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:125
-  def install_channel_recovery!(ch); end
-
-  # pkg:gem/hutch#lib/hutch/broker.rb:268
-  def nack(delivery_tag); end
+  # pkg:gem/hutch#lib/hutch/broker.rb:265
+  def nack(delivery_tag, channel: T.unsafe(nil)); end
 
   # Apply the configured namespace prefix to a queue name.
   #
   # pkg:gem/hutch#lib/hutch/broker.rb:197
   def namespaced_queue_name(name); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:108
+  # pkg:gem/hutch#lib/hutch/broker.rb:109
   def open_channel; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:121
+  # pkg:gem/hutch#lib/hutch/broker.rb:122
   def open_channel!; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:91
+  # pkg:gem/hutch#lib/hutch/broker.rb:92
   def open_connection; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:104
+  # pkg:gem/hutch#lib/hutch/broker.rb:105
   def open_connection!; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:272
+  # pkg:gem/hutch#lib/hutch/broker.rb:269
   def publish(*args); end
 
   # Create / get a durable queue.
   #
-  # pkg:gem/hutch#lib/hutch/broker.rb:190
+  # pkg:gem/hutch#lib/hutch/broker.rb:186
   def queue(name, options = T.unsafe(nil)); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:260
-  def reject(delivery_tag, requeue = T.unsafe(nil)); end
+  # pkg:gem/hutch#lib/hutch/broker.rb:192
+  def queue_exists?(name); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:256
-  def requeue(delivery_tag); end
+  # pkg:gem/hutch#lib/hutch/broker.rb:257
+  def reject(delivery_tag, requeue = T.unsafe(nil), channel: T.unsafe(nil)); end
+
+  # Closing the old channel makes RabbitMQ forget the consumers on it
+  # and requeue their unacknowledged deliveries.
+  #
+  # pkg:gem/hutch#lib/hutch/broker.rb:128
+  def replace_channel!; end
+
+  # Delivery tags are scoped to their channel: a tag from a replaced one
+  # is dropped, the server has requeued that delivery anyway.
+  #
+  # pkg:gem/hutch#lib/hutch/broker.rb:253
+  def requeue(delivery_tag, channel: T.unsafe(nil)); end
 
   # Connect to RabbitMQ via AMQP
   #
   # This sets up the main connection and channel we use for talking to
   # RabbitMQ. It also ensures the existence of the exchange we'll be using.
   #
-  # pkg:gem/hutch#lib/hutch/broker.rb:84
+  # pkg:gem/hutch#lib/hutch/broker.rb:85
   def set_up_amqp_connection; end
 
   # Set up the connection to the RabbitMQ management API. Unfortunately, this
   # is necessary to do a few things that are impossible over AMQP. E.g.
   # listing queues and bindings.
   #
-  # pkg:gem/hutch#lib/hutch/broker.rb:161
+  # pkg:gem/hutch#lib/hutch/broker.rb:157
   def set_up_api_connection; end
 
   # pkg:gem/hutch#lib/hutch/broker.rb:243
   def stop; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:185
+  # pkg:gem/hutch#lib/hutch/broker.rb:181
   def tracing_enabled?; end
 
   # Find the existing bindings, and unbind any redundant bindings
@@ -276,117 +295,142 @@ class Hutch::Broker
 
   # @return [Boolean] True if channel is set up to use publisher confirmations.
   #
-  # pkg:gem/hutch#lib/hutch/broker.rb:285
+  # pkg:gem/hutch#lib/hutch/broker.rb:282
   def using_publisher_confirmations?; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:280
+  # pkg:gem/hutch#lib/hutch/broker.rb:277
   def wait_for_confirms; end
 
   private
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:294
+  # pkg:gem/hutch#lib/hutch/broker.rb:312
   def api_config; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:396
+  # pkg:gem/hutch#lib/hutch/broker.rb:429
   def channel_work_pool; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:306
+  # pkg:gem/hutch#lib/hutch/broker.rb:292
+  def close_consumer_channel; end
+
+  # pkg:gem/hutch#lib/hutch/broker.rb:324
   def connection_params; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:404
+  # pkg:gem/hutch#lib/hutch/broker.rb:437
   def consumer_pool_abort_on_exception; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:400
+  # pkg:gem/hutch#lib/hutch/broker.rb:433
   def consumer_pool_size; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:351
+  # pkg:gem/hutch#lib/hutch/broker.rb:288
+  def current_channel?(ch); end
+
+  # pkg:gem/hutch#lib/hutch/broker.rb:383
   def default_mq_port; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:338
+  # Bunny kills the consumer work pool when the channel closes. Draining
+  # first gives the running handlers `graceful_exit_timeout` to finish.
+  #
+  # pkg:gem/hutch#lib/hutch/broker.rb:303
+  def drain_consumer_work_pool; end
+
+  # pkg:gem/hutch#lib/hutch/broker.rb:356
   def parse_uri; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:355
+  # Resolved here rather than in #connection_params, so that
+  # Config[:mq_vhost] holds the name the HTTP API reports too.
+  #
+  # pkg:gem/hutch#lib/hutch/broker.rb:371
+  def parse_vhost(uri); end
+
+  # pkg:gem/hutch#lib/hutch/broker.rb:387
   def sanitized_uri; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:362
+  # The vhost Hutch connects to. Config[:mq_vhost] can still be blank when it
+  # was set directly rather than through a URI, while the broker and its HTTP
+  # API call the default vhost `/`.
+  #
+  # pkg:gem/hutch#lib/hutch/broker.rb:379
+  def vhost; end
+
+  # pkg:gem/hutch#lib/hutch/broker.rb:395
   def with_authentication_error_handler; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:389
+  # pkg:gem/hutch#lib/hutch/broker.rb:422
   def with_bunny_connection_handler(uri); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:380
+  # pkg:gem/hutch#lib/hutch/broker.rb:413
   def with_bunny_precondition_handler(item); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:373
+  # pkg:gem/hutch#lib/hutch/broker.rb:406
   def with_connection_error_handler; end
 end
 
-# pkg:gem/hutch#lib/hutch/broker.rb:291
+# pkg:gem/hutch#lib/hutch/broker.rb:309
 class Hutch::Broker::Config < ::Struct
-  # pkg:gem/hutch#lib/hutch/broker.rb:291
+  # pkg:gem/hutch#lib/hutch/broker.rb:309
   def host; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:291
+  # pkg:gem/hutch#lib/hutch/broker.rb:309
   def host=(_); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:291
+  # pkg:gem/hutch#lib/hutch/broker.rb:309
   def password; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:291
+  # pkg:gem/hutch#lib/hutch/broker.rb:309
   def password=(_); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:291
+  # pkg:gem/hutch#lib/hutch/broker.rb:309
   def port; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:291
+  # pkg:gem/hutch#lib/hutch/broker.rb:309
   def port=(_); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:291
+  # pkg:gem/hutch#lib/hutch/broker.rb:309
   def protocol; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:291
+  # pkg:gem/hutch#lib/hutch/broker.rb:309
   def protocol=(_); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:291
+  # pkg:gem/hutch#lib/hutch/broker.rb:309
   def sanitized_uri; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:291
+  # pkg:gem/hutch#lib/hutch/broker.rb:309
   def sanitized_uri=(_); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:291
+  # pkg:gem/hutch#lib/hutch/broker.rb:309
   def ssl; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:291
+  # pkg:gem/hutch#lib/hutch/broker.rb:309
   def ssl=(_); end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:291
+  # pkg:gem/hutch#lib/hutch/broker.rb:309
   def username; end
 
-  # pkg:gem/hutch#lib/hutch/broker.rb:291
+  # pkg:gem/hutch#lib/hutch/broker.rb:309
   def username=(_); end
 
   class << self
-    # pkg:gem/hutch#lib/hutch/broker.rb:291
+    # pkg:gem/hutch#lib/hutch/broker.rb:309
     def [](*_arg0); end
 
-    # pkg:gem/hutch#lib/hutch/broker.rb:291
+    # pkg:gem/hutch#lib/hutch/broker.rb:309
     def inspect; end
 
-    # pkg:gem/hutch#lib/hutch/broker.rb:291
+    # pkg:gem/hutch#lib/hutch/broker.rb:309
     def keyword_init?; end
 
-    # pkg:gem/hutch#lib/hutch/broker.rb:291
+    # pkg:gem/hutch#lib/hutch/broker.rb:309
     def members; end
 
-    # pkg:gem/hutch#lib/hutch/broker.rb:291
+    # pkg:gem/hutch#lib/hutch/broker.rb:309
     def new(*_arg0); end
   end
 end
 
-# pkg:gem/hutch#lib/hutch/broker.rb:23
+# pkg:gem/hutch#lib/hutch/broker.rb:24
 Hutch::Broker::DEFAULT_AMQPS_PORT = T.let(T.unsafe(nil), Integer)
 
-# pkg:gem/hutch#lib/hutch/broker.rb:15
+# pkg:gem/hutch#lib/hutch/broker.rb:16
 Hutch::Broker::DEFAULT_AMQP_PORT = T.let(T.unsafe(nil), Integer)
 
 # pkg:gem/hutch#lib/hutch/cli.rb:9
@@ -396,10 +440,10 @@ class Hutch::CLI
   # pkg:gem/hutch#lib/hutch/cli.rb:33
   def load_app; end
 
-  # pkg:gem/hutch#lib/hutch/cli.rb:73
+  # pkg:gem/hutch#lib/hutch/cli.rb:70
   def load_rails_app(path); end
 
-  # pkg:gem/hutch#lib/hutch/cli.rb:107
+  # pkg:gem/hutch#lib/hutch/cli.rb:104
   def parse_options(args = T.unsafe(nil)); end
 
   # Run a Hutch worker with the command line interface.
@@ -407,27 +451,27 @@ class Hutch::CLI
   # pkg:gem/hutch#lib/hutch/cli.rb:13
   def run(argv = T.unsafe(nil)); end
 
-  # pkg:gem/hutch#lib/hutch/cli.rb:52
+  # pkg:gem/hutch#lib/hutch/cli.rb:49
   def set_up_code_paths!; end
 
   # Kick off the work loop. This method returns when the worker is shut down
   # gracefully (with a SIGQUIT, SIGTERM or SIGINT).
   #
-  # pkg:gem/hutch#lib/hutch/cli.rb:94
+  # pkg:gem/hutch#lib/hutch/cli.rb:91
   def start_work_loop; end
 
-  # pkg:gem/hutch#lib/hutch/cli.rb:218
+  # pkg:gem/hutch#lib/hutch/cli.rb:215
   def write_pid; end
 
   private
 
-  # pkg:gem/hutch#lib/hutch/cli.rb:242
+  # pkg:gem/hutch#lib/hutch/cli.rb:239
   def abort_with_message(message); end
 
-  # pkg:gem/hutch#lib/hutch/cli.rb:236
+  # pkg:gem/hutch#lib/hutch/cli.rb:233
   def abort_without_file(file, file_description, &block); end
 
-  # pkg:gem/hutch#lib/hutch/cli.rb:226
+  # pkg:gem/hutch#lib/hutch/cli.rb:223
   def daemonise_process; end
 end
 
@@ -916,7 +960,7 @@ module Hutch::Consumer::ClassMethods
   # pkg:gem/hutch#lib/hutch/consumer.rb:46
   def queue_name(name); end
 
-  # Congfiures queue options that will be passed when declaring the queue.
+  # Configures queue options that will be passed when declaring the queue.
   #
   # pkg:gem/hutch#lib/hutch/consumer.rb:84
   def queue_options(options = T.unsafe(nil)); end
@@ -1222,71 +1266,83 @@ class Hutch::Worker
   # pkg:gem/hutch#lib/hutch/worker.rb:13
   def initialize(broker, consumers, setup_procs); end
 
-  # pkg:gem/hutch#lib/hutch/worker.rb:92
+  # pkg:gem/hutch#lib/hutch/worker.rb:127
   def acknowledge_error(delivery_info, properties, broker, ex); end
 
-  # pkg:gem/hutch#lib/hutch/worker.rb:100
+  # pkg:gem/hutch#lib/hutch/worker.rb:135
   def consumers=(val); end
 
-  # pkg:gem/hutch#lib/hutch/worker.rb:107
+  # pkg:gem/hutch#lib/hutch/worker.rb:142
   def error_acknowledgements; end
 
-  # pkg:gem/hutch#lib/hutch/worker.rb:86
+  # A server-sent `basic.cancel` carries no reason, so a consumer timeout
+  # is indistinguishable from a queue deletion. Only the former is recoverable.
+  #
+  # pkg:gem/hutch#lib/hutch/worker.rb:66
+  def handle_cancellation(queue_name, cancelled_channel); end
+
+  # pkg:gem/hutch#lib/hutch/worker.rb:121
   def handle_error(*args); end
 
   # Called internally when a new messages comes in from RabbitMQ. Responsible
   # for wrapping up the message and passing it to the consumer.
   #
-  # pkg:gem/hutch#lib/hutch/worker.rb:63
+  # pkg:gem/hutch#lib/hutch/worker.rb:98
   def handle_message(consumer, delivery_info, properties, payload); end
+
+  # Runs on its own thread: closing the channel kills the consumer work
+  # pool this callback runs on. Returns the thread so that tests can join it.
+  #
+  # pkg:gem/hutch#lib/hutch/worker.rb:80
+  def resubscribe_on_a_new_channel(cancelled_channel); end
 
   # Run the main event loop. The consumers will be set up with queues, and
   # process the messages in their respective queues indefinitely. This method
   # never returns.
   #
-  # pkg:gem/hutch#lib/hutch/worker.rb:22
+  # pkg:gem/hutch#lib/hutch/worker.rb:23
   def run; end
 
   # Bind a consumer's routing keys to its queue, and set up a subscription to
   # receive messages sent to the queue.
   #
-  # pkg:gem/hutch#lib/hutch/worker.rb:47
+  # pkg:gem/hutch#lib/hutch/worker.rb:48
   def setup_queue(consumer); end
 
   # Set up the queues for each of the worker's consumers.
   #
-  # pkg:gem/hutch#lib/hutch/worker.rb:37
+  # pkg:gem/hutch#lib/hutch/worker.rb:38
   def setup_queues; end
 
   # Stop a running worker by killing all subscriber threads.
   #
-  # pkg:gem/hutch#lib/hutch/worker.rb:32
+  # pkg:gem/hutch#lib/hutch/worker.rb:33
   def stop; end
 
-  # pkg:gem/hutch#lib/hutch/worker.rb:82
+  # pkg:gem/hutch#lib/hutch/worker.rb:117
   def with_tracing(klass); end
 
   private
 
-  # pkg:gem/hutch#lib/hutch/worker.rb:133
+  # pkg:gem/hutch#lib/hutch/worker.rb:168
   def consumer_groups; end
 
-  # pkg:gem/hutch#lib/hutch/worker.rb:129
+  # pkg:gem/hutch#lib/hutch/worker.rb:164
   def group; end
 
-  # pkg:gem/hutch#lib/hutch/worker.rb:113
+  # pkg:gem/hutch#lib/hutch/worker.rb:148
   def group_configured?; end
 
-  # pkg:gem/hutch#lib/hutch/worker.rb:120
+  # pkg:gem/hutch#lib/hutch/worker.rb:155
   def group_restricted?(consumer); end
 
-  # pkg:gem/hutch#lib/hutch/worker.rb:137
+  # pkg:gem/hutch#lib/hutch/worker.rb:172
   def setup_procs; end
 
-  # pkg:gem/hutch#lib/hutch/worker.rb:137
+  # pkg:gem/hutch#lib/hutch/worker.rb:172
   def setup_procs=(_arg0); end
 
-  # pkg:gem/hutch#lib/hutch/worker.rb:139
+  # pkg:gem/hutch#lib/hutch/worker.rb:174
   def unique_consumer_tag; end
 end
 
