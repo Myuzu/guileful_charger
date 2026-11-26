@@ -33,7 +33,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Ruby without installing repository gems
-        uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1
+        uses: ruby/setup-ruby@f9c4492e86def3e644ab32a0ef185eda5b0c20d0 # v1
         with:
           ruby-version: .ruby-version
           bundler-cache: false
@@ -68,7 +68,7 @@ jobs:
       - name: Mint a repository-scoped publishing token
         if: steps.candidate.outputs.changed == 'true'
         id: app
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         with:
           client-id: ${{ vars.RBI_APP_CLIENT_ID }}
           private-key: ${{ secrets.RBI_APP_PRIVATE_KEY }}

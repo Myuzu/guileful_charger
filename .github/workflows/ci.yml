@@ -35,7 +35,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1
+        uses: ruby/setup-ruby@f9c4492e86def3e644ab32a0ef185eda5b0c20d0 # v1
         with:
           ruby-version: .ruby-version
           bundler-cache: true
@@ -86,7 +86,7 @@ jobs:
           docker exec --user rabbitmq "$RABBITMQ_CONTAINER" rabbitmq-diagnostics -q check_if_any_deprecated_features_are_used
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1
+        uses: ruby/setup-ruby@f9c4492e86def3e644ab32a0ef185eda5b0c20d0 # v1
         with:
           ruby-version: .ruby-version
           bundler-cache: true
