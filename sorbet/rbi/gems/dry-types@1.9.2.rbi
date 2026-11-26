@@ -320,7 +320,7 @@ class Dry::Types::Array::Member < ::Dry::Types::Array
   # @api private
   #
   # pkg:gem/dry-types#lib/dry/types/array/member.rb:45
-  def call_safe(input, &block); end
+  def call_safe(input); end
 
   # @param [Object] input
   #
@@ -1311,13 +1311,13 @@ class Dry::Types::Constructor < ::Dry::Types::Nominal
   # pkg:gem/dry-types#lib/dry/types/constructor.rb:62
   def initialize(type, fn: T.unsafe(nil), **options); end
 
-  # pkg:gem/dry-types#lib/dry/types/constructor.rb:147
+  # pkg:gem/dry-types#lib/dry/types/constructor.rb:143
   def <<(new_fn = T.unsafe(nil), **options, &block); end
 
-  # pkg:gem/dry-types#lib/dry/types/constructor.rb:121
+  # pkg:gem/dry-types#lib/dry/types/constructor.rb:117
   def >>(new_fn = T.unsafe(nil), **options, &block); end
 
-  # pkg:gem/dry-types#lib/dry/types/constructor.rb:120
+  # pkg:gem/dry-types#lib/dry/types/constructor.rb:116
   def append(new_fn = T.unsafe(nil), **options, &block); end
 
   # @return [Object]
@@ -1325,20 +1325,20 @@ class Dry::Types::Constructor < ::Dry::Types::Nominal
   # @api private
   #
   # pkg:gem/dry-types#lib/dry/types/constructor.rb:72
-  def call_safe(input, &block); end
+  def call_safe(input); end
 
   # @return [Object]
   #
   # @api private
   #
-  # pkg:gem/dry-types#lib/dry/types/constructor.rb:84
+  # pkg:gem/dry-types#lib/dry/types/constructor.rb:80
   def call_unsafe(input); end
 
   # @return [Class]
   #
   # @api private
   #
-  # pkg:gem/dry-types#lib/dry/types/constructor.rb:126
+  # pkg:gem/dry-types#lib/dry/types/constructor.rb:122
   def constrained_type; end
 
   # Build a new constructor by appending a block to the coercion function
@@ -1351,7 +1351,7 @@ class Dry::Types::Constructor < ::Dry::Types::Nominal
   #
   # @api public
   #
-  # pkg:gem/dry-types#lib/dry/types/constructor.rb:111
+  # pkg:gem/dry-types#lib/dry/types/constructor.rb:107
   def constructor(new_fn = T.unsafe(nil), **options, &block); end
 
   # @return [#call]
@@ -1364,7 +1364,7 @@ class Dry::Types::Constructor < ::Dry::Types::Nominal
   # @return [Lax]
   # @api public
   #
-  # pkg:gem/dry-types#lib/dry/types/constructor.rb:153
+  # pkg:gem/dry-types#lib/dry/types/constructor.rb:149
   def lax; end
 
   # Build a new constructor by prepending a block to the coercion function
@@ -1377,14 +1377,14 @@ class Dry::Types::Constructor < ::Dry::Types::Nominal
   #
   # @api public
   #
-  # pkg:gem/dry-types#lib/dry/types/constructor.rb:144
+  # pkg:gem/dry-types#lib/dry/types/constructor.rb:140
   def prepend(new_fn = T.unsafe(nil), **options, &block); end
 
   # @see Nominal#to_ast
   #
   # @api public
   #
-  # pkg:gem/dry-types#lib/dry/types/constructor.rb:131
+  # pkg:gem/dry-types#lib/dry/types/constructor.rb:127
   def to_ast(meta: T.unsafe(nil)); end
 
   # Wrap the type with a proc
@@ -1393,7 +1393,7 @@ class Dry::Types::Constructor < ::Dry::Types::Nominal
   #
   # @api public
   #
-  # pkg:gem/dry-types#lib/dry/types/constructor.rb:160
+  # pkg:gem/dry-types#lib/dry/types/constructor.rb:156
   def to_proc; end
 
   # @param [Object] input
@@ -1404,7 +1404,7 @@ class Dry::Types::Constructor < ::Dry::Types::Nominal
   #
   # @api public
   #
-  # pkg:gem/dry-types#lib/dry/types/constructor.rb:93
+  # pkg:gem/dry-types#lib/dry/types/constructor.rb:89
   def try(input, &); end
 
   # @return [Type]
@@ -1422,7 +1422,7 @@ class Dry::Types::Constructor < ::Dry::Types::Nominal
   #
   # @api private
   #
-  # pkg:gem/dry-types#lib/dry/types/constructor.rb:180
+  # pkg:gem/dry-types#lib/dry/types/constructor.rb:176
   def method_missing(method, *, **, &); end
 
   # @param [Symbol] meth
@@ -1431,7 +1431,7 @@ class Dry::Types::Constructor < ::Dry::Types::Nominal
   #
   # @api private
   #
-  # pkg:gem/dry-types#lib/dry/types/constructor.rb:169
+  # pkg:gem/dry-types#lib/dry/types/constructor.rb:165
   def respond_to_missing?(meth, include_private = T.unsafe(nil)); end
 
   class << self

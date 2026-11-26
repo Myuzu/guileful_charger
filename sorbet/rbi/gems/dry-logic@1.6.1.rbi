@@ -455,216 +455,216 @@ module Dry::Logic::Predicates
   mixes_in_class_methods ::Dry::Logic::Predicates::Methods
 
   class << self
-    # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:226
+    # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:227
     def included(other); end
   end
 end
 
-# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:16
+# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:15
 module Dry::Logic::Predicates::Methods
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:39
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:38
   def [](name); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:87
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:86
   def array?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:50
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:49
   def attr?(name, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:63
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:62
   def bool?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:114
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:113
   def bytesize?(size, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:170
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:169
   def case?(pattern, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:65
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:64
   def date?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:67
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:66
   def date_time?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:81
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:80
   def decimal?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:213
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:214
   def deprecated(name, in_favor_of); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:52
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:51
   def empty?(input); end
 
   # This overrides Object#eql? so we need to make it compatible
   #
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:154
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:153
   def eql?(left, right = T.unsafe(nil)); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:91
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:90
   def even?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:139
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:138
   def excluded_from?(list, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:151
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:150
   def excludes?(value, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:132
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:131
   def exclusion?(list, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:166
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:165
   def false?(value); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:61
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:60
   def filled?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:79
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:78
   def float?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:168
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:167
   def format?(regex, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:95
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:94
   def gt?(num, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:99
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:98
   def gteq?(num, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:85
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:84
   def hash?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:137
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:136
   def included_in?(list, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:141
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:140
   def includes?(value, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:127
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:126
   def inclusion?(list, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:77
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:76
   def int?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:160
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:159
   def is?(left, right); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:48
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:47
   def key?(name, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:93
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:92
   def lt?(num, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:97
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:96
   def lteq?(num, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:125
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:124
   def max_bytesize?(num, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:112
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:111
   def max_size?(num, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:123
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:122
   def min_bytesize?(num, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:110
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:109
   def min_size?(num, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:45
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:44
   def nil?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:46
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:45
   def none?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:162
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:161
   def not_eql?(left, right); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:71
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:70
   def number?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:89
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:88
   def odd?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:209
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:210
   def predicate(name, &); end
 
   # This overrides Object#respond_to? so we need to make it compatible
   #
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:203
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:204
   def respond_to?(method, input = T.unsafe(nil)); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:101
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:100
   def size?(size, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:83
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:82
   def str?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:69
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:68
   def time?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:164
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:163
   def true?(value); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:43
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:42
   def type?(type, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:189
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:190
   def uri?(schemes, input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:200
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:201
   def uri_rfc3986?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:172
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:171
   def uuid_v1?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:174
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:173
   def uuid_v2?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:176
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:175
   def uuid_v3?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:178
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:177
   def uuid_v4?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:180
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:179
   def uuid_v5?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:182
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:181
   def uuid_v6?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:184
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:183
   def uuid_v7?(input); end
 
-  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:186
+  # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:185
   def uuid_v8?(input); end
 
   class << self
-    # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:17
+    # pkg:gem/dry-logic#lib/dry/logic/predicates.rb:16
     def uuid_format(version); end
   end
 end
 
-# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:23
+# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:22
 Dry::Logic::Predicates::Methods::UUIDv1 = T.let(T.unsafe(nil), Regexp)
 
-# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:25
+# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:24
 Dry::Logic::Predicates::Methods::UUIDv2 = T.let(T.unsafe(nil), Regexp)
 
-# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:27
+# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:26
 Dry::Logic::Predicates::Methods::UUIDv3 = T.let(T.unsafe(nil), Regexp)
 
-# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:29
+# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:28
 Dry::Logic::Predicates::Methods::UUIDv4 = T.let(T.unsafe(nil), Regexp)
 
-# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:31
+# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:30
 Dry::Logic::Predicates::Methods::UUIDv5 = T.let(T.unsafe(nil), Regexp)
 
-# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:33
+# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:32
 Dry::Logic::Predicates::Methods::UUIDv6 = T.let(T.unsafe(nil), Regexp)
 
-# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:35
+# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:34
 Dry::Logic::Predicates::Methods::UUIDv7 = T.let(T.unsafe(nil), Regexp)
 
-# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:37
+# pkg:gem/dry-logic#lib/dry/logic/predicates.rb:36
 Dry::Logic::Predicates::Methods::UUIDv8 = T.let(T.unsafe(nil), Regexp)
 
 # pkg:gem/dry-logic#lib/dry/logic/result.rb:5
